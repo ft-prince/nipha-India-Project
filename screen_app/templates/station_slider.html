@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="refresh" content="120"> <!-- This will refresh the page every 120 seconds (2 minutes) -->
+    <meta http-equiv="refresh" content="120">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Station Media Slider</title>
     <style>
@@ -30,7 +30,6 @@
             left: 0;
             object-fit: cover;
         }
-
         .slider-container embed {
             height: 100%;
             width: 80%;
@@ -38,31 +37,47 @@
             position: absolute;
             top: 0;
             left: 10%;
-            object-fit:none;
+            object-fit: none;
         }
-
         .slider-container video.active, .slider-container embed.active {
             display: block;
         }
         .overlay-text {
-            position: absolute;
-            top: 50%;  /* Adjust to position the screen_name */
-            right: -100px; /* Adjust to position the screen_name */
-            font-size: 40px;  /* Control text size */
-            color: white;
-            /* background-color: rgba(7, 13, 212, 0.5); Semi-transparent background */
+            position: fixed;
+            top: 88%;
+            right: 2%;
+
+            margin-right: 20px;
+           text-align: center;
+           /* margin-bottom: 50px; */
+            transform: translateY(-50%) rotate(90deg);
+            transform-origin: right center;
             background-color: darkblue;
-            padding: 5px 10px;
+            color: white;
+            /* padding: 5px 10px; */
+            white-space: nowrap;
+            text-wrap: wrap;
             z-index: 10;
-            transform: rotate(90deg);
+            font-size: 42px;  /* Adjust as needed */
+           width: 550px;
         }
     </style>
 </head>
 <body>
     <div class="slider-container" id="slider-container">
-        <!-- The screen_name overlay -->
-        <div class="overlay-text">{{ station.screen_name }}</div>
+        <!-- The media content will be inserted here -->
     </div>
+        <div id="overlay-text" class="overlay-text"></div>
+  
+</head>
+<body>
+    <div class="slider-container" id="slider-container">
+        <!-- The media content will be inserted here -->
+    </div>
+    <!-- The screen_name overlay is now outside the slider container -->
+    <h3>
+        <div id="overlay-text" class="overlay-text"></div>
+    </h3>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -138,6 +153,10 @@
                             });
     
                             playCurrentMedia();
+
+                            // Update the overlay text
+                            const overlayText = document.getElementById('overlay-text');
+                            overlayText.textContent = `{{ station.screen_name }}`;
                         } else {
                             console.error('No media found for this station.');
                         }
@@ -150,7 +169,6 @@
             fetchMedia(); // Initial fetch
             setInterval(fetchMedia, 120000); // Refresh media every 120 seconds
         });
-
-</script>
+    </script>
 </body>
 </html>
