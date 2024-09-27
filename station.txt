@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Station Media Slider</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+        .slider-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+            background-color: black;
+            position: relative;
+        }
+        .slider-container video{
+            height: 100%;
+            width: 100%;
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            object-fit:cover;
+            transform:rotate(180deg);
+        }
+        .slider-container video.active, .slider-container embed.active, .slider-container img.active {
+            display: block;
+        }
+        .slider-container embed {
+            height: 100%;
+            width: 80%;
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 10%;
+            object-fit:none;
+        }
+        .slider-container img {
+            width: 100%;
+            height: 100%;
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            object-fit: contain;
+        }
+        .media-name {
+            position: absolute;
+            top: 50%;
+            left: 82%;
+            transform: translateX(-50%);
+            background-color:#0c31ab;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-family: Arial, sans-serif;
+            z-index: 10;
+            transform: rotate(90deg);
+            font-weight: bold;
+            font-size: 2em;
+        }
+    </style>
+</head>
+<body>
+    <div class="slider-container" id="slider-container"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const stationId = {{ station.id }};
+            const url = `/station/${stationId}/media/`;
+            let currentIndex = 0;
+            const mediaElements = [];
+            let slideshowTimer;
+    
+            const playCurrentMedia = () => {
+                const currentMedia = mediaElements[currentIndex];
+                let duration = currentMedia.dataset.duration || 10000; // Default to 10 seconds
+    
+                if (currentMedia.tagName === 'VIDEO') {
+                    currentMedia.play().catch(e => console.error("Error playing video:", e));
+                    duration = currentMedia.duration * 1000 || 15000; // Use the video's duration
+                } else if (currentMedia.tagName === 'EMBED' || currentMedia.tagName === 'IMG') {
+                    slideshowTimer = setTimeout(switchMedia, duration);
+                }
+    
+                // Show the current media name
+                const mediaName = document.getElementById('media-name');
+                if (mediaName) {
+                    mediaName.textContent = currentMedia.dataset.name || 'Untitled Media';
+                    mediaName.style.display = 'block';
+                }
+            };
+    
+            const stopCurrentMedia = () => {
+                const currentMedia = mediaElements[currentIndex];
+                if (currentMedia.tagName === 'VIDEO') {
+                    currentMedia.pause();
+                    currentMedia.currentTime = 0;
+                } else {
+                    clearTimeout(slideshowTimer);
+                }
+            };
+    
+            const switchMedia = () => {
+                stopCurrentMedia();
+                mediaElements[currentIndex].classList.remove('active');
+                currentIndex = (currentIndex + 1) % mediaElements.length;
+                mediaElements[currentIndex].classList.add('active');
+                playCurrentMedia();
+            };
+    
+            const fetchMedia = () => {
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.media && data.media.length > 0) {
+                            const sliderContainer = document.getElementById('slider-container');
+                            sliderContainer.innerHTML = ''; // Clear existing media
+                            mediaElements.length = 0; // Clear the array
+                            currentIndex = 0; // Reset the index
+    
+                            // Create media name element
+                            const mediaName = document.createElement('div');
+                            mediaName.id = 'media-name';
+                            mediaName.className = 'media-name';
+                            sliderContainer.appendChild(mediaName);
+    
+                            data.media.forEach((media, index) => {
+                                let mediaElement;
+                                if (['mp4', 'mov'].includes(media.type)) {
+                                    mediaElement = document.createElement('video');
+                                    mediaElement.src = media.url;
+                                    mediaElement.controls = false;
+                                    mediaElement.loop = false;
+                                    mediaElement.muted = true;
+                                    mediaElement.dataset.duration = media.duration * 1000; // Convert to milliseconds
+                                    mediaElement.className = index === 0 ? 'active' : '';
+                                    mediaElement.addEventListener('ended', switchMedia);
+                                } else if (media.type === 'pdf') {
+                                    mediaElement = document.createElement('embed');
+                                    mediaElement.src = media.url + '#toolbar=0';
+                                    mediaElement.type = 'application/pdf';
+                                    mediaElement.dataset.duration = media.duration * 1000;
+                                    mediaElement.className = index === 0 ? 'active' : '';
+                                }
+                                if (mediaElement) {
+                                    let defaultName = `${media.type.charAt(0).toUpperCase() + media.type.slice(1)} ${index + 1}`;
+    
+                                    if (!media.name && media.url) {
+                                        let urlParts = media.url.split('/');
+                                        let fileName = urlParts[urlParts.length - 1].split('?')[0].split('.').slice(0, -1).join('.');
+                                        if (fileName) {
+                                            media.name = decodeURIComponent(fileName);
+                                        }
+                                    }
+    
+                                    mediaElement.dataset.name = media.name || defaultName;
+                                    sliderContainer.appendChild(mediaElement);
+                                    mediaElements.push(mediaElement);
+                                }
+                            });
+    
+                            playCurrentMedia();
+                        } else {
+                            console.error('No media found for this station.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching media:', error);
+                    });
+            };
+    
+            fetchMedia(); // Initial fetch
+    
+            // Set an interval to refresh media every 5 minutes (300000 milliseconds)
+            setInterval(fetchMedia, 120000);
+        });
+    </script>
+    
+</body>
+</html>
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Station Media Slider</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+        .slider-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+            background-color: black;
+            position: relative;
+        }
+        .slider-container video, .slider-container embed {
+            height: 100%;
+            width: 100%;
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            object-fit: cover;
+        }
+        .slider-container video.active, .slider-container embed.active {
+            display: block;
+        }
+        .overlay-text {
+            position: absolute;
+            top: 50%;  /* Adjust to position the screen_name */
+            right: -15px; /* Adjust to position the screen_name */
+            font-size: 24px;  /* Control text size */
+            color: white;
+            /* background-color: rgba(7, 13, 212, 0.5); Semi-transparent background */
+            background-color: darkblue;
+            padding: 5px 10px;
+            z-index: 10;
+            transform: rotate(90deg);
+        }
+    </style>
+</head>
+<body>
+    <div class="slider-container" id="slider-container">
+        <!-- The screen_name overlay -->
+        <div class="overlay-text">{{ station.screen_name }}</div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const stationId = {{ station.id }};
+            const url = `/station/${stationId}/media/`;
+            let currentIndex = 0;
+            const mediaElements = [];
+            let slideshowTimer;
+
+            const playCurrentMedia = () => {
+                const currentMedia = mediaElements[currentIndex];
+                let duration = currentMedia.dataset.duration || 10000; // Default to 10 seconds
+
+                if (currentMedia.tagName === 'VIDEO') {
+                    currentMedia.play().catch(e => console.error("Error playing video:", e));
+                    duration = currentMedia.duration * 1000 || 15000; // Use the video's duration
+                } else if (currentMedia.tagName === 'EMBED') {
+                    slideshowTimer = setTimeout(switchMedia, duration);
+                }
+            };
+
+            const stopCurrentMedia = () => {
+                const currentMedia = mediaElements[currentIndex];
+                if (currentMedia.tagName === 'VIDEO') {
+                    currentMedia.pause();
+                    currentMedia.currentTime = 0;
+                } else {
+                    clearTimeout(slideshowTimer);
+                }
+            };
+
+            const switchMedia = () => {
+                stopCurrentMedia();
+                mediaElements[currentIndex].classList.remove('active');
+                currentIndex = (currentIndex + 1) % mediaElements.length;
+                mediaElements[currentIndex].classList.add('active');
+                playCurrentMedia();
+            };
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.media && data.media.length > 0) {
+                        const sliderContainer = document.getElementById('slider-container');
+
+                        data.media.forEach((media, index) => {
+                            let mediaElement;
+                            if (['mp4', 'mov'].includes(media.type)) {
+                                mediaElement = document.createElement('video');
+                                mediaElement.src = media.url;
+                                mediaElement.controls = false;
+                                mediaElement.loop = false;
+                                mediaElement.muted = true;
+                                mediaElement.dataset.duration = media.duration * 1000; // Convert to milliseconds
+                                mediaElement.className = index === 0 ? 'active' : '';
+                                mediaElement.addEventListener('ended', switchMedia);
+                            } else if (media.type === 'pdf') {
+                                mediaElement = document.createElement('embed');
+                                mediaElement.src = media.url+'#toolbar=0';
+                                mediaElement.type = 'application/pdf';
+                                mediaElement.dataset.duration = media.duration * 1000;
+                                mediaElement.className = index === 0 ? 'active' : '';
+                            }
+                            sliderContainer.appendChild(mediaElement);
+                            mediaElements.push(mediaElement);
+                        });
+
+                        playCurrentMedia();
+                    } else {
+                        console.error('No media found for this station.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching media:', error);
+                });
+        });
+    </script>
+</body>
+</html>
