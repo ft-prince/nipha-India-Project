@@ -66,16 +66,17 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const stationId = {{ station.id }};
+            const stationId = `{{ station.id }}`;  // If station.id is a string
             const url = `/station/${stationId}/media/`;
             let currentIndex = 0;
-            const mediaElements = [];
+            let mediaElements = [];
             let slideshowTimer;
-
+    
+            // Function to play the current media element
             const playCurrentMedia = () => {
                 const currentMedia = mediaElements[currentIndex];
                 let duration = currentMedia.dataset.duration || 10000; // Default to 10 seconds
-
+    
                 if (currentMedia.tagName === 'VIDEO') {
                     currentMedia.play().catch(e => console.error("Error playing video:", e));
                     duration = currentMedia.duration * 1000 || 15000; // Use the video's duration
@@ -83,7 +84,8 @@
                     slideshowTimer = setTimeout(switchMedia, duration);
                 }
             };
-
+    
+            // Function to stop the current media element
             const stopCurrentMedia = () => {
                 const currentMedia = mediaElements[currentIndex];
                 if (currentMedia.tagName === 'VIDEO') {
@@ -93,7 +95,8 @@
                     clearTimeout(slideshowTimer);
                 }
             };
-
+    
+            // Function to switch to the next media element
             const switchMedia = () => {
                 stopCurrentMedia();
                 mediaElements[currentIndex].classList.remove('active');
@@ -101,54 +104,53 @@
                 mediaElements[currentIndex].classList.add('active');
                 playCurrentMedia();
             };
+    
+            // Function to fetch media from the server
+            const fetchMedia = () => {
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.media && data.media.length > 0) {
+                            const sliderContainer = document.getElementById('slider-container');
+                            sliderContainer.innerHTML = '';  // Clear previous media elements
+                            mediaElements = [];  // Clear old references to avoid duplication
+    
+                            data.media.forEach((media, index) => {
+                                let mediaElement;
+                                if (['mp4', 'mov'].includes(media.type)) {
+                                    mediaElement = document.createElement('video');
+                                    mediaElement.src = media.url;
+                                    mediaElement.controls = false;
+                                    mediaElement.loop = false;
+                                    mediaElement.muted = true;
+                                    mediaElement.dataset.duration = media.duration * 1000;
+                                    mediaElement.className = index === 0 ? 'active' : '';
+                                    mediaElement.addEventListener('ended', switchMedia);
+                                } else if (media.type === 'pdf') {
+                                    mediaElement = document.createElement('embed');
+                                    mediaElement.src = media.url + '#toolbar=0';
+                                    mediaElement.type = 'application/pdf';
+                                    mediaElement.dataset.duration = media.duration * 1000;
+                                    mediaElement.className = index === 0 ? 'active' : '';
+                                }
+                                sliderContainer.appendChild(mediaElement);
+                                mediaElements.push(mediaElement);
+                            });
+    
+                            playCurrentMedia();
+                        } else {
+                            console.error('No media found for this station.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching media:', error);
+                    });
+            };
+    
+            fetchMedia(); // Initial fetch
+            setInterval(fetchMedia, 120000); // Refresh media every 120 seconds
+        });
 
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.media && data.media.length > 0) {
-                        const sliderContainer = document.getElementById('slider-container');
-
-                        data.media.forEach((media, index) => {
-                            let mediaElement;
-                            if (['mp4', 'mov'].includes(media.type)) {
-                                mediaElement = document.createElement('video');
-                                mediaElement.src = media.url;
-                                mediaElement.controls = false;
-                                mediaElement.loop = false;
-                                mediaElement.muted = true;
-                                mediaElement.dataset.duration = media.duration * 1000; // Convert to milliseconds
-                                mediaElement.className = index === 0 ? 'active' : '';
-                                mediaElement.addEventListener('ended', switchMedia);
-                            } else if (media.type === 'pdf') {
-                                mediaElement = document.createElement('embed');
-                                mediaElement.src = media.url+'#toolbar=0';
-                                mediaElement.type = 'application/pdf';
-                                mediaElement.dataset.duration = media.duration * 1000;
-                                mediaElement.className = index === 0 ? 'active' : '';
-                            }
-                            sliderContainer.appendChild(mediaElement);
-                            mediaElements.push(mediaElement);
-                        });
-
-                        playCurrentMedia();
-                    } else {
-                        console.error('No media found for this station.');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching media:', error);
-                });
-                fetchMedia(); // Initial fetch
-                
-                // Set an interval to refresh media every 5 minutes (300000 milliseconds)
-                setInterval(fetchMedia, 120000);
-                
-            }        );
-
-            setTimeout(function() {
-            window.location.reload();
-        }, 120000); // 120000 ms = 2 minutes
-
-    </script>
+</script>
 </body>
 </html>
