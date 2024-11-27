@@ -1,0 +1,27 @@
+from screen_app.models import Station, User  # Replace 'your_app_name' with your actual app name
+
+# Ensure there is a user to assign as manager
+manager = User.objects.first()  # Assign the first user in the database
+if not manager:
+    print("No user found to assign as manager. Please create a user first.")
+    exit()
+
+# Create stations with IDs 1 to 16
+for station_id in range(1, 17):  # IDs 1 to 16
+    station, created = Station.objects.get_or_create(
+        id=station_id,
+        defaults={
+            'name': f'Station {station_id}',
+            'screen_name': f'Screen Name for Station {station_id}',
+            'manager': manager,
+        }
+    )
+    if created:
+        print(f"Station {station_id} created successfully!")
+    else:
+        # Update the station if it already exists
+        station.name = f'Station {station_id}'
+        station.screen_name = f'Screen Name for Station {station_id}'
+        station.manager = manager
+        station.save()
+        print(f"Station {station_id} updated successfully!")
