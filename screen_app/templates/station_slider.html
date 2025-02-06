@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="refresh" content="120">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Station Media Slider</title>
     <style>
@@ -11,17 +10,19 @@
             padding: 0;
             height: 100%;
             overflow: hidden;
+            background-color: black;
         }
+
         .slider-container {
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             width: 100vw;
-            background-color: black;
             position: relative;
         }
-        .slider-container video {
+
+        .media-element {
             height: 100%;
             width: 100%;
             display: none;
@@ -29,145 +30,278 @@
             top: 0;
             left: 0;
             object-fit: cover;
+            transition: opacity 0.5s ease-in-out;
         }
-        .slider-container embed {
-            height: 100%;
+
+        .media-element.pdf {
             width: 80%;
-            display: none;
-            position: absolute;
-            top: 0;
             left: 10%;
-            object-fit: none;
+            object-fit: contain;
         }
-        .slider-container video.active, .slider-container embed.active {
+
+        .media-element.active {
             display: block;
+            opacity: 1;
         }
+
+        .media-element.fade-out {
+            opacity: 0;
+        }
+
         .overlay-text {
             position: fixed;
             top: 88%;
             right: 2%;
-
             margin-right: 20px;
-           text-align: center;
-           /* margin-bottom: 50px; */
+            text-align: center;
             transform: translateY(-50%) rotate(90deg);
             transform-origin: right center;
             background-color: darkblue;
             color: white;
-            /* padding: 5px 10px; */
             white-space: nowrap;
-            text-wrap: wrap;
             z-index: 10;
-            font-size: 42px;  /* Adjust as needed */
-           width: 550px;
+            font-size: 42px;
+            width: 550px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .connection-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            color: white;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .connection-status.visible {
+            opacity: 1;
+        }
+
+        .connection-status.connected {
+            background-color: #28a745;
+        }
+
+        .connection-status.disconnected {
+            background-color: #dc3545;
+        }
+
+        .connection-status.reconnecting {
+            background-color: #ffc107;
         }
     </style>
 </head>
 <body>
-    <div class="slider-container" id="slider-container">
-        <!-- The media content will be inserted here -->
-    </div>
-        <div id="overlay-text" class="overlay-text"></div>
-  
-</head>
-<body>
-    <div class="slider-container" id="slider-container">
-        <!-- The media content will be inserted here -->
-    </div>
-    <!-- The screen_name overlay is now outside the slider container -->
-    <h3>
-        <div id="overlay-text" class="overlay-text"></div>
-    </h3>
+    <div class="slider-container" id="slider-container"></div>
+    <div id="overlay-text" class="overlay-text"></div>
+    <div id="connection-status" class="connection-status">Connection Status</div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const stationId = `{{ station.id }}`;  // If station.id is a string
-            const url = `/station/${stationId}/media/`;
-            let currentIndex = 0;
-            let mediaElements = [];
-            let slideshowTimer;
-    
-            // Function to play the current media element
-            const playCurrentMedia = () => {
-                const currentMedia = mediaElements[currentIndex];
-                let duration = currentMedia.dataset.duration || 10000; // Default to 10 seconds
-    
-                if (currentMedia.tagName === 'VIDEO') {
-                    currentMedia.play().catch(e => console.error("Error playing video:", e));
-                    duration = currentMedia.duration * 1000 || 15000; // Use the video's duration
-                } else if (currentMedia.tagName === 'EMBED') {
-                    slideshowTimer = setTimeout(switchMedia, duration);
+        class MediaSlider {
+            constructor(stationId) {
+                this.stationId = stationId;
+                this.currentIndex = 0;
+                this.mediaElements = [];
+                this.slideshowTimer = null;
+                this.eventSource = null;
+                this.reconnectAttempts = 0;
+                this.maxReconnectAttempts = 5;
+                this.reconnectDelay = 5000;
+                this.containerElement = document.getElementById('slider-container');
+                this.overlayElement = document.getElementById('overlay-text');
+                this.statusElement = document.getElementById('connection-status');
+                
+                this.initializeEventSource();
+            }
+
+            initializeEventSource() {
+                if (this.eventSource) {
+                    this.eventSource.close();
                 }
-            };
-    
-            // Function to stop the current media element
-            const stopCurrentMedia = () => {
-                const currentMedia = mediaElements[currentIndex];
+
+                this.eventSource = new EventSource(`/station/${this.stationId}/stream/`);
+                this.setupEventListeners();
+                this.updateConnectionStatus('connected', 'Connected');
+            }
+
+            setupEventListeners() {
+                this.eventSource.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        this.updateMedia(data);
+                        this.reconnectAttempts = 0;
+                    } catch (error) {
+                        console.error('Error parsing SSE data:', error);
+                    }
+                };
+
+                this.eventSource.onerror = (error) => {
+                    console.error('EventSource error:', error);
+                    this.handleConnectionError();
+                };
+
+                this.eventSource.onopen = () => {
+                    this.updateConnectionStatus('connected', 'Connected');
+                    this.reconnectAttempts = 0;
+                };
+            }
+
+            updateConnectionStatus(status, message) {
+                this.statusElement.className = `connection-status ${status} visible`;
+                this.statusElement.textContent = message;
+                
+                if (status === 'connected') {
+                    setTimeout(() => {
+                        this.statusElement.classList.remove('visible');
+                    }, 3000);
+                }
+            }
+
+            handleConnectionError() {
+                this.eventSource.close();
+                this.updateConnectionStatus('disconnected', 'Connection Lost');
+
+                if (this.reconnectAttempts < this.maxReconnectAttempts) {
+                    this.reconnectAttempts++;
+                    this.updateConnectionStatus('reconnecting', 
+                        `Reconnecting (Attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
+                    
+                    setTimeout(() => {
+                        this.initializeEventSource();
+                    }, this.reconnectDelay);
+                } else {
+                    this.updateConnectionStatus('disconnected', 'Connection Failed - Refreshing Page...');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 3000);
+                }
+            }
+
+            updateMedia(data) {
+                if (!data.media || data.media.length === 0) {
+                    console.warn('No media data received');
+                    return;
+                }
+
+                this.overlayElement.textContent = data.screen_name || '';
+
+                const currentUrls = this.mediaElements.map(el => el.src);
+                const newUrls = data.media.map(m => m.url);
+
+                if (JSON.stringify(currentUrls) !== JSON.stringify(newUrls)) {
+                    this.clearCurrentMedia();
+                    this.createNewMediaElements(data.media);
+                    this.playCurrentMedia();
+                }
+            }
+
+            clearCurrentMedia() {
+                if (this.slideshowTimer) {
+                    clearTimeout(this.slideshowTimer);
+                }
+                this.stopCurrentMedia();
+                this.containerElement.innerHTML = '';
+                this.mediaElements = [];
+                this.currentIndex = 0;
+            }
+
+            createNewMediaElements(mediaData) {
+                mediaData.forEach((media, index) => {
+                    const mediaElement = this.createMediaElement(media, index);
+                    if (mediaElement) {
+                        this.containerElement.appendChild(mediaElement);
+                        this.mediaElements.push(mediaElement);
+                    }
+                });
+            }
+
+            createMediaElement(media, index) {
+                let element;
+                const type = media.type.toLowerCase();
+
+                if (['mp4', 'mov'].includes(type)) {
+                    element = document.createElement('video');
+                    element.src = media.url;
+                    element.className = 'media-element';
+                    element.controls = false;
+                    element.loop = false;
+                    element.muted = true;
+                    element.playsInline = true;
+                    element.addEventListener('ended', () => this.switchMedia());
+                    element.addEventListener('error', (e) => this.handleMediaError(e));
+                } else if (type === 'pdf') {
+                    element = document.createElement('embed');
+                    element.src = media.url + '#toolbar=0';
+                    element.className = 'media-element pdf';
+                    element.type = 'application/pdf';
+                } else {
+                    console.warn(`Unsupported media type: ${type}`);
+                    return null;
+                }
+
+                element.dataset.duration = media.duration * 1000;
+                element.className += index === 0 ? ' active' : '';
+                return element;
+            }
+
+            handleMediaError(error) {
+                console.error('Media error:', error);
+                this.switchMedia();
+            }
+
+            playCurrentMedia() {
+                const currentMedia = this.mediaElements[this.currentIndex];
+                if (!currentMedia) return;
+
+                let duration = parseInt(currentMedia.dataset.duration) || 10000;
+
+                if (currentMedia.tagName === 'VIDEO') {
+                    currentMedia.play().catch(error => {
+                        console.error('Error playing video:', error);
+                        this.switchMedia();
+                    });
+                } else {
+                    this.slideshowTimer = setTimeout(() => this.switchMedia(), duration);
+                }
+            }
+
+            stopCurrentMedia() {
+                const currentMedia = this.mediaElements[this.currentIndex];
+                if (!currentMedia) return;
+
                 if (currentMedia.tagName === 'VIDEO') {
                     currentMedia.pause();
                     currentMedia.currentTime = 0;
-                } else {
-                    clearTimeout(slideshowTimer);
                 }
-            };
-    
-            // Function to switch to the next media element
-            const switchMedia = () => {
-                stopCurrentMedia();
-                mediaElements[currentIndex].classList.remove('active');
-                currentIndex = (currentIndex + 1) % mediaElements.length;
-                mediaElements[currentIndex].classList.add('active');
-                playCurrentMedia();
-            };
-    
-            // Function to fetch media from the server
-            const fetchMedia = () => {
-                fetch(url)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.media && data.media.length > 0) {
-                            const sliderContainer = document.getElementById('slider-container');
-                            sliderContainer.innerHTML = '';  // Clear previous media elements
-                            mediaElements = [];  // Clear old references to avoid duplication
-    
-                            data.media.forEach((media, index) => {
-                                let mediaElement;
-                                if (['mp4', 'mov'].includes(media.type)) {
-                                    mediaElement = document.createElement('video');
-                                    mediaElement.src = media.url;
-                                    mediaElement.controls = false;
-                                    mediaElement.loop = false;
-                                    mediaElement.muted = true;
-                                    mediaElement.dataset.duration = media.duration * 1000;
-                                    mediaElement.className = index === 0 ? 'active' : '';
-                                    mediaElement.addEventListener('ended', switchMedia);
-                                } else if (media.type === 'pdf') {
-                                    mediaElement = document.createElement('embed');
-                                    mediaElement.src = media.url + '#toolbar=0';
-                                    mediaElement.type = 'application/pdf';
-                                    mediaElement.dataset.duration = media.duration * 1000;
-                                    mediaElement.className = index === 0 ? 'active' : '';
-                                }
-                                sliderContainer.appendChild(mediaElement);
-                                mediaElements.push(mediaElement);
-                            });
-    
-                            playCurrentMedia();
+                clearTimeout(this.slideshowTimer);
+            }
 
-                            // Update the overlay text
-                            const overlayText = document.getElementById('overlay-text');
-                            overlayText.textContent = `{{ station.screen_name }}`;
-                        } else {
-                            console.error('No media found for this station.');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error fetching media:', error);
-                    });
-            };
-    
-            fetchMedia(); // Initial fetch
-            setInterval(fetchMedia, 120000); // Refresh media every 120 seconds
+            switchMedia() {
+                const currentMedia = this.mediaElements[this.currentIndex];
+                if (!currentMedia) return;
+
+                currentMedia.classList.add('fade-out');
+                currentMedia.classList.remove('active');
+                
+                this.stopCurrentMedia();
+                this.currentIndex = (this.currentIndex + 1) % this.mediaElements.length;
+                
+                const nextMedia = this.mediaElements[this.currentIndex];
+                if (nextMedia) {
+                    nextMedia.classList.remove('fade-out');
+                    nextMedia.classList.add('active');
+                    this.playCurrentMedia();
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const stationId = '{{ station.id }}';
+            new MediaSlider(stationId);
         });
     </script>
 </body>
