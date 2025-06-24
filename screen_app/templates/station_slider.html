@@ -97,8 +97,8 @@
 </head>
 <body>
     <div class="slider-container" id="slider-container"></div>
-    <div id="overlay-text" class="overlay-text"></div>
-    <div id="connection-status" class="connection-status">Connection Status</div>
+    <div id="overlay-text" class="overlay-text">{{ station.name }}</div>
+    <div id="connection-status" class="connection-status">Loading...</div>
 
     <script>
         class MediaSlider {
@@ -107,47 +107,41 @@
                 this.currentIndex = 0;
                 this.mediaElements = [];
                 this.slideshowTimer = null;
-                this.eventSource = null;
-                this.reconnectAttempts = 0;
-                this.maxReconnectAttempts = 5;
-                this.reconnectDelay = 5000;
+                this.pollingInterval = null;
+                this.pollingDelay = 10000; // Poll every 10 seconds
+                this.lastMediaHash = null;
                 this.containerElement = document.getElementById('slider-container');
                 this.overlayElement = document.getElementById('overlay-text');
                 this.statusElement = document.getElementById('connection-status');
                 
-                this.initializeEventSource();
+                this.initializeMedia();
+                this.startPolling();
             }
 
-            initializeEventSource() {
-                if (this.eventSource) {
-                    this.eventSource.close();
+            async initializeMedia() {
+                try {
+                    const response = await fetch(`/station/${this.stationId}/media/`);
+                    const data = await response.json();
+                    this.updateMedia({ media: data.media, station_name: '{{ station.name }}' });
+                    this.updateConnectionStatus('connected', 'Loaded');
+                } catch (error) {
+                    console.error('Error loading initial media:', error);
+                    this.updateConnectionStatus('disconnected', 'Load Failed');
                 }
-
-                this.eventSource = new EventSource(`/station/${this.stationId}/stream/`);
-                this.setupEventListeners();
-                this.updateConnectionStatus('connected', 'Connected');
             }
 
-            setupEventListeners() {
-                this.eventSource.onmessage = (event) => {
+            startPolling() {
+                this.pollingInterval = setInterval(async () => {
                     try {
-                        const data = JSON.parse(event.data);
-                        this.updateMedia(data);
-                        this.reconnectAttempts = 0;
+                        const response = await fetch(`/station/${this.stationId}/media/`);
+                        const data = await response.json();
+                        this.updateMedia({ media: data.media, station_name: '{{ station.name }}' });
+                        this.updateConnectionStatus('connected', 'Updated');
                     } catch (error) {
-                        console.error('Error parsing SSE data:', error);
+                        console.error('Error polling media:', error);
+                        this.updateConnectionStatus('disconnected', 'Update Failed');
                     }
-                };
-
-                this.eventSource.onerror = (error) => {
-                    console.error('EventSource error:', error);
-                    this.handleConnectionError();
-                };
-
-                this.eventSource.onopen = () => {
-                    this.updateConnectionStatus('connected', 'Connected');
-                    this.reconnectAttempts = 0;
-                };
+                }, this.pollingDelay);
             }
 
             updateConnectionStatus(status, message) {
@@ -157,27 +151,7 @@
                 if (status === 'connected') {
                     setTimeout(() => {
                         this.statusElement.classList.remove('visible');
-                    }, 3000);
-                }
-            }
-
-            handleConnectionError() {
-                this.eventSource.close();
-                this.updateConnectionStatus('disconnected', 'Connection Lost');
-
-                if (this.reconnectAttempts < this.maxReconnectAttempts) {
-                    this.reconnectAttempts++;
-                    this.updateConnectionStatus('reconnecting', 
-                        `Reconnecting (Attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
-                    
-                    setTimeout(() => {
-                        this.initializeEventSource();
-                    }, this.reconnectDelay);
-                } else {
-                    this.updateConnectionStatus('disconnected', 'Connection Failed - Refreshing Page...');
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 3000);
+                    }, 2000);
                 }
             }
 
@@ -187,16 +161,17 @@
                     return;
                 }
 
-                this.overlayElement.textContent = data.screen_name || '';
-
-                const currentUrls = this.mediaElements.map(el => el.src);
-                const newUrls = data.media.map(m => m.url);
-
-                if (JSON.stringify(currentUrls) !== JSON.stringify(newUrls)) {
-                    this.clearCurrentMedia();
-                    this.createNewMediaElements(data.media);
-                    this.playCurrentMedia();
+                // Create a hash of current media to detect changes
+                const mediaHash = JSON.stringify(data.media.map(m => m.url));
+                
+                if (this.lastMediaHash === mediaHash) {
+                    return; // No changes
                 }
+
+                this.lastMediaHash = mediaHash;
+                this.clearCurrentMedia();
+                this.createNewMediaElements(data.media);
+                this.playCurrentMedia();
             }
 
             clearCurrentMedia() {
@@ -281,11 +256,13 @@
             }
 
             switchMedia() {
-                const currentMedia = this.mediaElements[this.currentIndex];
-                if (!currentMedia) return;
+                if (this.mediaElements.length === 0) return;
 
-                currentMedia.classList.add('fade-out');
-                currentMedia.classList.remove('active');
+                const currentMedia = this.mediaElements[this.currentIndex];
+                if (currentMedia) {
+                    currentMedia.classList.add('fade-out');
+                    currentMedia.classList.remove('active');
+                }
                 
                 this.stopCurrentMedia();
                 this.currentIndex = (this.currentIndex + 1) % this.mediaElements.length;
