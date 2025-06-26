@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BRG Assembly 40K - Supervisor Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .control-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .control-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+
+        .control-card h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .icon {
+            font-size: 1.5em;
+        }
+
+        .status-overview {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .display-status {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-top: 4px solid;
+        }
+
+        .display-1 { border-top-color: #FF6B6B; }
+        .display-2 { border-top-color: #4ECDC4; }
+        .display-3 { border-top-color: #45B7D1; }
+
+        .display-number {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .display-type {
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .current-process {
+            background: #e8f5e8;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            color: #2d5a2d;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .form-control:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1em;
+            margin: 5px;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #229954;
+            transform: translateY(-2px);
+        }
+
+        .btn-warning {
+            background: #f39c12;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #e67e22;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+
+        .process-navigation {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            border-color: #b8daff;
+            color: #0c5460;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .loop-status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .loop-active {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .loop-inactive {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .status-online { background: #27ae60; }
+        .status-offline { background: #e74c3c; }
+        .status-loading { background: #f39c12; }
+
+        .loop-toggle {
+            background: #f39c12;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .loop-toggle:hover {
+            background: #e67e22;
+        }
+
+        .loop-toggle.active {
+            background: #27ae60;
+        }
+
+        .bulk-controls {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .bulk-controls h4 {
+            color: #1976d2;
+            margin-bottom: 15px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .control-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .status-overview {
+                grid-template-columns: 1fr;
+            }
+            
+            .process-navigation {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="header">
+            <h1>🏭 BRG Assembly 40K - Supervisor Dashboard</h1>
+            <p>Individual display control with bulk operation options</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Display Status Overview -->
+            <div class="status-overview">
+                <div class="display-status display-1">
+                    <div class="display-number">1</div>
+                    <div class="display-type">BOMs & Reference</div>
+                    <div class="current-process" id="display1-process">Loading...</div>
+                    <div style="margin-top: 10px;">
+                        <span class="status-indicator status-loading" id="display1-status"></span>
+                        <span id="display1-connection">Checking...</span>
+                    </div>
+                </div>
+                <div class="display-status display-2">
+                    <div class="display-number">2</div>
+                    <div class="display-type">Process Instructions</div>
+                    <div class="current-process" id="display2-process">Loading...</div>
+                    <div style="margin-top: 10px;">
+                        <span class="status-indicator status-loading" id="display2-status"></span>
+                        <span id="display2-connection">Checking...</span>
+                    </div>
+                </div>
+                <div class="display-status display-3">
+                    <div class="display-number">3</div>
+                    <div class="display-type">Instructional Videos</div>
+                    <div class="current-process" id="display3-process">Loading...</div>
+                    <div style="margin-top: 10px;">
+                        <span class="status-indicator status-loading" id="display3-status"></span>
+                        <span id="display3-connection">Checking...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bulk Control Section -->
+            <div class="bulk-controls">
+                <h4>🎛️ Bulk Operations</h4>
+                <div class="alert alert-info" style="margin: 10px 0;">
+                    <strong>Quick Setup:</strong> Select multiple displays and apply the same configuration to all selected displays at once.
+                </div>
+                
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="bulk-display-1">
+                        <label for="bulk-display-1">Display 1</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="bulk-display-2">
+                        <label for="bulk-display-2">Display 2</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="bulk-display-3">
+                        <label for="bulk-display-3">Display 3</label>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                    <select class="form-control" id="bulk-stage-select" style="flex: 1; min-width: 200px;">
+                        <option value="">Select Stage</option>
+                    </select>
+                    <select class="form-control" id="bulk-process-select" style="flex: 1; min-width: 200px;">
+                        <option value="">Select Process</option>
+                    </select>
+                    <button class="btn btn-warning" onclick="applyBulkConfiguration()">📡 Apply to Selected</button>
+                    <button class="btn btn-success" onclick="refreshAllDisplays()">🔄 Refresh All</button>
+                </div>
+            </div>
+
+            <!-- Individual Display Controls -->
+            <div class="control-grid">
+                <!-- Display 1 Control -->
+                <div class="control-card">
+                    <h3><span class="icon">📺</span>Display 1 - BOMs & Reference</h3>
+                    
+                    <div class="form-group">
+                        <label>Assembly Stage:</label>
+                        <select class="form-control" id="stage-select-1">
+                            <option value="">Loading stages...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Process:</label>
+                        <select class="form-control" id="process-select-1">
+                            <option value="">Select stage first</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Quantity:</label>
+                        <input type="number" class="form-control" id="quantity-input-1" value="50" min="1" max="1000">
+                    </div>
+
+                    <div class="form-group">
+                        <label>BOM Type (Display 1 Only):</label>
+                        <div style="margin-top: 10px;">
+                            <div class="checkbox-item" style="margin-bottom: 10px;">
+                                <input type="radio" name="bom-type-1" value="single" id="bom-single-1">
+                                <label for="bom-single-1">Single Unit BOM (Reference)</label>
+                            </div>
+                            <div class="checkbox-item">
+                                <input type="radio" name="bom-type-1" value="batch" id="bom-batch-1" checked>
+                                <label for="bom-batch-1">Batch BOM (Production)</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="process-navigation">
+                        <button class="btn btn-primary" onclick="previousProcess(1)">⬅️ Previous</button>
+                        <button class="btn btn-primary" onclick="nextProcess(1)">➡️ Next</button>
+                        <button class="btn btn-warning" onclick="updateConfiguration(1)">💾 Update</button>
+                        <button class="btn btn-success" onclick="testDisplay(1)">🧪 Test</button>
+                    </div>
+
+                    <div style="margin-top: 15px;">
+                        <span class="loop-status loop-inactive" id="loop-status-1">🔄 Loop: Inactive</span>
+                        <button class="loop-toggle" id="loop-toggle-btn-1" onclick="toggleLoopMode(1)">Toggle Loop</button>
+                    </div>
+                </div>
+
+                <!-- Display 2 Control -->
+                <div class="control-card">
+                    <h3><span class="icon">📺</span>Display 2 - Process Instructions</h3>
+                    
+                    <div class="form-group">
+                        <label>Assembly Stage:</label>
+                        <select class="form-control" id="stage-select-2">
+                            <option value="">Loading stages...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Process:</label>
+                        <select class="form-control" id="process-select-2">
+                            <option value="">Select stage first</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Quantity:</label>
+                        <input type="number" class="form-control" id="quantity-input-2" value="50" min="1" max="1000">
+                    </div>
+
+                    <div class="process-navigation">
+                        <button class="btn btn-primary" onclick="previousProcess(2)">⬅️ Previous</button>
+                        <button class="btn btn-primary" onclick="nextProcess(2)">➡️ Next</button>
+                        <button class="btn btn-warning" onclick="updateConfiguration(2)">💾 Update</button>
+                        <button class="btn btn-success" onclick="testDisplay(2)">🧪 Test</button>
+                    </div>
+
+                    <div style="margin-top: 15px;">
+                        <span class="loop-status loop-inactive" id="loop-status-2">🔄 Loop: Inactive</span>
+                        <button class="loop-toggle" id="loop-toggle-btn-2" onclick="toggleLoopMode(2)">Toggle Loop</button>
+                    </div>
+                </div>
+
+                <!-- Display 3 Control -->
+                <div class="control-card">
+                    <h3><span class="icon">📺</span>Display 3 - Instructional Videos</h3>
+                    
+                    <div class="form-group">
+                        <label>Assembly Stage:</label>
+                        <select class="form-control" id="stage-select-3">
+                            <option value="">Loading stages...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Process:</label>
+                        <select class="form-control" id="process-select-3">
+                            <option value="">Select stage first</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Quantity:</label>
+                        <input type="number" class="form-control" id="quantity-input-3" value="50" min="1" max="1000">
+                    </div>
+
+                    <div class="process-navigation">
+                        <button class="btn btn-primary" onclick="previousProcess(3)">⬅️ Previous</button>
+                        <button class="btn btn-primary" onclick="nextProcess(3)">➡️ Next</button>
+                        <button class="btn btn-warning" onclick="updateConfiguration(3)">💾 Update</button>
+                        <button class="btn btn-success" onclick="testDisplay(3)">🧪 Test</button>
+                    </div>
+
+                    <div style="margin-top: 15px;">
+                        <span class="loop-status loop-inactive" id="loop-status-3">🔄 Loop: Inactive</span>
+                        <button class="loop-toggle" id="loop-toggle-btn-3" onclick="toggleLoopMode(3)">Toggle Loop</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="alert alert-info">
+                <strong>🔗 Quick Links:</strong>
+                <div class="quick-actions">
+                    <a href="workflow-guide.html" class="btn btn-primary">📋 View Workflow Guide</a>
+                    <a href="hindi.html" class="btn btn-primary">🇮🇳 हिंदी गाइड</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStationData = {};
+        let isUserEditing = false; // Flag to pause auto-updates during editing
+        let editingTimeouts = {}; // Track editing timeouts per display
+
+        // Add editing protection for quantity inputs and BOM settings
+        function addEditingProtectionToInputs() {
+            // Protect quantity inputs
+            for (let i = 1; i <= 3; i++) {
+                const quantityInput = document.getElementById(`quantity-input-${i}`);
+                if (quantityInput) {
+                    quantityInput.addEventListener('focus', function() {
+                        setEditingMode(i, true);
+                    });
+                    quantityInput.addEventListener('blur', function() {
+                        setTimeout(() => {
+                            setEditingMode(i, false);
+                        }, 1000);
+                    });
+                }
+            }
+
+            // Protect BOM radio buttons
+            const bomRadios = document.querySelectorAll('input[name="bom-type-1"]');
+            bomRadios.forEach(radio => {
+                radio.addEventListener('focus', function() {
+                    setEditingMode(1, true);
+                });
+                radio.addEventListener('change', function() {
+                    setEditingMode(1, true);
+                    setTimeout(() => {
+                        setEditingMode(1, false);
+                    }, 2000);
+                });
+            });
+        }
+
+        // Enhanced initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStationData();
+            loadAssemblyOptions();
+            startStatusUpdates();
+            
+            // Add editing protection after DOM is loaded
+            setTimeout(() => {
+                addEditingProtectionToInputs();
+            }, 1000);
+        });
+
+        // Load current station data
+        async function loadStationData() {
+            try {
+                const responses = await Promise.all([
+                    fetch('/station/1/media/'),
+                    fetch('/station/2/media/'),
+                    fetch('/station/3/media/')
+                ]);
+
+                for (let i = 0; i < responses.length; i++) {
+                    const data = await responses[i].json();
+                    updateDisplayStatus(i + 1, data);
+                }
+            } catch (error) {
+                console.error('Error loading station data:', error);
+                showSystemAlert('Error loading station data', 'danger');
+            }
+        }
+
+        // Load assembly options for all displays
+        async function loadAssemblyOptions() {
+            try {
+                const response = await fetch('/station/1/assembly/options/');
+                const data = await response.json();
+                
+                // Store stages data globally for later use
+                window.stagesData = data.stages;
+                
+                // Populate stage selects for all displays
+                for (let i = 1; i <= 3; i++) {
+                    populateStageSelect(data.stages, i);
+                }
+                
+                // Populate bulk controls
+                populateBulkStageSelect(data.stages);
+                
+                // Update current config for each display
+                for (let i = 1; i <= 3; i++) {
+                    const displayResponse = await fetch(`/station/${i}/assembly/options/`);
+                    const displayData = await displayResponse.json();
+                    updateCurrentConfig(displayData.current_config, i);
+                }
+            } catch (error) {
+                console.error('Error loading assembly options:', error);
+            }
+        }
+
+        // Populate stage select for specific display
+        function populateStageSelect(stages, displayNum) {
+            const stageSelect = document.getElementById(`stage-select-${displayNum}`);
+            stageSelect.innerHTML = '<option value="">Select Stage</option>';
+            
+            stages.forEach(stage => {
+                const option = document.createElement('option');
+                option.value = stage.id;
+                option.textContent = stage.display_name;
+                stageSelect.appendChild(option);
+            });
+
+            // Add event listeners for user interaction
+            stageSelect.addEventListener('focus', function() {
+                setEditingMode(displayNum, true);
+            });
+
+            stageSelect.addEventListener('change', function() {
+                setEditingMode(displayNum, true);
+                const selectedStage = stages.find(s => s.id == this.value);
+                populateProcessSelect(selectedStage ? selectedStage.processes : [], displayNum);
+                
+                // Clear process selection when stage changes
+                document.getElementById(`process-select-${displayNum}`).value = '';
+            });
+
+            stageSelect.addEventListener('blur', function() {
+                // Delay clearing editing mode to allow for process selection
+                setTimeout(() => {
+                    setEditingMode(displayNum, false);
+                }, 2000);
+            });
+        }
+
+        // Populate bulk stage select
+        function populateBulkStageSelect(stages) {
+            const bulkStageSelect = document.getElementById('bulk-stage-select');
+            bulkStageSelect.innerHTML = '<option value="">Select Stage</option>';
+            
+            stages.forEach(stage => {
+                const option = document.createElement('option');
+                option.value = stage.id;
+                option.textContent = stage.display_name;
+                bulkStageSelect.appendChild(option);
+            });
+
+            bulkStageSelect.addEventListener('focus', function() {
+                isUserEditing = true;
+            });
+
+            bulkStageSelect.addEventListener('change', function() {
+                isUserEditing = true;
+                const selectedStage = stages.find(s => s.id == this.value);
+                populateBulkProcessSelect(selectedStage ? selectedStage.processes : []);
+                
+                // Clear process selection when stage changes
+                document.getElementById('bulk-process-select').value = '';
+                
+                setTimeout(() => {
+                    isUserEditing = false;
+                }, 3000);
+            });
+
+            bulkStageSelect.addEventListener('blur', function() {
+                setTimeout(() => {
+                    isUserEditing = false;
+                }, 2000);
+            });
+        }
+
+        // Populate process select for specific display
+        function populateProcessSelect(processes, displayNum) {
+            const processSelect = document.getElementById(`process-select-${displayNum}`);
+            const currentValue = processSelect.value; // Store current selection
+            processSelect.innerHTML = '<option value="">Select Process</option>';
+            
+            processes.forEach(process => {
+                const option = document.createElement('option');
+                option.value = process.id;
+                option.textContent = `${process.name} - ${process.display_name}`;
+                processSelect.appendChild(option);
+            });
+            
+            // Restore selection if it still exists
+            if (currentValue && processSelect.querySelector(`option[value="${currentValue}"]`)) {
+                processSelect.value = currentValue;
+            }
+
+            // Add event listeners for user interaction
+            processSelect.addEventListener('focus', function() {
+                setEditingMode(displayNum, true);
+            });
+
+            processSelect.addEventListener('change', function() {
+                setEditingMode(displayNum, true);
+            });
+
+            processSelect.addEventListener('blur', function() {
+                setTimeout(() => {
+                    setEditingMode(displayNum, false);
+                }, 1000);
+            });
+        }
+
+        // Set editing mode for a specific display
+        function setEditingMode(displayNum, editing) {
+            if (editing) {
+                editingTimeouts[displayNum] = true;
+                // Clear any existing timeout
+                if (editingTimeouts[`timeout_${displayNum}`]) {
+                    clearTimeout(editingTimeouts[`timeout_${displayNum}`]);
+                }
+                // Set timeout to automatically clear editing mode
+                editingTimeouts[`timeout_${displayNum}`] = setTimeout(() => {
+                    editingTimeouts[displayNum] = false;
+                }, 5000); // 5 seconds to finish editing
+            } else {
+                editingTimeouts[displayNum] = false;
+                if (editingTimeouts[`timeout_${displayNum}`]) {
+                    clearTimeout(editingTimeouts[`timeout_${displayNum}`]);
+                }
+            }
+        }
+
+        // Check if any display is being edited
+        function isAnyDisplayBeingEdited() {
+            return isUserEditing || Object.keys(editingTimeouts).some(key => 
+                !key.startsWith('timeout_') && editingTimeouts[key] === true
+            );
+        }
+
+        // Populate bulk process select
+        function populateBulkProcessSelect(processes) {
+            const bulkProcessSelect = document.getElementById('bulk-process-select');
+            bulkProcessSelect.innerHTML = '<option value="">Select Process</option>';
+            
+            processes.forEach(process => {
+                const option = document.createElement('option');
+                option.value = process.id;
+                option.textContent = `${process.name} - ${process.display_name}`;
+                bulkProcessSelect.appendChild(option);
+            });
+        }
+
+        // Update current configuration for specific display
+        function updateCurrentConfig(config, displayNum) {
+            // Update stage selection
+            const stageSelect = document.getElementById(`stage-select-${displayNum}`);
+            stageSelect.value = config.stage_id || '';
+            
+            // If stage is selected, populate and set process
+            if (config.stage_id && window.stagesData) {
+                const selectedStage = window.stagesData.find(s => s.id == config.stage_id);
+                if (selectedStage) {
+                    populateProcessSelect(selectedStage.processes, displayNum);
+                    // Set process after populating
+                    setTimeout(() => {
+                        document.getElementById(`process-select-${displayNum}`).value = config.process_id || '';
+                    }, 100);
+                }
+            }
+            
+            document.getElementById(`quantity-input-${displayNum}`).value = config.quantity || 50;
+            
+            updateLoopStatus(config.loop_mode, displayNum);
+            
+            // Update BOM settings (only for display 1)
+            if (displayNum === 1) {
+                const bomType = config.bom_settings?.show_single_unit ? 'single' : 'batch';
+                const bomRadio = document.querySelector(`input[name="bom-type-1"][value="${bomType}"]`);
+                if (bomRadio) {
+                    bomRadio.checked = true;
+                }
+            }
+        }
+
+        // Process navigation for individual displays
+        async function previousProcess(displayNum) {
+            await sendClickerAction('backward', displayNum);
+        }
+
+        async function nextProcess(displayNum) {
+            await sendClickerAction('forward', displayNum);
+        }
+
+        async function sendClickerAction(action, displayNum) {
+            try {
+                const response = await fetch(`/station/${displayNum}/clicker/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: action })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showSystemAlert(`Display ${displayNum}: ${action} successful`, 'success');
+                    loadStationData();
+                } else {
+                    showSystemAlert(`Display ${displayNum}: ${result.error || 'Action failed'}`, 'warning');
+                }
+            } catch (error) {
+                showSystemAlert(`Display ${displayNum}: Error sending command`, 'danger');
+            }
+        }
+
+        // Toggle loop mode for individual display
+        async function toggleLoopMode(displayNum) {
+            await sendClickerAction('toggle_loop', displayNum);
+        }
+
+        // Update configuration for individual display
+        async function updateConfiguration(displayNum) {
+            const stageId = document.getElementById(`stage-select-${displayNum}`).value;
+            const processId = document.getElementById(`process-select-${displayNum}`).value;
+            const quantity = document.getElementById(`quantity-input-${displayNum}`).value;
+            
+            // Get BOM settings (only relevant for display 1)
+            let bomType = 'batch';
+            if (displayNum === 1) {
+                bomType = document.querySelector('input[name="bom-type-1"]:checked').value;
+            }
+
+            const config = {
+                stage_id: stageId,
+                process_id: processId,
+                quantity: parseInt(quantity),
+                show_single_unit_bom: bomType === 'single',
+                show_batch_bom: bomType === 'batch'
+            };
+
+            try {
+                const response = await fetch(`/station/${displayNum}/assembly/config/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showSystemAlert(`Display ${displayNum} updated successfully`, 'success');
+                    loadStationData();
+                } else {
+                    showSystemAlert(`Display ${displayNum} update failed`, 'danger');
+                }
+            } catch (error) {
+                showSystemAlert(`Display ${displayNum}: Error updating configuration`, 'danger');
+            }
+        }
+
+        // Apply bulk configuration to selected displays
+        async function applyBulkConfiguration() {
+            const selectedDisplays = [];
+            for (let i = 1; i <= 3; i++) {
+                if (document.getElementById(`bulk-display-${i}`).checked) {
+                    selectedDisplays.push(i);
+                }
+            }
+
+            if (selectedDisplays.length === 0) {
+                alert('Please select at least one display');
+                return;
+            }
+
+            const stageId = document.getElementById('bulk-stage-select').value;
+            const processId = document.getElementById('bulk-process-select').value;
+
+            if (!stageId || !processId) {
+                alert('Please select both stage and process');
+                return;
+            }
+
+            const config = {
+                stage_id: stageId,
+                process_id: processId,
+                quantity: 50,
+                show_single_unit_bom: false,
+                show_batch_bom: true
+            };
+
+            try {
+                const promises = selectedDisplays.map(displayNum => 
+                    fetch(`/station/${displayNum}/assembly/config/`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(config)
+                    })
+                );
+
+                const responses = await Promise.all(promises);
+                const results = await Promise.all(responses.map(r => r.json()));
+                
+                if (results.every(r => r.success)) {
+                    showSystemAlert(`Configuration applied to displays: ${selectedDisplays.join(', ')}`, 'success');
+                    loadStationData();
+                    loadAssemblyOptions();
+                } else {
+                    showSystemAlert('Some displays failed to update', 'warning');
+                }
+            } catch (error) {
+                showSystemAlert('Error applying bulk configuration', 'danger');
+            }
+        }
+
+        // Update display status with real-time loop and clicker status
+        function updateDisplayStatus(displayNum, data) {
+            const processElement = document.getElementById(`display${displayNum}-process`);
+            const statusElement = document.getElementById(`display${displayNum}-status`);
+            const connectionElement = document.getElementById(`display${displayNum}-connection`);
+            
+            if (data.station_info) {
+                const station = data.station_info;
+                
+                // Update process display
+                let processText = 'No process selected';
+                if (station.current_process && station.current_stage) {
+                    processText = `${station.current_stage.name} - ${station.current_process.name}`;
+                    
+                    // Add loop indicator if active
+                    if (station.loop_mode) {
+                        processText += ' 🔄';
+                    }
+                    
+                    // Add clicker status
+                    if (!station.clicker_enabled) {
+                        processText += ' 🚫';
+                    }
+                }
+                
+                processElement.textContent = processText;
+                statusElement.className = 'status-indicator status-online';
+                connectionElement.textContent = 'Connected';
+                
+                // Update the individual controls to reflect current state
+                updateControlsFromStatus(station, displayNum);
+                
+            } else {
+                processElement.textContent = 'Connection error';
+                statusElement.className = 'status-indicator status-offline';
+                connectionElement.textContent = 'Offline';
+            }
+        }
+
+        // Update individual controls based on current station status
+        function updateControlsFromStatus(station, displayNum) {
+            // Skip updates if user is currently editing this display
+            if (editingTimeouts[displayNum]) {
+                return;
+            }
+
+            // Update stage selection if it changed
+            const stageSelect = document.getElementById(`stage-select-${displayNum}`);
+            if (station.current_stage && stageSelect.value != station.current_stage.id) {
+                stageSelect.value = station.current_stage.id;
+                
+                // Trigger stage change to populate processes
+                if (window.stagesData) {
+                    const selectedStage = window.stagesData.find(s => s.id == station.current_stage.id);
+                    if (selectedStage) {
+                        populateProcessSelect(selectedStage.processes, displayNum);
+                    }
+                }
+            }
+            
+            // Update process selection if it changed
+            const processSelect = document.getElementById(`process-select-${displayNum}`);
+            if (station.current_process && processSelect.value != station.current_process.id) {
+                processSelect.value = station.current_process.id;
+            }
+            
+            // Update quantity if it changed
+            const quantityInput = document.getElementById(`quantity-input-${displayNum}`);
+            if (quantityInput.value != station.quantity) {
+                quantityInput.value = station.quantity;
+            }
+            
+            // Update loop status in real-time
+            updateLoopStatus(station.loop_mode, displayNum);
+        }
+
+        // Load current station data with editing protection
+        async function loadStationData() {
+            // Skip auto-refresh if user is editing
+            if (isAnyDisplayBeingEdited()) {
+                return;
+            }
+
+            try {
+                const responses = await Promise.all([
+                    fetch('/station/1/media/'),
+                    fetch('/station/2/media/'),
+                    fetch('/station/3/media/')
+                ]);
+
+                for (let i = 0; i < responses.length; i++) {
+                    const data = await responses[i].json();
+                    updateDisplayStatus(i + 1, data);
+                }
+            } catch (error) {
+                console.error('Error loading station data:', error);
+                // Don't show alert during auto-refresh to avoid spam
+            }
+        }
+
+        // Enhanced update configuration with real-time feedback
+        async function updateConfiguration(displayNum) {
+            const stageId = document.getElementById(`stage-select-${displayNum}`).value;
+            const processId = document.getElementById(`process-select-${displayNum}`).value;
+            const quantity = document.getElementById(`quantity-input-${displayNum}`).value;
+            
+            if (!stageId || !processId) {
+                alert('Please select both stage and process');
+                return;
+            }
+            
+            // Get BOM settings (only relevant for display 1)
+            let bomType = 'batch';
+            if (displayNum === 1) {
+                const bomRadio = document.querySelector('input[name="bom-type-1"]:checked');
+                if (bomRadio) {
+                    bomType = bomRadio.value;
+                }
+            }
+
+            const config = {
+                stage_id: stageId,
+                process_id: processId,
+                quantity: parseInt(quantity),
+                show_single_unit_bom: bomType === 'single',
+                show_batch_bom: bomType === 'batch'
+            };
+
+            // Find the update button for this display
+            const updateBtn = document.querySelector(`button[onclick="updateConfiguration(${displayNum})"]`);
+            const originalText = updateBtn ? updateBtn.textContent : '💾 Update';
+
+            try {
+                // Show loading state
+                if (updateBtn) {
+                    updateBtn.textContent = '⏳ Updating...';
+                    updateBtn.disabled = true;
+                }
+
+                const response = await fetch(`/station/${displayNum}/assembly/config/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showSystemAlert(`Display ${displayNum} updated successfully`, 'success');
+                    // Force immediate refresh of this display's data
+                    await refreshSingleDisplay(displayNum);
+                } else {
+                    showSystemAlert(`Display ${displayNum} update failed: ${result.error}`, 'danger');
+                }
+            } catch (error) {
+                showSystemAlert(`Display ${displayNum}: Error updating configuration`, 'danger');
+            } finally {
+                // Restore button state
+                if (updateBtn) {
+                    updateBtn.textContent = originalText;
+                    updateBtn.disabled = false;
+                }
+            }
+        }
+
+        // Refresh single display data
+        async function refreshSingleDisplay(displayNum) {
+            try {
+                const response = await fetch(`/station/${displayNum}/media/`);
+                const data = await response.json();
+                updateDisplayStatus(displayNum, data);
+            } catch (error) {
+                console.error(`Error refreshing display ${displayNum}:`, error);
+            }
+        }
+
+        // Enhanced clicker actions with immediate feedback
+        async function sendClickerAction(action, displayNum) {
+            try {
+                // Show loading state
+                const actionBtns = document.querySelectorAll(`button[onclick*="${action}(${displayNum})"]`);
+                actionBtns.forEach(btn => {
+                    btn.style.opacity = '0.6';
+                    btn.disabled = true;
+                });
+
+                const response = await fetch(`/station/${displayNum}/clicker/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: action })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showSystemAlert(`Display ${displayNum}: ${action} successful`, 'success');
+                    // Immediate refresh of this display's data
+                    await refreshSingleDisplay(displayNum);
+                } else {
+                    showSystemAlert(`Display ${displayNum}: ${result.error || 'Action failed'}`, 'warning');
+                }
+            } catch (error) {
+                showSystemAlert(`Display ${displayNum}: Error sending command`, 'danger');
+            } finally {
+                // Restore button states
+                const actionBtns = document.querySelectorAll(`button[onclick*="${action}(${displayNum})"]`);
+                actionBtns.forEach(btn => {
+                    btn.style.opacity = '1';
+                    btn.disabled = false;
+                });
+            }
+        }
+
+        function updateLoopStatus(isActive, displayNum) {
+            const loopStatus = document.getElementById(`loop-status-${displayNum}`);
+            const loopToggleBtn = document.getElementById(`loop-toggle-btn-${displayNum}`);
+            
+            if (isActive) {
+                loopStatus.textContent = '🔄 Loop: Active';
+                loopStatus.className = 'loop-status loop-active';
+                loopToggleBtn.classList.add('active');
+                loopToggleBtn.textContent = 'Disable Loop';
+            } else {
+                loopStatus.textContent = '🔄 Loop: Inactive';
+                loopStatus.className = 'loop-status loop-inactive';
+                loopToggleBtn.classList.remove('active');
+                loopToggleBtn.textContent = 'Enable Loop';
+            }
+        }
+
+        function refreshAllDisplays() {
+            loadStationData();
+            loadAssemblyOptions();
+            showSystemAlert('Refreshing all displays...', 'info');
+        }
+
+        function testDisplay(displayNum) {
+            window.open(`/station/${displayNum}/slider/`, '_blank');
+        }
+
+        function showSystemAlert(message, type) {
+            // Create alert element
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.style.position = 'fixed';
+            alertDiv.style.top = '20px';
+            alertDiv.style.right = '20px';
+            alertDiv.style.zIndex = '9999';
+            alertDiv.style.maxWidth = '400px';
+            alertDiv.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+            alertDiv.innerHTML = `
+                <strong>${type.charAt(0).toUpperCase() + type.slice(1)}:</strong> ${message}
+                <button onclick="this.parentElement.remove()" style="float: right; background: none; border: none; font-size: 18px; cursor: pointer;">×</button>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentElement) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+
+        function startStatusUpdates() {
+            // More frequent updates for better real-time experience
+            setInterval(async () => {
+                await loadStationData();
+            }, 3000); // Update every 3 seconds instead of 10
+            
+            // Also reload assembly options periodically to catch any changes
+            setInterval(async () => {
+                await loadAssemblyOptions();
+            }, 30000); // Reload options every 30 seconds
+        }
+    </script>
+</body>
+</html>
