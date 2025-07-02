@@ -682,9 +682,7 @@
                 <strong>🔗 Quick Links:</strong>
                 <div class="quick-actions">
                     <a href="workflow-guide.html" class="btn btn-primary">📋 View Workflow Guide</a>
- 
                     <a href="/admin/" class="btn btn-warning">⚙️ Admin Panel</a>
-       
                 </div>
             </div>
         </div>
@@ -696,6 +694,12 @@
         let editingTimeouts = {};
         let selectedBulkStage = null;
         let selectedBulkProcess = null;
+        let lastUsedQuantities = {
+            1: 50,  // Default for Display 1
+            2: 50,  // Default for Display 2
+            3: 50,  // Default for Display 3
+            bulk: 50 // Default for bulk operations
+        };
 
         // Initialize when page loads
         document.addEventListener('DOMContentLoaded', function() {
@@ -709,6 +713,7 @@
         function handleStageChange(displayNum) {
             const stageSelect = document.getElementById(`stage-select-${displayNum}`);
             const processSelect = document.getElementById(`process-select-${displayNum}`);
+            const quantityInput = document.getElementById(`quantity-input-${displayNum}`);
             const stageId = stageSelect.value;
             
             if (!stageId) {
@@ -738,8 +743,12 @@
             processSelect.value = firstProcess.id;
             processSelect.classList.add('auto-selected');
             
+            // USE LAST USED QUANTITY instead of default 50
+            quantityInput.value = lastUsedQuantities[displayNum];
+            quantityInput.classList.add('auto-selected');
+            
             // Show visual feedback
-            showSystemAlert(`Display ${displayNum}: Auto-selected "${firstProcess.name}"`, 'success');
+            showSystemAlert(`Display ${displayNum}: Auto-selected "${firstProcess.name}" with quantity ${lastUsedQuantities[displayNum]}`, 'success');
             
             setEditingMode(displayNum, true);
         }
@@ -795,7 +804,7 @@
                 bulkProcessSelect.classList.add('auto-selected');
                 selectedBulkProcess = firstProcess;
                 
-                showSystemAlert(`Bulk: Auto-selected "${firstProcess.name}" for ${stage.display_name}`, 'info');
+                showSystemAlert(`Bulk: Auto-selected "${firstProcess.name}" with quantity ${lastUsedQuantities.bulk}`, 'info');
             }
         }
 
@@ -872,7 +881,7 @@
             const config = {
                 stage_id: selectedBulkStage.id,
                 process_id: selectedBulkProcess.id,
-                quantity: 50,
+                quantity: lastUsedQuantities.bulk, // Use last used bulk quantity
                 show_single_unit_bom: false,
                 show_batch_bom: true
             };
@@ -892,7 +901,7 @@
                 const results = await Promise.all(responses.map(r => r.json()));
                 
                 if (results.every(r => r.success)) {
-                    showSystemAlert(`✅ Configuration applied successfully to displays: ${selectedDisplays.join(', ')}`, 'success');
+                    showSystemAlert(`✅ Configuration applied successfully to displays: ${selectedDisplays.join(', ')} with quantity ${lastUsedQuantities.bulk}`, 'success');
                     loadStationData();
                     loadAssemblyOptions();
                 } else {
@@ -1086,7 +1095,11 @@
                 }
             }
             
-            document.getElementById(`quantity-input-${displayNum}`).value = config.quantity || 50;
+            // Update quantity and remember it
+            const currentQuantity = config.quantity || 50;
+            document.getElementById(`quantity-input-${displayNum}`).value = currentQuantity;
+            lastUsedQuantities[displayNum] = currentQuantity;
+            lastUsedQuantities.bulk = currentQuantity; // Also update bulk default
             
             updateLoopStatus(config.loop_mode, displayNum);
             
@@ -1136,6 +1149,16 @@
                         setTimeout(() => {
                             setEditingMode(i, false);
                         }, 1000);
+                    });
+                    
+                    // REMEMBER LAST USED QUANTITY when user changes it
+                    quantityInput.addEventListener('change', function() {
+                        const newQuantity = parseInt(this.value);
+                        if (newQuantity && newQuantity > 0) {
+                            lastUsedQuantities[i] = newQuantity;
+                            lastUsedQuantities.bulk = newQuantity; // Also update bulk default
+                            showSystemAlert(`✅ Quantity ${newQuantity} saved for Display ${i} and bulk operations`, 'success');
+                        }
                     });
                 }
             }
