@@ -1,12 +1,326 @@
 from django.shortcuts import render, get_object_or_404
-from django.http import JsonResponse, StreamingHttpResponse
+from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 import json
 import time
 from .models import (Station, Product, ProductMedia, AssemblyStage, 
-                    AssemblyProcess, AssemblySession, BillOfMaterial)
+                    AssemblyProcess, AssemblySession, BillOfMaterial,BOMTemplate, BOMItem, BOMTemplateItem)
+
+
+
+
+# for bom 
+
+def get_station_bom_data(request, station_id):
+    """Get database BOM data for a specific station"""
+    station = get_object_or_404(Station, pk=station_id)
+    
+    if not station.current_product:
+        return JsonResponse({'error': 'No product selected'}, status=400)
+    
+    # Get BOM data based on station settings
+    bom_data = station.get_current_bom_data()
+    
+    if not bom_data:
+        return JsonResponse({'error': 'No BOM data available'}, status=404)
+    
+    # Format BOM data for frontend
+    formatted_bom = []
+    for item_data in bom_data:
+        item_info = {
+            'serial_number': item_data['serial_number'],
+            'item_code': item_data['item'].item_code,
+            'item_description': item_data['item'].item_description,
+            'part_number': item_data['item'].part_number,
+            'unit_of_measure': item_data['item'].unit_of_measure,
+            'base_quantity': item_data['base_quantity'],
+            'calculated_quantity': item_data['calculated_quantity'],
+            'formatted_quantity': item_data['formatted_quantity'],
+            'notes': item_data['notes'],
+            'item_photo_url': item_data['item'].item_photo.url if item_data['item'].item_photo else None,
+            'supplier': item_data['item'].supplier,
+            'cost_per_unit': float(item_data['item'].cost_per_unit) if item_data['item'].cost_per_unit else None,
+        }
+        formatted_bom.append(item_info)
+    
+    # Get BOM template information
+    bom_template_info = None
+    if station.show_single_unit_bom:
+        bom_type = 'SINGLE_UNIT'
+        quantity = 1
+    elif station.show_batch_bom:
+        bom_type = 'BATCH_50'
+        quantity = station.product_quantity
+    else:
+        bom_type = station.current_stage.name if station.current_stage else None
+        quantity = station.product_quantity
+    
+    try:
+        bom_template = BOMTemplate.objects.get(
+            product=station.current_product,
+            bom_type=bom_type,
+            is_active=True
+        )
+        bom_template_info = {
+            'id': bom_template.id,
+            'name': bom_template.template_name,
+            'bom_type': bom_template.get_bom_type_display(),
+            'stage': bom_template.stage.display_name if bom_template.stage else None,
+            'description': bom_template.description,
+        }
+    except BOMTemplate.DoesNotExist:
+        pass
+    
+    return JsonResponse({
+        'bom_data': formatted_bom,
+        'bom_template': bom_template_info,
+        'station_info': {
+            'name': station.name,
+            'display_number': station.display_number,
+            'product_code': station.current_product.code,
+            'product_name': station.current_product.name,
+            'quantity': quantity,
+            'bom_type': bom_type,
+        },
+        'summary': {
+            'total_items': len(formatted_bom),
+            'total_cost': sum(
+                item['calculated_quantity'] * (item['cost_per_unit'] or 0) 
+                for item in formatted_bom
+            ),
+        }
+    })
+
+def render_bom_display(request, station_id):
+    """Render BOM display page for a station"""
+    station = get_object_or_404(Station, pk=station_id)
+    
+    # Get BOM data
+    bom_data = station.get_current_bom_data() if station.current_product else []
+    
+    # Determine BOM type and quantity
+    if station.show_single_unit_bom:
+        bom_type = 'Single Unit'
+        quantity = 1
+    elif station.show_batch_bom:
+        bom_type = f'{station.product_quantity} Units Batch'
+        quantity = station.product_quantity
+    else:
+        bom_type = station.current_stage.display_name if station.current_stage else 'Unknown'
+        quantity = station.product_quantity
+    
+    context = {
+        'station': station,
+        'bom_data': bom_data,
+        'bom_type': bom_type,
+        'quantity': quantity,
+        'product': station.current_product,
+        'stage': station.current_stage,
+        'process': station.current_process,
+    }
+    
+    return render(request, 'bom_display.html', context)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def update_bom_settings(request, station_id):
+    """Update BOM display settings for a station"""
+    station = get_object_or_404(Station, pk=station_id)
+    
+    try:
+        data = json.loads(request.body)
+        
+        # Update BOM display settings
+        if 'show_single_unit_bom' in data:
+            station.show_single_unit_bom = data['show_single_unit_bom']
+        if 'show_batch_bom' in data:
+            station.show_batch_bom = data['show_batch_bom']
+        if 'product_quantity' in data:
+            quantity = int(data['product_quantity'])
+            if quantity > 0:
+                station.product_quantity = quantity
+        
+        station.save()
+        
+        # Get updated BOM data
+        bom_data = station.get_current_bom_data()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'BOM settings updated successfully',
+            'current_settings': {
+                'show_single_unit_bom': station.show_single_unit_bom,
+                'show_batch_bom': station.show_batch_bom,
+                'product_quantity': station.product_quantity,
+            },
+            'bom_item_count': len(bom_data) if bom_data else 0,
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    except ValueError:
+        return JsonResponse({'error': 'Invalid quantity value'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+def get_bom_templates(request):
+    """Get all available BOM templates"""
+    templates = BOMTemplate.objects.filter(is_active=True).select_related('product', 'stage')
+    
+    templates_data = []
+    for template in templates:
+        template_info = {
+            'id': template.id,
+            'name': template.template_name,
+            'product_code': template.product.code,
+            'product_name': template.product.name,
+            'bom_type': template.bom_type,
+            'bom_type_display': template.get_bom_type_display(),
+            'stage': template.stage.name if template.stage else None,
+            'stage_display': template.stage.display_name if template.stage else None,
+            'description': template.description,
+            'item_count': template.bom_items.filter(is_active=True).count(),
+            'displays': {
+                'screen_1': template.display_screen_1,
+                'screen_2': template.display_screen_2,
+                'screen_3': template.display_screen_3,
+            },
+            'created_date': template.created_date.isoformat(),
+        }
+        templates_data.append(template_info)
+    
+    return JsonResponse({
+        'templates': templates_data,
+        'total_count': len(templates_data),
+    })
+
+def preview_bom_template(request, template_id):
+    """Preview BOM template for different quantities"""
+    template = get_object_or_404(BOMTemplate, pk=template_id)
+    quantity = int(request.GET.get('quantity', 1))
+    
+    # Generate BOM data for the specified quantity
+    bom_data = template.generate_bom_for_quantity(quantity)
+    
+    # Format for JSON response
+    formatted_bom = []
+    total_cost = 0
+    
+    for item_data in bom_data:
+        item_cost = (item_data['calculated_quantity'] * 
+                    (item_data['item'].cost_per_unit or 0))
+        total_cost += item_cost
+        
+        item_info = {
+            'serial_number': item_data['serial_number'],
+            'item_code': item_data['item'].item_code,
+            'item_description': item_data['item'].item_description,
+            'part_number': item_data['item'].part_number,
+            'unit_of_measure': item_data['item'].unit_of_measure,
+            'base_quantity': item_data['base_quantity'],
+            'calculated_quantity': item_data['calculated_quantity'],
+            'formatted_quantity': item_data['formatted_quantity'],
+            'notes': item_data['notes'],
+            'cost_per_unit': float(item_data['item'].cost_per_unit) if item_data['item'].cost_per_unit else None,
+            'line_cost': float(item_cost),
+            'supplier': item_data['item'].supplier,
+            'item_photo_url': item_data['item'].item_photo.url if item_data['item'].item_photo else None,
+        }
+        formatted_bom.append(item_info)
+    
+    return JsonResponse({
+        'template': {
+            'id': template.id,
+            'name': template.template_name,
+            'bom_type': template.get_bom_type_display(),
+            'product': {
+                'code': template.product.code,
+                'name': template.product.name,
+            },
+            'stage': template.stage.display_name if template.stage else None,
+            'description': template.description,
+        },
+        'quantity': quantity,
+        'bom_data': formatted_bom,
+        'summary': {
+            'total_items': len(formatted_bom),
+            'total_cost': float(total_cost),
+            'unique_suppliers': len(set(
+                item['supplier'] for item in formatted_bom 
+                if item['supplier']
+            )),
+        }
+    })
+
+def get_bom_items(request):
+    """Get all BOM items with search and filtering"""
+    items = BOMItem.objects.filter(is_active=True)
+    
+    # Search functionality
+    search = request.GET.get('search', '').strip()
+    if search:
+        items = items.filter(
+            item_description__icontains=search
+        ) | items.filter(
+            item_code__icontains=search
+        ) | items.filter(
+            part_number__icontains=search
+        )
+    
+    # Filter by unit
+    unit_filter = request.GET.get('unit')
+    if unit_filter:
+        items = items.filter(unit_of_measure=unit_filter)
+    
+    # Filter by supplier
+    supplier_filter = request.GET.get('supplier')
+    if supplier_filter:
+        items = items.filter(supplier__icontains=supplier_filter)
+    
+    # Pagination
+    page = int(request.GET.get('page', 1))
+    per_page = int(request.GET.get('per_page', 50))
+    start = (page - 1) * per_page
+    end = start + per_page
+    
+    total_count = items.count()
+    items_page = items[start:end]
+    
+    items_data = []
+    for item in items_page:
+        item_info = {
+            'id': item.id,
+            'item_code': item.item_code,
+            'item_description': item.item_description,
+            'part_number': item.part_number,
+            'unit_of_measure': item.unit_of_measure,
+            'supplier': item.supplier,
+            'cost_per_unit': float(item.cost_per_unit) if item.cost_per_unit else None,
+            'weight_per_unit': float(item.weight_per_unit) if item.weight_per_unit else None,
+            'item_photo_url': item.item_photo.url if item.item_photo else None,
+            'created_date': item.created_date.isoformat(),
+            'is_active': item.is_active,
+        }
+        items_data.append(item_info)
+    
+    return JsonResponse({
+        'items': items_data,
+        'pagination': {
+            'page': page,
+            'per_page': per_page,
+            'total_count': total_count,
+            'total_pages': (total_count + per_page - 1) // per_page,
+            'has_next': end < total_count,
+            'has_prev': page > 1,
+        },
+        'filters': {
+            'search': search,
+            'unit': unit_filter,
+            'supplier': supplier_filter,
+        }
+    })
 
 
 
@@ -104,6 +418,8 @@ def station_media_slider(request, station_id):
     }
     
     return render(request, 'brg_station_slider.html', context)
+
+
 
 def station_media_stream(request, station_id):
     """Real-time streaming for BRG assembly workflow"""
@@ -703,7 +1019,591 @@ def update_assembly_config(request, station_id):
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
     
     
-# Add this to your views.py for debugging
+def station_media_stream_enhanced(request, station_id):
+    """Enhanced streaming with BOM data support"""
+    def event_stream():
+        last_update = None
+        while True:
+            try:
+                station = get_object_or_404(Station, pk=station_id)
+                current_media = station.get_current_media()
+                bom_data = station.get_current_bom_data()
+                
+                # Create comprehensive comparison data including BOM
+                media_comparison = []
+                for media in current_media:
+                    comparison_item = {
+                        'id': media.id,
+                        'file_url': media.file.url if media.file else None,
+                        'media_type': media.media_type,
+                        'process_id': media.process.id if media.process else None,
+                        'bom_id': media.bom.id if media.bom else None
+                    }
+                    media_comparison.append(comparison_item)
+                
+                # Include BOM data in comparison
+                bom_comparison = []
+                if bom_data:
+                    for item_data in bom_data:
+                        bom_comparison.append({
+                            'item_code': item_data['item'].item_code,
+                            'calculated_quantity': item_data['calculated_quantity'],
+                            'serial_number': item_data['serial_number']
+                        })
+                
+                # Include assembly state in comparison
+                assembly_state = {
+                    'current_product_id': station.current_product.id if station.current_product else None,
+                    'current_stage_id': station.current_stage.id if station.current_stage else None,
+                    'current_process_id': station.current_process.id if station.current_process else None,
+                    'product_quantity': station.product_quantity,
+                    'loop_mode': station.loop_mode,
+                    'display_number': station.display_number,
+                    'show_single_unit_bom': station.show_single_unit_bom,
+                    'show_batch_bom': station.show_batch_bom,
+                }
+                
+                current_state = {
+                    'media': media_comparison,
+                    'bom': bom_comparison,
+                    'assembly': assembly_state
+                }
+                
+                # Only send update if something changed
+                if current_state != last_update:
+                    # Prepare detailed media data for frontend
+                    media_data = []
+                    for media in current_media:
+                        media_info = {
+                            'id': media.id,
+                            'url': media.file.url if media.file else None,
+                            'type': media.file.name.split('.')[-1].lower() if media.file else 'bom',
+                            'duration': media.duration,
+                            'media_type': media.get_media_type_display(),
+                            'product_name': media.product.name,
+                            'product_code': media.product.code,
+                        }
+                        
+                        if media.process:
+                            media_info['process'] = {
+                                'id': media.process.id,
+                                'name': media.process.name,
+                                'display_name': media.process.display_name,
+                                'stage': media.process.stage.display_name,
+                                'order': media.process.order,
+                                'is_looped': media.process.is_looped,
+                                'loop_group': media.process.loop_group
+                            }
+                        
+                        if media.bom:
+                            media_info['bom'] = {
+                                'id': media.bom.id,
+                                'type': media.bom.get_bom_type_display(),
+                                'stage': media.bom.stage.display_name if media.bom.stage else None
+                            }
+                        
+                        media_data.append(media_info)
+                    
+                    # Prepare BOM data for frontend
+                    formatted_bom = []
+                    if bom_data:
+                        for item_data in bom_data:
+                            formatted_bom.append({
+                                'serial_number': item_data['serial_number'],
+                                'item_code': item_data['item'].item_code,
+                                'item_description': item_data['item'].item_description,
+                                'part_number': item_data['item'].part_number,
+                                'formatted_quantity': item_data['formatted_quantity'],
+                                'notes': item_data['notes'],
+                                'item_photo_url': item_data['item'].item_photo.url if item_data['item'].item_photo else None,
+                                'supplier': item_data['item'].supplier,
+                            })
+                    
+                    # Prepare assembly info
+                    assembly_info = {
+                        'current_product': {
+                            'id': station.current_product.id,
+                            'code': station.current_product.code,
+                            'name': station.current_product.name
+                        } if station.current_product else None,
+                        'current_stage': {
+                            'id': station.current_stage.id,
+                            'name': station.current_stage.display_name,
+                            'order': station.current_stage.order
+                        } if station.current_stage else None,
+                        'current_process': {
+                            'id': station.current_process.id,
+                            'name': station.current_process.name,
+                            'display_name': station.current_process.display_name,
+                            'order': station.current_process.order,
+                            'is_looped': station.current_process.is_looped,
+                            'loop_group': station.current_process.loop_group
+                        } if station.current_process else None,
+                        'quantity': station.product_quantity,
+                        'loop_mode': station.loop_mode,
+                        'clicker_enabled': station.clicker_enabled,
+                        'display_number': station.display_number,
+                        'bom_settings': {
+                            'show_single_unit': station.show_single_unit_bom,
+                            'show_batch': station.show_batch_bom,
+                        },
+                        'next_process': {
+                            'id': station.get_next_process().id,
+                            'name': station.get_next_process().name,
+                            'display_name': station.get_next_process().display_name
+                        } if station.get_next_process() else None,
+                        'previous_process': {
+                            'id': station.get_previous_process().id,  
+                            'name': station.get_previous_process().name,
+                            'display_name': station.get_previous_process().display_name
+                        } if station.get_previous_process() else None,
+                    }
+                    
+                    response_data = {
+                        'media': media_data,
+                        'bom_data': formatted_bom,
+                        'station_name': station.name,
+                        'assembly': assembly_info,
+                        'timestamp': time.time()
+                    }
+                    
+                    last_update = current_state
+                    yield f"data: {json.dumps(response_data)}\n\n"
+                
+                time.sleep(3)  # Check every 3 seconds
+                
+            except Station.DoesNotExist:
+                yield f"data: {json.dumps({'error': 'Station not found'})}\n\n"
+                break
+            except Exception as e:
+                yield f"data: {json.dumps({'error': str(e)})}\n\n"
+                time.sleep(10)
+
+    response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+    response['Cache-Control'] = 'no-cache'
+    response['Connection'] = 'keep-alive'
+    response['X-Accel-Buffering'] = 'no'
+    return response
+
+
+
+def get_station_media_with_bom(request, station_id):
+    """Enhanced station media API that includes BOM data as virtual media"""
+    station = get_object_or_404(Station, pk=station_id)
+    
+    # Get regular media
+    current_media = station.get_current_media()
+    
+    media_data = []
+    
+    # Add regular media first
+    for media in current_media:
+        media_info = {
+            'id': media.id,
+            'url': media.file.url if media.file else None,
+            'type': media.file.name.split('.')[-1].lower() if media.file else 'unknown',
+            'duration': media.duration,
+            'media_type': media.get_media_type_display(),
+            'product_name': media.product.name,
+            'product_code': media.product.code,
+            'is_bom_data': False,
+        }
+        
+        if media.process:
+            media_info['process'] = {
+                'id': media.process.id,
+                'name': media.process.name,
+                'display_name': media.process.display_name,
+                'stage': media.process.stage.display_name,
+                'order': media.process.order,
+                'is_looped': media.process.is_looped,
+                'loop_group': media.process.loop_group
+            }
+        
+        if media.bom:
+            media_info['bom'] = {
+                'id': media.bom.id,
+                'type': media.bom.get_bom_type_display(),
+                'stage': media.bom.stage.display_name if media.bom.stage else None
+            }
+        
+        media_data.append(media_info)
+    
+    # Add BOM data as virtual media (for Display 1 primarily)
+    bom_data = station.get_current_bom_data()
+    if bom_data and station.display_number == 1:  # Show BOM primarily on Display 1
+        bom_media_info = {
+            'id': f'bom_{station.id}',
+            'url': f'/station/{station.id}/bom-render/',  # Virtual URL for BOM rendering
+            'type': 'bom',
+            'duration': 30,  # BOM display duration
+            'media_type': 'Bill of Material',
+            'product_name': station.current_product.name,
+            'product_code': station.current_product.code,
+            'is_bom_data': True,
+            'bom_items': len(bom_data),
+            'bom_type': 'Batch 50 Units' if station.show_batch_bom else 'Single Unit',
+            'bom_data': []
+        }
+        
+        # Add formatted BOM items
+        for item_data in bom_data:
+            bom_item = {
+                'serial_number': item_data['serial_number'],
+                'item_code': item_data['item'].item_code,
+                'item_description': item_data['item'].item_description,
+                'part_number': item_data['item'].part_number,
+                'formatted_quantity': item_data['formatted_quantity'],
+                'notes': item_data['notes'],
+                'item_photo_url': item_data['item'].item_photo.url if item_data['item'].item_photo else None,
+                'supplier': item_data['item'].supplier,
+            }
+            bom_media_info['bom_data'].append(bom_item)
+        
+        media_data.insert(0, bom_media_info)  # Add BOM as first item
+    
+    return JsonResponse({
+        'media': media_data,
+        'station_info': {
+            'name': station.name,
+            'display_number': station.display_number,
+            'current_product': {
+                'id': station.current_product.id,
+                'code': station.current_product.code,
+                'name': station.current_product.name
+            } if station.current_product else None,
+            'current_stage': {
+                'id': station.current_stage.id,
+                'name': station.current_stage.display_name,
+                'order': station.current_stage.order
+            } if station.current_stage else None,
+            'current_process': {
+                'id': station.current_process.id,
+                'name': station.current_process.name,
+                'display_name': station.current_process.display_name,
+                'order': station.current_process.order,
+                'is_looped': station.current_process.is_looped,
+                'loop_group': station.current_process.loop_group
+            } if station.current_process else None,
+            'quantity': station.product_quantity,
+            'loop_mode': station.loop_mode,
+            'clicker_enabled': station.clicker_enabled,
+            'bom_settings': {
+                'show_single_unit': station.show_single_unit_bom,
+                'show_batch': station.show_batch_bom,
+            }
+        }
+    })
+
+def render_bom_for_slider(request, station_id):
+    """Render BOM as HTML fragment for slider integration"""
+    station = get_object_or_404(Station, pk=station_id)
+    
+    if not station.current_product:
+        return HttpResponse('<div class="bom-error">No product selected</div>')
+    
+    bom_data = station.get_current_bom_data()
+    
+    if not bom_data:
+        return HttpResponse('<div class="bom-error">No BOM data available</div>')
+    
+    # Determine BOM type and quantity
+    if station.show_single_unit_bom:
+        bom_type = 'Single Unit'
+        quantity = 1
+    elif station.show_batch_bom:
+        bom_type = f'{station.product_quantity} Units Batch'
+        quantity = station.product_quantity
+    else:
+        bom_type = station.current_stage.display_name if station.current_stage else 'Unknown'
+        quantity = station.product_quantity
+    
+    context = {
+        'station': station,
+        'bom_data': bom_data,
+        'bom_type': bom_type,
+        'quantity': quantity,
+        'product': station.current_product,
+        'stage': station.current_stage,
+    }
+    
+    return render(request, 'bom_slider_fragment.html', context)
+
+
+# BOM Management Dashboard
+def bom_management_dashboard(request):
+    """BOM management dashboard"""
+    context = {
+        'total_items': BOMItem.objects.filter(is_active=True).count(),
+        'total_templates': BOMTemplate.objects.filter(is_active=True).count(),
+        'total_products': Product.objects.count(),
+        'recent_items': BOMItem.objects.filter(is_active=True).order_by('-created_date')[:10],
+        'recent_templates': BOMTemplate.objects.filter(is_active=True).order_by('-created_date')[:5],
+        'templates_by_type': {},
+    }
+    
+    # Group templates by type
+    templates = BOMTemplate.objects.filter(is_active=True).select_related('product', 'stage')
+    for template in templates:
+        if template.bom_type not in context['templates_by_type']:
+            context['templates_by_type'][template.bom_type] = []
+        context['templates_by_type'][template.bom_type].append(template)
+    
+    return render(request, 'bom_management_dashboard.html', context)
+
+def bom_item_management(request):
+    """BOM item management page"""
+    search = request.GET.get('search', '').strip()
+    unit_filter = request.GET.get('unit', '')
+    supplier_filter = request.GET.get('supplier', '')
+    
+    items = BOMItem.objects.filter(is_active=True)
+    
+    if search:
+        items = items.filter(
+            item_description__icontains=search
+        ) | items.filter(
+            item_code__icontains=search
+        ) | items.filter(
+            part_number__icontains=search
+        )
+    
+    if unit_filter:
+        items = items.filter(unit_of_measure=unit_filter)
+    
+    if supplier_filter:
+        items = items.filter(supplier__icontains=supplier_filter)
+    
+    items = items.order_by('item_description')
+    
+    # Get filter options
+    units = BOMItem.objects.filter(is_active=True).values_list('unit_of_measure', flat=True).distinct()
+    suppliers = BOMItem.objects.filter(is_active=True, supplier__isnull=False).exclude(supplier='').values_list('supplier', flat=True).distinct()
+    
+    context = {
+        'items': items,
+        'search': search,
+        'unit_filter': unit_filter,
+        'supplier_filter': supplier_filter,
+        'units': sorted(units),
+        'suppliers': sorted(suppliers),
+        'total_items': items.count(),
+    }
+    
+    return render(request, 'bom_item_management.html', context)
+
+
+def bom_template_management(request):
+    """BOM template management page"""
+    templates = BOMTemplate.objects.filter(is_active=True).select_related('product', 'stage').prefetch_related('bom_items__item')
+    
+    context = {
+        'templates': templates,
+        'products': Product.objects.all(),
+        'stages': AssemblyStage.objects.all(),
+    }
+    
+    return render(request, 'bom_template_management.html', context)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def bulk_update_bom_items(request):
+    """Bulk update BOM items via AJAX"""
+    try:
+        data = json.loads(request.body)
+        updates = data.get('updates', [])
+        
+        updated_count = 0
+        for update in updates:
+            item_id = update.get('id')
+            if not item_id:
+                continue
+                
+            try:
+                item = BOMItem.objects.get(id=item_id)
+                
+                # Update fields if provided
+                if 'cost_per_unit' in update:
+                    item.cost_per_unit = update['cost_per_unit']
+                if 'supplier' in update:
+                    item.supplier = update['supplier']
+                if 'is_active' in update:
+                    item.is_active = update['is_active']
+                    
+                item.save()
+                updated_count += 1
+                
+            except BOMItem.DoesNotExist:
+                continue
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Updated {updated_count} items successfully',
+            'updated_count': updated_count
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+def export_all_bom_items_csv(request):
+    """Export all BOM items to CSV"""
+    import csv
+    
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="all_bom_items.csv"'
+    
+    writer = csv.writer(response)
+    writer.writerow([
+        'Item Code', 'Description', 'Part Number', 'Unit', 
+        'Supplier', 'Cost per Unit', 'Weight per Unit', 'Active', 'Created Date'
+    ])
+    
+    items = BOMItem.objects.all().order_by('item_code')
+    for item in items:
+        writer.writerow([
+            item.item_code,
+            item.item_description,
+            item.part_number,
+            item.unit_of_measure,
+            item.supplier or '',
+            item.cost_per_unit or '',
+            item.weight_per_unit or '',
+            'Yes' if item.is_active else 'No',
+            item.created_date.strftime('%Y-%m-%d %H:%M:%S')
+        ])
+    
+    return response
+
+def station_media_slider_enhanced(request, station_id):
+    """Enhanced media slider with BOM integration"""
+    station = get_object_or_404(Station, pk=station_id)
+    request.session['last_station_id'] = station_id
+
+    # Get current media for this display
+    current_media = station.get_current_media()
+    
+    # Get BOM data if available
+    bom_data = station.get_current_bom_data()
+    has_bom_data = bool(bom_data and station.display_number == 1)
+    
+    context = {
+        'station': station,
+        'selected_media': current_media,
+        'current_product': station.current_product,
+        'current_stage': station.current_stage,
+        'current_process': station.current_process,
+        'product_quantity': station.product_quantity,
+        'clicker_enabled': station.clicker_enabled,
+        'loop_mode': station.loop_mode,
+        'next_process': station.get_next_process(),
+        'previous_process': station.get_previous_process(),
+        'display_number': station.display_number,
+        'has_bom_data': has_bom_data,
+        'bom_item_count': len(bom_data) if bom_data else 0,
+    }
+    
+    return render(request, 'brg_station_slider_enhanced.html', context)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def quick_add_bom_item(request):
+    """Quick add BOM item via AJAX"""
+    try:
+        data = json.loads(request.body)
+        
+        required_fields = ['item_code', 'item_description', 'part_number']
+        if not all(field in data for field in required_fields):
+            return JsonResponse({'error': 'Missing required fields'}, status=400)
+        
+        # Check if item already exists
+        if BOMItem.objects.filter(item_code=data['item_code']).exists():
+            return JsonResponse({'error': 'Item code already exists'}, status=400)
+        
+        item = BOMItem.objects.create(
+            item_code=data['item_code'],
+            item_description=data['item_description'],
+            part_number=data['part_number'],
+            unit_of_measure=data.get('unit_of_measure', 'NO.'),
+            supplier=data.get('supplier', ''),
+            cost_per_unit=data.get('cost_per_unit'),
+            is_active=True
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Item created successfully',
+            'item': {
+                'id': item.id,
+                'item_code': item.item_code,
+                'item_description': item.item_description,
+                'part_number': item.part_number,
+                'unit_of_measure': item.unit_of_measure,
+            }
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+def export_bom_csv(request, template_id):
+    """Export BOM template to CSV"""
+    import csv
+    from django.http import HttpResponse
+    
+    template = get_object_or_404(BOMTemplate, pk=template_id)
+    quantity = int(request.GET.get('quantity', 1))
+    
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="{template.template_name}_qty_{quantity}.csv"'
+    
+    writer = csv.writer(response)
+    
+    # Write header
+    writer.writerow([
+        'S.NO', 'Item Code', 'Item Description', 'Part Number', 
+        'Quantity', 'Unit', 'Supplier', 'Cost per Unit', 'Line Cost', 'Notes'
+    ])
+    
+    # Write BOM data
+    bom_data = template.generate_bom_for_quantity(quantity)
+    total_cost = 0
+    
+    for item_data in bom_data:
+        line_cost = (item_data['calculated_quantity'] * 
+                    (item_data['item'].cost_per_unit or 0))
+        total_cost += line_cost
+        
+        writer.writerow([
+            item_data['serial_number'],
+            item_data['item'].item_code,
+            item_data['item'].item_description,
+            item_data['item'].part_number,
+            item_data['calculated_quantity'],
+            item_data['item'].unit_of_measure,
+            item_data['item'].supplier or '',
+            item_data['item'].cost_per_unit or '',
+            f"{line_cost:.2f}" if line_cost > 0 else '',
+            item_data['notes'] or '',
+        ])
+    
+    # Write summary
+    writer.writerow([])
+    writer.writerow(['Summary'])
+    writer.writerow(['Total Items:', len(bom_data)])
+    writer.writerow(['Total Cost:', f"{total_cost:.2f}"])
+    writer.writerow(['Quantity:', quantity])
+    writer.writerow(['Template:', template.template_name])
+    writer.writerow(['Product:', f"{template.product.code} - {template.product.name}"])
+    writer.writerow(['Generated:', time.strftime('%Y-%m-%d %H:%M:%S')])
+    
+    return response
+
+
+
 
 # Add this to your views.py for debugging
 
