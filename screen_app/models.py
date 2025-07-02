@@ -405,8 +405,10 @@ class Station(models.Model):
         
         return None
 
+# Replace the get_current_media method in your Station model
+
     def get_current_media(self):
-        """Get media for current state based on display number"""
+        """Get media for current state based on display number - UPDATED: No PDF BOMs"""
         if not self.current_product:
             return ProductMedia.objects.none()
         
@@ -429,43 +431,17 @@ class Station(models.Model):
         else:
             process_media = ProductMedia.objects.none()
         
-        # Get BOMs based on settings (only for display 1)
-        bom_media = ProductMedia.objects.none()
+        # REMOVED: PDF BOM media logic since we're using database BOMs
+        # Only return process-specific media (videos, documents, but not BOMs)
+        non_bom_media = media_query.exclude(media_type='BOM')
         
-        if self.display_number == 1:  # Only show BOMs on display 1
-            bom_query = ProductMedia.objects.filter(
-                product=self.current_product,
-                media_type='BOM',
-                display_screen_1=True
-            )
-            
-            # Priority: Stage-specific BOM > Single unit > Batch
-            if self.current_stage:
-                stage_bom = bom_query.filter(bom__stage=self.current_stage)
-                if stage_bom.exists():
-                    bom_media = stage_bom
-                elif self.show_single_unit_bom:
-                    bom_media = bom_query.filter(bom__bom_type='SINGLE_UNIT')
-                elif self.show_batch_bom:
-                    bom_media = bom_query.filter(bom__bom_type='BATCH_50')
-            else:
-                # No stage, use general BOM settings
-                if self.show_single_unit_bom:
-                    bom_media = bom_query.filter(bom__bom_type='SINGLE_UNIT')
-                elif self.show_batch_bom:
-                    bom_media = bom_query.filter(bom__bom_type='BATCH_50')
-        
-        # Combine process media and BOM media
-        if process_media.exists() and bom_media.exists():
-            return process_media.union(bom_media)
-        elif process_media.exists():
-            return process_media
-        elif bom_media.exists():
-            return bom_media
+        if process_media.exists():
+            # Return process-specific media (excluding BOMs)
+            return process_media.exclude(media_type='BOM')
         else:
-            # Return any media for this display if nothing else matches
-            return media_query
-    
+            # Return any non-BOM media for this display
+            return non_bom_media
+            
     def get_next_process(self):
         """Get next process, handling loops and stage transitions"""
         if not self.current_stage:

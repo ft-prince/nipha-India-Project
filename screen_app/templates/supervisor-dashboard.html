@@ -48,10 +48,121 @@
             padding: 30px;
         }
 
+        /* Enhanced Bulk Controls Section */
+        .bulk-controls {
+            background: linear-gradient(135deg, #e3f2fd 0%, #f8f9fa 100%);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 2px solid #2196f3;
+            box-shadow: 0 8px 25px rgba(33, 150, 243, 0.1);
+        }
+
+        .bulk-controls h3 {
+            color: #1976d2;
+            margin-bottom: 20px;
+            font-size: 1.6em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .quick-setup-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .quick-setup-section h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .stage-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stage-btn {
+            padding: 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 600;
+            position: relative;
+        }
+
+        .stage-btn:hover {
+            border-color: #3498db;
+            background: #f8f9fa;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.15);
+        }
+
+        .stage-btn.selected {
+            border-color: #27ae60;
+            background: #e8f5e8;
+            color: #27ae60;
+        }
+
+        .stage-btn .stage-name {
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+
+        .stage-btn .stage-info {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .process-selection {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 25px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 15px;
+            background: white;
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .checkbox-item:hover {
+            border-color: #3498db;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #3498db;
+        }
+
         .control-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
-            gap: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
             margin-bottom: 40px;
         }
 
@@ -140,6 +251,11 @@
             outline: none;
         }
 
+        .form-control.auto-selected {
+            background: #e8f5e8;
+            border-color: #27ae60;
+        }
+
         .btn {
             padding: 12px 24px;
             border: none;
@@ -189,6 +305,12 @@
         .btn-danger:hover {
             background: #c0392b;
             transform: translateY(-2px);
+        }
+
+        .btn-large {
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border-radius: 12px;
         }
 
         .process-navigation {
@@ -279,29 +401,20 @@
             background: #27ae60;
         }
 
-        .bulk-controls {
-            background: #e3f2fd;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-
-        .bulk-controls h4 {
-            color: #1976d2;
+        .auto-info {
+            background: #e8f5e8;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            color: #2d5a2d;
             margin-bottom: 15px;
         }
 
-        .checkbox-group {
+        .bulk-action-buttons {
             display: flex;
-            gap: 20px;
-            margin-bottom: 15px;
+            gap: 15px;
             flex-wrap: wrap;
-        }
-
-        .checkbox-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            margin-top: 20px;
         }
 
         @media (max-width: 768px) {
@@ -316,6 +429,15 @@
             .process-navigation {
                 flex-direction: column;
             }
+
+            .stage-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .checkbox-group {
+                flex-direction: column;
+                gap: 10px;
+            }
         }
     </style>
 </head>
@@ -323,7 +445,7 @@
     <div class="dashboard-container">
         <div class="header">
             <h1>🏭 BRG Assembly 40K - Supervisor Dashboard</h1>
-            <p>Individual display control with bulk operation options</p>
+            <p>Easy assembly control with auto-selection and bulk operations</p>
         </div>
 
         <div class="main-content">
@@ -358,37 +480,63 @@
                 </div>
             </div>
 
-            <!-- Bulk Control Section -->
+            <!-- Enhanced Bulk Control Section -->
             <div class="bulk-controls">
-                <h4>🎛️ Bulk Operations</h4>
-                <div class="alert alert-info" style="margin: 10px 0;">
-                    <strong>Quick Setup:</strong> Select multiple displays and apply the same configuration to all selected displays at once.
-                </div>
+                <h3>🎛️ Easy Bulk Operations</h3>
                 
-                <div class="checkbox-group">
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="bulk-display-1">
-                        <label for="bulk-display-1">Display 1</label>
+                <div class="quick-setup-section">
+                    <h4>📋 Quick Stage Selection</h4>
+                    <div class="auto-info">
+                        ✨ <strong>Auto-Selection:</strong> Click a stage below and the first process will be automatically selected. You can change the process if needed.
                     </div>
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="bulk-display-2">
-                        <label for="bulk-display-2">Display 2</label>
+                    
+                    <div class="stage-buttons" id="stage-buttons">
+                        <!-- Stage buttons will be populated here -->
                     </div>
-                    <div class="checkbox-item">
-                        <input type="checkbox" id="bulk-display-3">
-                        <label for="bulk-display-3">Display 3</label>
+                    
+                    <div class="process-selection" id="process-selection" style="display: none;">
+                        <label><strong>Selected Process (auto-selected first, change if needed):</strong></label>
+                        <select class="form-control" id="bulk-process-select">
+                            <option value="">Loading processes...</option>
+                        </select>
                     </div>
                 </div>
 
-                <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                    <select class="form-control" id="bulk-stage-select" style="flex: 1; min-width: 200px;">
-                        <option value="">Select Stage</option>
-                    </select>
-                    <select class="form-control" id="bulk-process-select" style="flex: 1; min-width: 200px;">
-                        <option value="">Select Process</option>
-                    </select>
-                    <button class="btn btn-warning" onclick="applyBulkConfiguration()">📡 Apply to Selected</button>
-                    <button class="btn btn-success" onclick="refreshAllDisplays()">🔄 Refresh All</button>
+                <div class="quick-setup-section">
+                    <h4>📺 Select Displays to Update</h4>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="bulk-display-1" checked>
+                            <label for="bulk-display-1"><strong>Display 1</strong> - BOMs & Reference</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="bulk-display-2" checked>
+                            <label for="bulk-display-2"><strong>Display 2</strong> - Process Instructions</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" id="bulk-display-3" checked>
+                            <label for="bulk-display-3"><strong>Display 3</strong> - Instructional Videos</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bulk-action-buttons">
+                    <button class="btn btn-success btn-large" onclick="applyBulkConfiguration()">
+                        📡 Apply to Selected Displays
+                    </button>
+                    <button class="btn btn-warning btn-large" onclick="refreshAllDisplays()">
+                        🔄 Refresh All
+                    </button>
+                    <button class="btn btn-primary btn-large" onclick="syncAllDisplays()">
+                        🔗 Sync All to Same Process
+                    </button>
+                </div>
+
+                <div class="alert alert-info" style="margin-top: 15px;">
+                    <strong>💡 How to use:</strong> 
+                    1. Click a stage above → First process auto-selected
+                    2. Change process if needed → Select displays to update
+                    3. Click "Apply to Selected Displays" → Done!
                 </div>
             </div>
 
@@ -398,15 +546,19 @@
                 <div class="control-card">
                     <h3><span class="icon">📺</span>Display 1 - BOMs & Reference</h3>
                     
+                    <div class="auto-info">
+                        ✨ Stage selection auto-selects first process
+                    </div>
+                    
                     <div class="form-group">
                         <label>Assembly Stage:</label>
-                        <select class="form-control" id="stage-select-1">
+                        <select class="form-control" id="stage-select-1" onchange="handleStageChange(1)">
                             <option value="">Loading stages...</option>
                         </select>
                     </div>
 
                     <div class="form-group">
-                        <label>Process:</label>
+                        <label>Process (auto-selected):</label>
                         <select class="form-control" id="process-select-1">
                             <option value="">Select stage first</option>
                         </select>
@@ -448,15 +600,19 @@
                 <div class="control-card">
                     <h3><span class="icon">📺</span>Display 2 - Process Instructions</h3>
                     
+                    <div class="auto-info">
+                        ✨ Stage selection auto-selects first process
+                    </div>
+                    
                     <div class="form-group">
                         <label>Assembly Stage:</label>
-                        <select class="form-control" id="stage-select-2">
+                        <select class="form-control" id="stage-select-2" onchange="handleStageChange(2)">
                             <option value="">Loading stages...</option>
                         </select>
                     </div>
 
                     <div class="form-group">
-                        <label>Process:</label>
+                        <label>Process (auto-selected):</label>
                         <select class="form-control" id="process-select-2">
                             <option value="">Select stage first</option>
                         </select>
@@ -484,15 +640,19 @@
                 <div class="control-card">
                     <h3><span class="icon">📺</span>Display 3 - Instructional Videos</h3>
                     
+                    <div class="auto-info">
+                        ✨ Stage selection auto-selects first process
+                    </div>
+                    
                     <div class="form-group">
                         <label>Assembly Stage:</label>
-                        <select class="form-control" id="stage-select-3">
+                        <select class="form-control" id="stage-select-3" onchange="handleStageChange(3)">
                             <option value="">Loading stages...</option>
                         </select>
                     </div>
 
                     <div class="form-group">
-                        <label>Process:</label>
+                        <label>Process (auto-selected):</label>
                         <select class="form-control" id="process-select-3">
                             <option value="">Select stage first</option>
                         </select>
@@ -522,7 +682,9 @@
                 <strong>🔗 Quick Links:</strong>
                 <div class="quick-actions">
                     <a href="workflow-guide.html" class="btn btn-primary">📋 View Workflow Guide</a>
-                    <a href="hindi.html" class="btn btn-primary">🇮🇳 हिंदी गाइड</a>
+ 
+                    <a href="/admin/" class="btn btn-warning">⚙️ Admin Panel</a>
+       
                 </div>
             </div>
         </div>
@@ -530,88 +692,128 @@
 
     <script>
         let currentStationData = {};
-        let isUserEditing = false; // Flag to pause auto-updates during editing
-        let editingTimeouts = {}; // Track editing timeouts per display
+        let isUserEditing = false;
+        let editingTimeouts = {};
+        let selectedBulkStage = null;
+        let selectedBulkProcess = null;
 
-        // Add editing protection for quantity inputs and BOM settings
-        function addEditingProtectionToInputs() {
-            // Protect quantity inputs
-            for (let i = 1; i <= 3; i++) {
-                const quantityInput = document.getElementById(`quantity-input-${i}`);
-                if (quantityInput) {
-                    quantityInput.addEventListener('focus', function() {
-                        setEditingMode(i, true);
-                    });
-                    quantityInput.addEventListener('blur', function() {
-                        setTimeout(() => {
-                            setEditingMode(i, false);
-                        }, 1000);
-                    });
-                }
-            }
-
-            // Protect BOM radio buttons
-            const bomRadios = document.querySelectorAll('input[name="bom-type-1"]');
-            bomRadios.forEach(radio => {
-                radio.addEventListener('focus', function() {
-                    setEditingMode(1, true);
-                });
-                radio.addEventListener('change', function() {
-                    setEditingMode(1, true);
-                    setTimeout(() => {
-                        setEditingMode(1, false);
-                    }, 2000);
-                });
-            });
-        }
-
-        // Enhanced initialization
+        // Initialize when page loads
         document.addEventListener('DOMContentLoaded', function() {
             loadStationData();
             loadAssemblyOptions();
             startStatusUpdates();
-            
-            // Add editing protection after DOM is loaded
-            setTimeout(() => {
-                addEditingProtectionToInputs();
-            }, 1000);
+            addEditingProtectionToInputs();
         });
 
-        // Load current station data
-        async function loadStationData() {
-            try {
-                const responses = await Promise.all([
-                    fetch('/station/1/media/'),
-                    fetch('/station/2/media/'),
-                    fetch('/station/3/media/')
-                ]);
+        // Enhanced stage change handler with auto-selection for individual displays
+        function handleStageChange(displayNum) {
+            const stageSelect = document.getElementById(`stage-select-${displayNum}`);
+            const processSelect = document.getElementById(`process-select-${displayNum}`);
+            const stageId = stageSelect.value;
+            
+            if (!stageId) {
+                processSelect.innerHTML = '<option value="">Select stage first</option>';
+                processSelect.classList.remove('auto-selected');
+                return;
+            }
 
-                for (let i = 0; i < responses.length; i++) {
-                    const data = await responses[i].json();
-                    updateDisplayStatus(i + 1, data);
-                }
-            } catch (error) {
-                console.error('Error loading station data:', error);
-                showSystemAlert('Error loading station data', 'danger');
+            // Find the selected stage
+            const selectedStage = window.stagesData.find(s => s.id == stageId);
+            if (!selectedStage || !selectedStage.processes.length) {
+                processSelect.innerHTML = '<option value="">No processes available</option>';
+                return;
+            }
+
+            // Populate processes
+            processSelect.innerHTML = '';
+            selectedStage.processes.forEach(process => {
+                const option = document.createElement('option');
+                option.value = process.id;
+                option.textContent = `${process.name} - ${process.display_name}`;
+                processSelect.appendChild(option);
+            });
+
+            // AUTO-SELECT the first process
+            const firstProcess = selectedStage.processes[0];
+            processSelect.value = firstProcess.id;
+            processSelect.classList.add('auto-selected');
+            
+            // Show visual feedback
+            showSystemAlert(`Display ${displayNum}: Auto-selected "${firstProcess.name}"`, 'success');
+            
+            setEditingMode(displayNum, true);
+        }
+
+        // Enhanced bulk stage selection with visual buttons
+        function createStageButtons() {
+            const stageButtonsContainer = document.getElementById('stage-buttons');
+            stageButtonsContainer.innerHTML = '';
+
+            if (!window.stagesData) return;
+
+            window.stagesData.forEach(stage => {
+                const button = document.createElement('div');
+                button.className = 'stage-btn';
+                button.onclick = () => selectBulkStage(stage, button);
+                
+                button.innerHTML = `
+                    <div class="stage-name">${stage.display_name}</div>
+                    <div class="stage-info">${stage.processes.length} processes</div>
+                `;
+                
+                stageButtonsContainer.appendChild(button);
+            });
+        }
+
+        // Handle bulk stage selection
+        function selectBulkStage(stage, buttonElement) {
+            // Update visual selection
+            document.querySelectorAll('.stage-btn').forEach(btn => btn.classList.remove('selected'));
+            buttonElement.classList.add('selected');
+            
+            selectedBulkStage = stage;
+            
+            // Show process selection
+            const processSelectionDiv = document.getElementById('process-selection');
+            processSelectionDiv.style.display = 'block';
+            
+            // Populate processes
+            const bulkProcessSelect = document.getElementById('bulk-process-select');
+            bulkProcessSelect.innerHTML = '';
+            
+            stage.processes.forEach(process => {
+                const option = document.createElement('option');
+                option.value = process.id;
+                option.textContent = `${process.name} - ${process.display_name}`;
+                bulkProcessSelect.appendChild(option);
+            });
+
+            // AUTO-SELECT the first process
+            if (stage.processes.length > 0) {
+                const firstProcess = stage.processes[0];
+                bulkProcessSelect.value = firstProcess.id;
+                bulkProcessSelect.classList.add('auto-selected');
+                selectedBulkProcess = firstProcess;
+                
+                showSystemAlert(`Bulk: Auto-selected "${firstProcess.name}" for ${stage.display_name}`, 'info');
             }
         }
 
-        // Load assembly options for all displays
+        // Load assembly options with stage buttons
         async function loadAssemblyOptions() {
             try {
                 const response = await fetch('/station/1/assembly/options/');
                 const data = await response.json();
                 
-                // Store stages data globally for later use
                 window.stagesData = data.stages;
                 
-                // Populate stage selects for all displays
+                // Create stage buttons for bulk operations
+                createStageButtons();
+                
+                // Populate individual display selects
                 for (let i = 1; i <= 3; i++) {
                     populateStageSelect(data.stages, i);
                 }
-                
-                // Populate bulk controls
-                populateBulkStageSelect(data.stages);
                 
                 // Update current config for each display
                 for (let i = 1; i <= 3; i++) {
@@ -621,10 +823,11 @@
                 }
             } catch (error) {
                 console.error('Error loading assembly options:', error);
+                showSystemAlert('Error loading assembly options', 'danger');
             }
         }
 
-        // Populate stage select for specific display
+        // Populate stage select for individual displays
         function populateStageSelect(stages, displayNum) {
             const stageSelect = document.getElementById(`stage-select-${displayNum}`);
             stageSelect.innerHTML = '<option value="">Select Stage</option>';
@@ -636,246 +839,18 @@
                 stageSelect.appendChild(option);
             });
 
-            // Add event listeners for user interaction
             stageSelect.addEventListener('focus', function() {
                 setEditingMode(displayNum, true);
             });
 
-            stageSelect.addEventListener('change', function() {
-                setEditingMode(displayNum, true);
-                const selectedStage = stages.find(s => s.id == this.value);
-                populateProcessSelect(selectedStage ? selectedStage.processes : [], displayNum);
-                
-                // Clear process selection when stage changes
-                document.getElementById(`process-select-${displayNum}`).value = '';
-            });
-
             stageSelect.addEventListener('blur', function() {
-                // Delay clearing editing mode to allow for process selection
                 setTimeout(() => {
                     setEditingMode(displayNum, false);
                 }, 2000);
             });
         }
 
-        // Populate bulk stage select
-        function populateBulkStageSelect(stages) {
-            const bulkStageSelect = document.getElementById('bulk-stage-select');
-            bulkStageSelect.innerHTML = '<option value="">Select Stage</option>';
-            
-            stages.forEach(stage => {
-                const option = document.createElement('option');
-                option.value = stage.id;
-                option.textContent = stage.display_name;
-                bulkStageSelect.appendChild(option);
-            });
-
-            bulkStageSelect.addEventListener('focus', function() {
-                isUserEditing = true;
-            });
-
-            bulkStageSelect.addEventListener('change', function() {
-                isUserEditing = true;
-                const selectedStage = stages.find(s => s.id == this.value);
-                populateBulkProcessSelect(selectedStage ? selectedStage.processes : []);
-                
-                // Clear process selection when stage changes
-                document.getElementById('bulk-process-select').value = '';
-                
-                setTimeout(() => {
-                    isUserEditing = false;
-                }, 3000);
-            });
-
-            bulkStageSelect.addEventListener('blur', function() {
-                setTimeout(() => {
-                    isUserEditing = false;
-                }, 2000);
-            });
-        }
-
-        // Populate process select for specific display
-        function populateProcessSelect(processes, displayNum) {
-            const processSelect = document.getElementById(`process-select-${displayNum}`);
-            const currentValue = processSelect.value; // Store current selection
-            processSelect.innerHTML = '<option value="">Select Process</option>';
-            
-            processes.forEach(process => {
-                const option = document.createElement('option');
-                option.value = process.id;
-                option.textContent = `${process.name} - ${process.display_name}`;
-                processSelect.appendChild(option);
-            });
-            
-            // Restore selection if it still exists
-            if (currentValue && processSelect.querySelector(`option[value="${currentValue}"]`)) {
-                processSelect.value = currentValue;
-            }
-
-            // Add event listeners for user interaction
-            processSelect.addEventListener('focus', function() {
-                setEditingMode(displayNum, true);
-            });
-
-            processSelect.addEventListener('change', function() {
-                setEditingMode(displayNum, true);
-            });
-
-            processSelect.addEventListener('blur', function() {
-                setTimeout(() => {
-                    setEditingMode(displayNum, false);
-                }, 1000);
-            });
-        }
-
-        // Set editing mode for a specific display
-        function setEditingMode(displayNum, editing) {
-            if (editing) {
-                editingTimeouts[displayNum] = true;
-                // Clear any existing timeout
-                if (editingTimeouts[`timeout_${displayNum}`]) {
-                    clearTimeout(editingTimeouts[`timeout_${displayNum}`]);
-                }
-                // Set timeout to automatically clear editing mode
-                editingTimeouts[`timeout_${displayNum}`] = setTimeout(() => {
-                    editingTimeouts[displayNum] = false;
-                }, 5000); // 5 seconds to finish editing
-            } else {
-                editingTimeouts[displayNum] = false;
-                if (editingTimeouts[`timeout_${displayNum}`]) {
-                    clearTimeout(editingTimeouts[`timeout_${displayNum}`]);
-                }
-            }
-        }
-
-        // Check if any display is being edited
-        function isAnyDisplayBeingEdited() {
-            return isUserEditing || Object.keys(editingTimeouts).some(key => 
-                !key.startsWith('timeout_') && editingTimeouts[key] === true
-            );
-        }
-
-        // Populate bulk process select
-        function populateBulkProcessSelect(processes) {
-            const bulkProcessSelect = document.getElementById('bulk-process-select');
-            bulkProcessSelect.innerHTML = '<option value="">Select Process</option>';
-            
-            processes.forEach(process => {
-                const option = document.createElement('option');
-                option.value = process.id;
-                option.textContent = `${process.name} - ${process.display_name}`;
-                bulkProcessSelect.appendChild(option);
-            });
-        }
-
-        // Update current configuration for specific display
-        function updateCurrentConfig(config, displayNum) {
-            // Update stage selection
-            const stageSelect = document.getElementById(`stage-select-${displayNum}`);
-            stageSelect.value = config.stage_id || '';
-            
-            // If stage is selected, populate and set process
-            if (config.stage_id && window.stagesData) {
-                const selectedStage = window.stagesData.find(s => s.id == config.stage_id);
-                if (selectedStage) {
-                    populateProcessSelect(selectedStage.processes, displayNum);
-                    // Set process after populating
-                    setTimeout(() => {
-                        document.getElementById(`process-select-${displayNum}`).value = config.process_id || '';
-                    }, 100);
-                }
-            }
-            
-            document.getElementById(`quantity-input-${displayNum}`).value = config.quantity || 50;
-            
-            updateLoopStatus(config.loop_mode, displayNum);
-            
-            // Update BOM settings (only for display 1)
-            if (displayNum === 1) {
-                const bomType = config.bom_settings?.show_single_unit ? 'single' : 'batch';
-                const bomRadio = document.querySelector(`input[name="bom-type-1"][value="${bomType}"]`);
-                if (bomRadio) {
-                    bomRadio.checked = true;
-                }
-            }
-        }
-
-        // Process navigation for individual displays
-        async function previousProcess(displayNum) {
-            await sendClickerAction('backward', displayNum);
-        }
-
-        async function nextProcess(displayNum) {
-            await sendClickerAction('forward', displayNum);
-        }
-
-        async function sendClickerAction(action, displayNum) {
-            try {
-                const response = await fetch(`/station/${displayNum}/clicker/`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: action })
-                });
-
-                const result = await response.json();
-                
-                if (result.success) {
-                    showSystemAlert(`Display ${displayNum}: ${action} successful`, 'success');
-                    loadStationData();
-                } else {
-                    showSystemAlert(`Display ${displayNum}: ${result.error || 'Action failed'}`, 'warning');
-                }
-            } catch (error) {
-                showSystemAlert(`Display ${displayNum}: Error sending command`, 'danger');
-            }
-        }
-
-        // Toggle loop mode for individual display
-        async function toggleLoopMode(displayNum) {
-            await sendClickerAction('toggle_loop', displayNum);
-        }
-
-        // Update configuration for individual display
-        async function updateConfiguration(displayNum) {
-            const stageId = document.getElementById(`stage-select-${displayNum}`).value;
-            const processId = document.getElementById(`process-select-${displayNum}`).value;
-            const quantity = document.getElementById(`quantity-input-${displayNum}`).value;
-            
-            // Get BOM settings (only relevant for display 1)
-            let bomType = 'batch';
-            if (displayNum === 1) {
-                bomType = document.querySelector('input[name="bom-type-1"]:checked').value;
-            }
-
-            const config = {
-                stage_id: stageId,
-                process_id: processId,
-                quantity: parseInt(quantity),
-                show_single_unit_bom: bomType === 'single',
-                show_batch_bom: bomType === 'batch'
-            };
-
-            try {
-                const response = await fetch(`/station/${displayNum}/assembly/config/`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(config)
-                });
-
-                const result = await response.json();
-                
-                if (result.success) {
-                    showSystemAlert(`Display ${displayNum} updated successfully`, 'success');
-                    loadStationData();
-                } else {
-                    showSystemAlert(`Display ${displayNum} update failed`, 'danger');
-                }
-            } catch (error) {
-                showSystemAlert(`Display ${displayNum}: Error updating configuration`, 'danger');
-            }
-        }
-
-        // Apply bulk configuration to selected displays
+        // Enhanced apply bulk configuration
         async function applyBulkConfiguration() {
             const selectedDisplays = [];
             for (let i = 1; i <= 3; i++) {
@@ -885,27 +860,26 @@
             }
 
             if (selectedDisplays.length === 0) {
-                alert('Please select at least one display');
+                alert('Please select at least one display to update');
                 return;
             }
 
-            const stageId = document.getElementById('bulk-stage-select').value;
-            const processId = document.getElementById('bulk-process-select').value;
-
-            if (!stageId || !processId) {
-                alert('Please select both stage and process');
+            if (!selectedBulkStage || !selectedBulkProcess) {
+                alert('Please select a stage first (stages auto-select the first process)');
                 return;
             }
 
             const config = {
-                stage_id: stageId,
-                process_id: processId,
+                stage_id: selectedBulkStage.id,
+                process_id: selectedBulkProcess.id,
                 quantity: 50,
                 show_single_unit_bom: false,
                 show_batch_bom: true
             };
 
             try {
+                showSystemAlert('Applying configuration to selected displays...', 'info');
+                
                 const promises = selectedDisplays.map(displayNum => 
                     fetch(`/station/${displayNum}/assembly/config/`, {
                         method: 'POST',
@@ -918,94 +892,64 @@
                 const results = await Promise.all(responses.map(r => r.json()));
                 
                 if (results.every(r => r.success)) {
-                    showSystemAlert(`Configuration applied to displays: ${selectedDisplays.join(', ')}`, 'success');
+                    showSystemAlert(`✅ Configuration applied successfully to displays: ${selectedDisplays.join(', ')}`, 'success');
                     loadStationData();
                     loadAssemblyOptions();
                 } else {
-                    showSystemAlert('Some displays failed to update', 'warning');
+                    showSystemAlert('⚠️ Some displays failed to update', 'warning');
                 }
             } catch (error) {
-                showSystemAlert('Error applying bulk configuration', 'danger');
+                showSystemAlert('❌ Error applying bulk configuration', 'danger');
             }
         }
 
-        // Update display status with real-time loop and clicker status
-        function updateDisplayStatus(displayNum, data) {
-            const processElement = document.getElementById(`display${displayNum}-process`);
-            const statusElement = document.getElementById(`display${displayNum}-status`);
-            const connectionElement = document.getElementById(`display${displayNum}-connection`);
-            
-            if (data.station_info) {
-                const station = data.station_info;
-                
-                // Update process display
-                let processText = 'No process selected';
-                if (station.current_process && station.current_stage) {
-                    processText = `${station.current_stage.name} - ${station.current_process.name}`;
-                    
-                    // Add loop indicator if active
-                    if (station.loop_mode) {
-                        processText += ' 🔄';
-                    }
-                    
-                    // Add clicker status
-                    if (!station.clicker_enabled) {
-                        processText += ' 🚫';
-                    }
-                }
-                
-                processElement.textContent = processText;
-                statusElement.className = 'status-indicator status-online';
-                connectionElement.textContent = 'Connected';
-                
-                // Update the individual controls to reflect current state
-                updateControlsFromStatus(station, displayNum);
-                
-            } else {
-                processElement.textContent = 'Connection error';
-                statusElement.className = 'status-indicator status-offline';
-                connectionElement.textContent = 'Offline';
-            }
-        }
+        // Sync all displays to the same process
+        async function syncAllDisplays() {
+            // Get the configuration from Display 1
+            const stage1 = document.getElementById('stage-select-1').value;
+            const process1 = document.getElementById('process-select-1').value;
+            const quantity1 = document.getElementById('quantity-input-1').value;
 
-        // Update individual controls based on current station status
-        function updateControlsFromStatus(station, displayNum) {
-            // Skip updates if user is currently editing this display
-            if (editingTimeouts[displayNum]) {
+            if (!stage1 || !process1) {
+                alert('Please set Display 1 configuration first, then use this to sync all displays to the same settings');
                 return;
             }
 
-            // Update stage selection if it changed
-            const stageSelect = document.getElementById(`stage-select-${displayNum}`);
-            if (station.current_stage && stageSelect.value != station.current_stage.id) {
-                stageSelect.value = station.current_stage.id;
+            const config = {
+                stage_id: stage1,
+                process_id: process1,
+                quantity: parseInt(quantity1),
+                show_single_unit_bom: false,
+                show_batch_bom: true
+            };
+
+            try {
+                showSystemAlert('Syncing all displays to Display 1 configuration...', 'info');
                 
-                // Trigger stage change to populate processes
-                if (window.stagesData) {
-                    const selectedStage = window.stagesData.find(s => s.id == station.current_stage.id);
-                    if (selectedStage) {
-                        populateProcessSelect(selectedStage.processes, displayNum);
-                    }
+                const promises = [2, 3].map(displayNum => 
+                    fetch(`/station/${displayNum}/assembly/config/`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(config)
+                    })
+                );
+
+                const responses = await Promise.all(promises);
+                const results = await Promise.all(responses.map(r => r.json()));
+                
+                if (results.every(r => r.success)) {
+                    showSystemAlert('✅ All displays synced successfully!', 'success');
+                    loadStationData();
+                    loadAssemblyOptions();
+                } else {
+                    showSystemAlert('⚠️ Some displays failed to sync', 'warning');
                 }
+            } catch (error) {
+                showSystemAlert('❌ Error syncing displays', 'danger');
             }
-            
-            // Update process selection if it changed
-            const processSelect = document.getElementById(`process-select-${displayNum}`);
-            if (station.current_process && processSelect.value != station.current_process.id) {
-                processSelect.value = station.current_process.id;
-            }
-            
-            // Update quantity if it changed
-            const quantityInput = document.getElementById(`quantity-input-${displayNum}`);
-            if (quantityInput.value != station.quantity) {
-                quantityInput.value = station.quantity;
-            }
-            
-            // Update loop status in real-time
-            updateLoopStatus(station.loop_mode, displayNum);
         }
 
-        // Load current station data with editing protection
+        // Load current station data
         async function loadStationData() {
             // Skip auto-refresh if user is editing
             if (isAnyDisplayBeingEdited()) {
@@ -1025,90 +969,207 @@
                 }
             } catch (error) {
                 console.error('Error loading station data:', error);
-                // Don't show alert during auto-refresh to avoid spam
             }
         }
 
-        // Enhanced update configuration with real-time feedback
-        async function updateConfiguration(displayNum) {
-            const stageId = document.getElementById(`stage-select-${displayNum}`).value;
-            const processId = document.getElementById(`process-select-${displayNum}`).value;
-            const quantity = document.getElementById(`quantity-input-${displayNum}`).value;
+        // Update display status with real-time data
+        function updateDisplayStatus(displayNum, data) {
+            const processElement = document.getElementById(`display${displayNum}-process`);
+            const statusElement = document.getElementById(`display${displayNum}-status`);
+            const connectionElement = document.getElementById(`display${displayNum}-connection`);
             
-            if (!stageId || !processId) {
-                alert('Please select both stage and process');
+            if (data.station_info) {
+                const station = data.station_info;
+                
+                // Update process display
+                let processText = 'No process selected';
+                if (station.current_process && station.current_stage) {
+                    processText = `${station.current_stage.name} - ${station.current_process.name}`;
+                    
+                    if (station.loop_mode) {
+                        processText += ' 🔄';
+                    }
+                    
+                    if (!station.clicker_enabled) {
+                        processText += ' 🚫';
+                    }
+                }
+                
+                processElement.textContent = processText;
+                statusElement.className = 'status-indicator status-online';
+                connectionElement.textContent = 'Connected';
+                
+                updateControlsFromStatus(station, displayNum);
+                
+            } else {
+                processElement.textContent = 'Connection error';
+                statusElement.className = 'status-indicator status-offline';
+                connectionElement.textContent = 'Offline';
+            }
+        }
+
+        // Update controls based on current station status
+        function updateControlsFromStatus(station, displayNum) {
+            if (editingTimeouts[displayNum]) {
                 return;
             }
-            
-            // Get BOM settings (only relevant for display 1)
-            let bomType = 'batch';
-            if (displayNum === 1) {
-                const bomRadio = document.querySelector('input[name="bom-type-1"]:checked');
-                if (bomRadio) {
-                    bomType = bomRadio.value;
-                }
-            }
 
-            const config = {
-                stage_id: stageId,
-                process_id: processId,
-                quantity: parseInt(quantity),
-                show_single_unit_bom: bomType === 'single',
-                show_batch_bom: bomType === 'batch'
-            };
-
-            // Find the update button for this display
-            const updateBtn = document.querySelector(`button[onclick="updateConfiguration(${displayNum})"]`);
-            const originalText = updateBtn ? updateBtn.textContent : '💾 Update';
-
-            try {
-                // Show loading state
-                if (updateBtn) {
-                    updateBtn.textContent = '⏳ Updating...';
-                    updateBtn.disabled = true;
-                }
-
-                const response = await fetch(`/station/${displayNum}/assembly/config/`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(config)
-                });
-
-                const result = await response.json();
+            const stageSelect = document.getElementById(`stage-select-${displayNum}`);
+            if (station.current_stage && stageSelect.value != station.current_stage.id) {
+                stageSelect.value = station.current_stage.id;
                 
-                if (result.success) {
-                    showSystemAlert(`Display ${displayNum} updated successfully`, 'success');
-                    // Force immediate refresh of this display's data
-                    await refreshSingleDisplay(displayNum);
-                } else {
-                    showSystemAlert(`Display ${displayNum} update failed: ${result.error}`, 'danger');
+                if (window.stagesData) {
+                    const selectedStage = window.stagesData.find(s => s.id == station.current_stage.id);
+                    if (selectedStage) {
+                        populateProcessSelect(selectedStage.processes, displayNum);
+                    }
                 }
-            } catch (error) {
-                showSystemAlert(`Display ${displayNum}: Error updating configuration`, 'danger');
-            } finally {
-                // Restore button state
-                if (updateBtn) {
-                    updateBtn.textContent = originalText;
-                    updateBtn.disabled = false;
+            }
+            
+            const processSelect = document.getElementById(`process-select-${displayNum}`);
+            if (station.current_process && processSelect.value != station.current_process.id) {
+                processSelect.value = station.current_process.id;
+            }
+            
+            const quantityInput = document.getElementById(`quantity-input-${displayNum}`);
+            if (quantityInput.value != station.quantity) {
+                quantityInput.value = station.quantity;
+            }
+            
+            updateLoopStatus(station.loop_mode, displayNum);
+        }
+
+        // Populate process select for individual displays
+        function populateProcessSelect(processes, displayNum) {
+            const processSelect = document.getElementById(`process-select-${displayNum}`);
+            const currentValue = processSelect.value;
+            processSelect.innerHTML = '<option value="">Select Process</option>';
+            
+            processes.forEach(process => {
+                const option = document.createElement('option');
+                option.value = process.id;
+                option.textContent = `${process.name} - ${process.display_name}`;
+                processSelect.appendChild(option);
+            });
+            
+            if (currentValue && processSelect.querySelector(`option[value="${currentValue}"]`)) {
+                processSelect.value = currentValue;
+            }
+
+            processSelect.addEventListener('focus', function() {
+                setEditingMode(displayNum, true);
+            });
+
+            processSelect.addEventListener('change', function() {
+                setEditingMode(displayNum, true);
+            });
+
+            processSelect.addEventListener('blur', function() {
+                setTimeout(() => {
+                    setEditingMode(displayNum, false);
+                }, 1000);
+            });
+        }
+
+        // Update current configuration for specific display
+        function updateCurrentConfig(config, displayNum) {
+            const stageSelect = document.getElementById(`stage-select-${displayNum}`);
+            stageSelect.value = config.stage_id || '';
+            
+            if (config.stage_id && window.stagesData) {
+                const selectedStage = window.stagesData.find(s => s.id == config.stage_id);
+                if (selectedStage) {
+                    populateProcessSelect(selectedStage.processes, displayNum);
+                    setTimeout(() => {
+                        document.getElementById(`process-select-${displayNum}`).value = config.process_id || '';
+                    }, 100);
+                }
+            }
+            
+            document.getElementById(`quantity-input-${displayNum}`).value = config.quantity || 50;
+            
+            updateLoopStatus(config.loop_mode, displayNum);
+            
+            if (displayNum === 1) {
+                const bomType = config.bom_settings?.show_single_unit ? 'single' : 'batch';
+                const bomRadio = document.querySelector(`input[name="bom-type-1"][value="${bomType}"]`);
+                if (bomRadio) {
+                    bomRadio.checked = true;
                 }
             }
         }
 
-        // Refresh single display data
-        async function refreshSingleDisplay(displayNum) {
-            try {
-                const response = await fetch(`/station/${displayNum}/media/`);
-                const data = await response.json();
-                updateDisplayStatus(displayNum, data);
-            } catch (error) {
-                console.error(`Error refreshing display ${displayNum}:`, error);
+        // Set editing mode for specific display
+        function setEditingMode(displayNum, editing) {
+            if (editing) {
+                editingTimeouts[displayNum] = true;
+                if (editingTimeouts[`timeout_${displayNum}`]) {
+                    clearTimeout(editingTimeouts[`timeout_${displayNum}`]);
+                }
+                editingTimeouts[`timeout_${displayNum}`] = setTimeout(() => {
+                    editingTimeouts[displayNum] = false;
+                }, 5000);
+            } else {
+                editingTimeouts[displayNum] = false;
+                if (editingTimeouts[`timeout_${displayNum}`]) {
+                    clearTimeout(editingTimeouts[`timeout_${displayNum}`]);
+                }
             }
         }
 
-        // Enhanced clicker actions with immediate feedback
+        // Check if any display is being edited
+        function isAnyDisplayBeingEdited() {
+            return isUserEditing || Object.keys(editingTimeouts).some(key => 
+                !key.startsWith('timeout_') && editingTimeouts[key] === true
+            );
+        }
+
+        // Add editing protection for inputs
+        function addEditingProtectionToInputs() {
+            for (let i = 1; i <= 3; i++) {
+                const quantityInput = document.getElementById(`quantity-input-${i}`);
+                if (quantityInput) {
+                    quantityInput.addEventListener('focus', function() {
+                        setEditingMode(i, true);
+                    });
+                    quantityInput.addEventListener('blur', function() {
+                        setTimeout(() => {
+                            setEditingMode(i, false);
+                        }, 1000);
+                    });
+                }
+            }
+
+            const bomRadios = document.querySelectorAll('input[name="bom-type-1"]');
+            bomRadios.forEach(radio => {
+                radio.addEventListener('focus', function() {
+                    setEditingMode(1, true);
+                });
+                radio.addEventListener('change', function() {
+                    setEditingMode(1, true);
+                    setTimeout(() => {
+                        setEditingMode(1, false);
+                    }, 2000);
+                });
+            });
+        }
+
+        // Process navigation functions
+        async function previousProcess(displayNum) {
+            await sendClickerAction('backward', displayNum);
+        }
+
+        async function nextProcess(displayNum) {
+            await sendClickerAction('forward', displayNum);
+        }
+
+        async function toggleLoopMode(displayNum) {
+            await sendClickerAction('toggle_loop', displayNum);
+        }
+
+        // Send clicker actions
         async function sendClickerAction(action, displayNum) {
             try {
-                // Show loading state
                 const actionBtns = document.querySelectorAll(`button[onclick*="${action}(${displayNum})"]`);
                 actionBtns.forEach(btn => {
                     btn.style.opacity = '0.6';
@@ -1125,7 +1186,6 @@
                 
                 if (result.success) {
                     showSystemAlert(`Display ${displayNum}: ${action} successful`, 'success');
-                    // Immediate refresh of this display's data
                     await refreshSingleDisplay(displayNum);
                 } else {
                     showSystemAlert(`Display ${displayNum}: ${result.error || 'Action failed'}`, 'warning');
@@ -1133,7 +1193,6 @@
             } catch (error) {
                 showSystemAlert(`Display ${displayNum}: Error sending command`, 'danger');
             } finally {
-                // Restore button states
                 const actionBtns = document.querySelectorAll(`button[onclick*="${action}(${displayNum})"]`);
                 actionBtns.forEach(btn => {
                     btn.style.opacity = '1';
@@ -1142,6 +1201,78 @@
             }
         }
 
+        // Update configuration for individual display
+        async function updateConfiguration(displayNum) {
+            const stageId = document.getElementById(`stage-select-${displayNum}`).value;
+            const processId = document.getElementById(`process-select-${displayNum}`).value;
+            const quantity = document.getElementById(`quantity-input-${displayNum}`).value;
+            
+            if (!stageId || !processId) {
+                alert('Please select both stage and process');
+                return;
+            }
+            
+            let bomType = 'batch';
+            if (displayNum === 1) {
+                const bomRadio = document.querySelector('input[name="bom-type-1"]:checked');
+                if (bomRadio) {
+                    bomType = bomRadio.value;
+                }
+            }
+
+            const config = {
+                stage_id: stageId,
+                process_id: processId,
+                quantity: parseInt(quantity),
+                show_single_unit_bom: bomType === 'single',
+                show_batch_bom: bomType === 'batch'
+            };
+
+            const updateBtn = document.querySelector(`button[onclick="updateConfiguration(${displayNum})"]`);
+            const originalText = updateBtn ? updateBtn.textContent : '💾 Update';
+
+            try {
+                if (updateBtn) {
+                    updateBtn.textContent = '⏳ Updating...';
+                    updateBtn.disabled = true;
+                }
+
+                const response = await fetch(`/station/${displayNum}/assembly/config/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showSystemAlert(`Display ${displayNum} updated successfully`, 'success');
+                    await refreshSingleDisplay(displayNum);
+                } else {
+                    showSystemAlert(`Display ${displayNum} update failed: ${result.error}`, 'danger');
+                }
+            } catch (error) {
+                showSystemAlert(`Display ${displayNum}: Error updating configuration`, 'danger');
+            } finally {
+                if (updateBtn) {
+                    updateBtn.textContent = originalText;
+                    updateBtn.disabled = false;
+                }
+            }
+        }
+
+        // Refresh single display
+        async function refreshSingleDisplay(displayNum) {
+            try {
+                const response = await fetch(`/station/${displayNum}/media/`);
+                const data = await response.json();
+                updateDisplayStatus(displayNum, data);
+            } catch (error) {
+                console.error(`Error refreshing display ${displayNum}:`, error);
+            }
+        }
+
+        // Update loop status display
         function updateLoopStatus(isActive, displayNum) {
             const loopStatus = document.getElementById(`loop-status-${displayNum}`);
             const loopToggleBtn = document.getElementById(`loop-toggle-btn-${displayNum}`);
@@ -1159,18 +1290,20 @@
             }
         }
 
+        // Refresh all displays
         function refreshAllDisplays() {
             loadStationData();
             loadAssemblyOptions();
             showSystemAlert('Refreshing all displays...', 'info');
         }
 
+        // Test display
         function testDisplay(displayNum) {
             window.open(`/station/${displayNum}/slider/`, '_blank');
         }
 
+        // Show system alerts
         function showSystemAlert(message, type) {
-            // Create alert element
             const alertDiv = document.createElement('div');
             alertDiv.className = `alert alert-${type}`;
             alertDiv.style.position = 'fixed';
@@ -1186,7 +1319,6 @@
             
             document.body.appendChild(alertDiv);
             
-            // Auto remove after 5 seconds
             setTimeout(() => {
                 if (alertDiv.parentElement) {
                     alertDiv.remove();
@@ -1194,16 +1326,15 @@
             }, 5000);
         }
 
+        // Start periodic status updates
         function startStatusUpdates() {
-            // More frequent updates for better real-time experience
             setInterval(async () => {
                 await loadStationData();
-            }, 3000); // Update every 3 seconds instead of 10
+            }, 3000);
             
-            // Also reload assembly options periodically to catch any changes
             setInterval(async () => {
                 await loadAssemblyOptions();
-            }, 30000); // Reload options every 30 seconds
+            }, 30000);
         }
     </script>
 </body>

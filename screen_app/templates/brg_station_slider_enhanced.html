@@ -405,8 +405,9 @@ body {
         </div>
     </div>
 
-    <script>
-// Enhanced BRG Media Slider with BOM Integration
+<!-- Enhanced JavaScript for Real-time BOM Updates -->
+<script>
+// Enhanced BRG Media Slider with Real-time BOM Streaming
 class BRGMediaSliderWithBOM {
     constructor(stationId, displayNumber) {
         this.stationId = stationId;
@@ -415,8 +416,9 @@ class BRGMediaSliderWithBOM {
         this.mediaElements = [];
         this.slideshowTimer = null;
         this.pollingInterval = null;
-        this.pollingDelay = 3000;
+        this.pollingDelay = 2000; // REDUCED: Faster polling for real-time updates
         this.lastDataHash = null;
+        this.lastBomHash = null; // NEW: Track BOM changes separately
         
         // DOM elements
         this.containerElement = document.getElementById('slider-container');
@@ -446,30 +448,65 @@ class BRGMediaSliderWithBOM {
 
     async pollForUpdates() {
         try {
-            // Use enhanced endpoint that includes BOM data
-            const response = await fetch(`/station/${this.stationId}/media-with-bom/`);
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
+            // Get regular media data
+            const mediaResponse = await fetch(`/station/${this.stationId}/media/`);
+            if (!mediaResponse.ok) {
+                throw new Error(`HTTP ${mediaResponse.status}`);
+            }
+            const mediaData = await mediaResponse.json();
+            
+            // Get BOM data separately for real-time updates
+            let bomData = null;
+            if (this.displayNumber === 1) {
+                try {
+                    const bomResponse = await fetch(`/station/api/station/${this.stationId}/bom-data/`);
+                    if (bomResponse.ok) {
+                        bomData = await bomResponse.json();
+                    }
+                } catch (bomError) {
+                    console.log('No BOM data available:', bomError);
+                }
             }
             
-            const data = await response.json();
-            
-            const dataHash = JSON.stringify({
-                media: data.media.map(m => ({ 
+            // Create separate hashes for media and BOM to track changes independently
+            const mediaHash = JSON.stringify({
+                media: mediaData.media ? mediaData.media.map(m => ({ 
                     id: m.id, 
                     url: m.url, 
-                    is_bom_data: m.is_bom_data,
-                    bom_items: m.bom_items 
-                })),
-                station: data.station_info
+                    type: m.type
+                })) : [],
+                station: mediaData.station_info
             });
             
-            if (this.lastDataHash !== dataHash) {
-                this.updateAssemblyInfo(data);
-                this.updateMedia(data);
+            const bomHash = bomData ? JSON.stringify({
+                items: bomData.bom_data.map(item => ({
+                    serial: item.serial_number,
+                    code: item.item_code,
+                    quantity: item.calculated_quantity
+                })),
+                template: bomData.bom_template,
+                stage: bomData.station_info.current_stage,
+                quantity: bomData.station_info.quantity
+            }) : null;
+            
+            // Check if anything changed
+            const mediaChanged = mediaHash !== this.lastDataHash;
+            const bomChanged = bomHash !== this.lastBomHash;
+            
+            if (mediaChanged || bomChanged) {
+                console.log('Update detected:', { mediaChanged, bomChanged });
+                
+                this.updateAssemblyInfo(mediaData, bomData);
+                
+                // Always update media if anything changed (BOM or media)
+                this.updateMedia(mediaData, bomData, bomChanged);
+                
                 this.hideError();
                 this.updateConnectionStatus('connected', 'Updated');
-                this.lastDataHash = dataHash;
+                
+                // Update hashes
+                this.lastDataHash = mediaHash;
+                this.lastBomHash = bomHash;
             }
             
         } catch (error) {
@@ -517,11 +554,11 @@ class BRGMediaSliderWithBOM {
         if (status === 'connected') {
             setTimeout(() => {
                 this.statusElement.classList.remove('visible');
-            }, 2000);
+            }, 1500); // REDUCED: Faster status update
         }
     }
 
-    updateAssemblyInfo(data) {
+    updateAssemblyInfo(data, bomData) {
         if (data.station_info) {
             const station = data.station_info;
             
@@ -552,10 +589,10 @@ class BRGMediaSliderWithBOM {
                 this.rightControlsElement.classList.add('hidden');
             }
             
-            // Update BOM status
-            const bomItems = data.media.find(m => m.is_bom_data);
-            if (bomItems && this.bomStatusElement) {
-                this.bomStatusElement.textContent = `📋 BOM: ${bomItems.bom_items} items`;
+            // Update BOM status for Display 1
+            if (bomData && bomData.bom_data && this.bomStatusElement) {
+                const bomType = bomData.bom_template ? bomData.bom_template.bom_type : 'Unknown';
+                this.bomStatusElement.textContent = `📋 BOM: ${bomData.bom_data.length} items (${bomType})`;
                 this.bomStatusElement.classList.remove('hidden');
             } else if (this.bomStatusElement) {
                 this.bomStatusElement.classList.add('hidden');
@@ -563,20 +600,64 @@ class BRGMediaSliderWithBOM {
         }
     }
 
-    updateMedia(data) {
-        if (!data.media || data.media.length === 0) {
+    updateMedia(data, bomData, forceUpdate = false) {
+        // Combine regular media with BOM data for Display 1
+        let allMedia = [];
+        
+        // Add BOM as first item for Display 1 if available
+        if (this.displayNumber === 1 && bomData && bomData.bom_data && bomData.bom_data.length > 0) {
+            allMedia.push({
+                id: 'database_bom',
+                url: `/station/${this.stationId}/bom-render/`,
+                type: 'bom',
+                duration: 30,
+                media_type: 'Database BOM',
+                is_bom_data: true,
+                bom_items: bomData.bom_data.length,
+                bom_hash: this.lastBomHash // Add hash for tracking
+            });
+        }
+        
+        // Add regular media (videos, documents - no PDF BOMs)
+        if (data.media && data.media.length > 0) {
+            allMedia = allMedia.concat(data.media.filter(m => m.media_type !== 'Bill of Material'));
+        }
+        
+        if (allMedia.length === 0) {
             this.showError('No media available for current configuration');
             return;
         }
 
         const currentUrls = this.mediaElements.map(el => el.dataset.url);
-        const newUrls = data.media.map(m => m.url);
+        const newUrls = allMedia.map(m => m.url);
+        
+        // Force update if BOM changed or media changed
+        const shouldUpdate = forceUpdate || JSON.stringify(currentUrls) !== JSON.stringify(newUrls);
 
-        if (JSON.stringify(currentUrls) !== JSON.stringify(newUrls)) {
+        if (shouldUpdate) {
+            console.log('Updating media elements...');
+            const wasPlayingBom = this.isCurrentlyShowingBOM();
+            
             this.clearCurrentMedia();
-            this.createNewMediaElements(data.media);
+            this.createNewMediaElements(allMedia);
+            
+            // If we were showing BOM and BOM changed, stay on BOM
+            if (wasPlayingBom && this.hasBOMElement()) {
+                this.currentIndex = 0; // BOM is always first
+            }
+            
             this.playCurrentMedia();
         }
+    }
+
+    isCurrentlyShowingBOM() {
+        if (this.mediaElements.length === 0 || this.currentIndex >= this.mediaElements.length) return false;
+        const currentElement = this.mediaElements[this.currentIndex];
+        return currentElement && currentElement.dataset.mediaType === 'Database BOM';
+    }
+
+    hasBOMElement() {
+        return this.mediaElements.some(el => el.dataset.mediaType === 'Database BOM');
     }
 
     clearCurrentMedia() {
@@ -608,20 +689,21 @@ class BRGMediaSliderWithBOM {
         let element;
         let indicator;
 
-        if (media.is_bom_data) {
-            // Create BOM element
+        if (media.is_bom_data || media.type === 'bom') {
+            // Create Database BOM element
             element = document.createElement('div');
             element.className = 'media-element bom';
             element.dataset.url = media.url;
             element.dataset.duration = media.duration * 1000;
-            element.dataset.mediaType = 'BOM';
+            element.dataset.mediaType = 'Database BOM';
+            element.dataset.bomHash = media.bom_hash || ''; // Track BOM changes
             
             // Load BOM content via fetch
             this.loadBOMContent(element, media);
             
             indicator = document.createElement('div');
             indicator.className = 'media-type-indicator bom-indicator';
-            indicator.textContent = '📋 Database BOM';
+            indicator.textContent = '📋 Real-time BOM';
             
         } else {
             const type = media.type.toLowerCase();
@@ -648,15 +730,8 @@ class BRGMediaSliderWithBOM {
                 element.type = 'application/pdf';
                 
                 indicator = document.createElement('div');
-                indicator.className = 'media-type-indicator';
-                
-                if (media.media_type === 'Bill of Material') {
-                    indicator.textContent = '📋 PDF BOM';
-                    indicator.className += ' bom-indicator';
-                } else {
-                    indicator.textContent = '📄 Document';
-                    indicator.className += ' doc-indicator';
-                }
+                indicator.className = 'media-type-indicator doc-indicator';
+                indicator.textContent = '📄 Document';
             } else {
                 console.warn(`Unsupported media type: ${type}`);
                 return null;
@@ -677,17 +752,29 @@ class BRGMediaSliderWithBOM {
 
     async loadBOMContent(element, media) {
         try {
-            // Load BOM content from the render endpoint
-            const response = await fetch(`/station/${this.stationId}/bom-render/`);
+            // Add timestamp to prevent caching for real-time updates
+            const timestamp = new Date().getTime();
+            const response = await fetch(`/station/${this.stationId}/bom-render/?t=${timestamp}`);
+            
             if (response.ok) {
                 const bomHTML = await response.text();
                 element.innerHTML = bomHTML;
+                console.log('BOM content refreshed');
             } else {
-                element.innerHTML = '<div class="bom-error">Failed to load BOM data</div>';
+                element.innerHTML = '<div class="bom-error" style="color: white; text-align: center; padding: 50px;">Failed to load BOM data</div>';
             }
         } catch (error) {
             console.error('Error loading BOM content:', error);
-            element.innerHTML = '<div class="bom-error">Error loading BOM data</div>';
+            element.innerHTML = '<div class="bom-error" style="color: white; text-align: center; padding: 50px;">Error loading BOM data</div>';
+        }
+    }
+
+    async refreshCurrentBOMContent() {
+        // NEW: Method to refresh BOM content without rebuilding entire media
+        const currentElement = this.mediaElements[this.currentIndex];
+        if (currentElement && currentElement.dataset.mediaType === 'Database BOM') {
+            console.log('Refreshing current BOM content...');
+            await this.loadBOMContent(currentElement, {});
         }
     }
 
@@ -725,6 +812,10 @@ class BRGMediaSliderWithBOM {
     switchMedia() {
         if (this.mediaElements.length === 0) return;
         if (this.mediaElements.length === 1) {
+            // If only one element and it's BOM, refresh its content periodically
+            if (this.isCurrentlyShowingBOM()) {
+                this.refreshCurrentBOMContent();
+            }
             this.stopCurrentMedia();
             this.playCurrentMedia();
             return;
@@ -743,6 +834,12 @@ class BRGMediaSliderWithBOM {
         if (nextMedia) {
             nextMedia.classList.remove('fade-out');
             nextMedia.classList.add('active');
+            
+            // If switching to BOM, refresh its content
+            if (nextMedia.dataset.mediaType === 'Database BOM') {
+                this.loadBOMContent(nextMedia, {});
+            }
+            
             this.playCurrentMedia();
         }
     }
@@ -778,7 +875,12 @@ class BRGMediaSliderWithBOM {
                 this.updateConnectionStatus('connected', 
                     `${action.charAt(0).toUpperCase() + action.slice(1)} - Success`);
                 this.showClickAlert(alertMessage || 'Action Completed!');
-                await this.pollForUpdates();
+                
+                // Force immediate update after clicker action
+                setTimeout(async () => {
+                    await this.pollForUpdates();
+                }, 100);
+                
             } else {
                 this.showError(result.error || 'Clicker action failed');
                 this.showClickAlert('Action Failed!', true);
@@ -816,6 +918,5 @@ window.addEventListener('beforeunload', () => {
     }
 });
 </script>
-
 </body>
 </html>
