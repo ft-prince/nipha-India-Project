@@ -12,7 +12,8 @@ urlpatterns = [
     # MISSING: Enhanced media endpoint with BOM integration
     path('<int:station_id>/media-with-bom/', views.get_station_media_with_bom, name='station_media_with_bom'),
     path('<int:station_id>/bom-render/', views.render_bom_for_slider, name='render_bom_for_slider'),
-    
+    # Add this URL pattern to your urls.py:
+path('<int:station_id>/bom-settings/', views.update_bom_settings, name='update_bom_settings'),
     # File streaming
     path('stream/video/<path:video_path>/', views.stream_video, name='stream_video'),
     path('stream/pdf/<path:pdf_path>/', views.stream_pdf, name='stream_pdf'),

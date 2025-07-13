@@ -388,7 +388,11 @@ body {
 
 .bom-indicator { background: rgba(52, 152, 219, 0.8); }
 .video-indicator { background: rgba(231, 76, 60, 0.8); }
-
+.doc-indicator { 
+    background: rgba(46, 204, 113, 0.8);
+    font-size: 18px;
+    padding: 15px 25px;
+}
 
 /* Error states */
 .error-message {
@@ -965,6 +969,7 @@ class BRGMediaSliderWithBOM {
                 // CRITICAL: Enhanced PDF handling for large rotated displays
                 element = this.createOptimizedPDFElement(media);
                 
+                indicator = document.createElement('div');
 
                 
             } else {

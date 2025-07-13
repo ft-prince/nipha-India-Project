@@ -8,7 +8,7 @@ import time
 from .models import (Station, Product, ProductMedia, AssemblyStage, 
                     AssemblyProcess, AssemblySession, BillOfMaterial,BOMTemplate, BOMItem, BOMTemplateItem)
 
-import math
+
 
 
 # for bom 
