@@ -1,3 +1,4 @@
+<!-- templates/brg_station_slider_enhanced.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -109,6 +110,15 @@ body {
     object-fit: contain;
     border: none;
     background-color: black;
+}
+
+.media-element.bom {
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    overflow: hidden;
 }
 
 .media-element.active {
@@ -306,9 +316,19 @@ body {
     display: none;
 }
 
+/* BOM indicator in status bar */
+.bom-status {
+    background: rgba(52, 152, 219, 0.8);
+    color: white;
+    padding: 5px 15px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
     </style>
 </head>
-<body >
+<body>
     <div class="main-container">
         <!-- Assembly Header -->
         <div class="assembly-header display-{{ station.display_number }}">
@@ -363,6 +383,13 @@ body {
         <!-- Status Bar -->
         <div class="status-bar">
             <span id="quantity-info">Quantity: {{ product_quantity|default:0 }}</span>
+            
+            {% if has_bom_data %}
+            <div class="bom-status" id="bom-status">
+                📋 BOM: {{ bom_item_count }} items
+            </div>
+            {% endif %}
+            
             <div class="loop-indicator {% if not loop_mode %}hidden{% endif %}" id="loop-indicator">
                 🔄 LOOP MODE - Processes 1A, 1B, 1C
             </div>
@@ -378,11 +405,10 @@ body {
         </div>
     </div>
 
-    <script>
-// Alternative polling-based solution instead of EventSource
-// Replace the EventSource code in your JavaScript with this:
-
-class BRGMediaSliderPolling {
+<!-- Enhanced JavaScript for Real-time BOM Updates -->
+<script>
+// Enhanced BRG Media Slider with Real-time BOM Streaming
+class BRGMediaSliderWithBOM {
     constructor(stationId, displayNumber) {
         this.stationId = stationId;
         this.displayNumber = displayNumber;
@@ -390,8 +416,9 @@ class BRGMediaSliderPolling {
         this.mediaElements = [];
         this.slideshowTimer = null;
         this.pollingInterval = null;
-        this.pollingDelay = 3000; // Poll every 3 seconds
+        this.pollingDelay = 2000; // REDUCED: Faster polling for real-time updates
         this.lastDataHash = null;
+        this.lastBomHash = null; // NEW: Track BOM changes separately
         
         // DOM elements
         this.containerElement = document.getElementById('slider-container');
@@ -405,6 +432,7 @@ class BRGMediaSliderPolling {
         this.leftControlsElement = document.getElementById('left-controls');
         this.rightControlsElement = document.getElementById('right-controls');
         this.clickAlertElement = document.getElementById('click-alert');
+        this.bomStatusElement = document.getElementById('bom-status');
         
         this.startPolling();
         this.setupKeyboardListeners();
@@ -412,10 +440,7 @@ class BRGMediaSliderPolling {
     }
 
     async startPolling() {
-        // Initial load
         await this.pollForUpdates();
-        
-        // Set up regular polling
         this.pollingInterval = setInterval(async () => {
             await this.pollForUpdates();
         }, this.pollingDelay);
@@ -423,25 +448,65 @@ class BRGMediaSliderPolling {
 
     async pollForUpdates() {
         try {
-            const response = await fetch(`/station/${this.stationId}/media/`);
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
+            // Get regular media data
+            const mediaResponse = await fetch(`/station/${this.stationId}/media/`);
+            if (!mediaResponse.ok) {
+                throw new Error(`HTTP ${mediaResponse.status}`);
+            }
+            const mediaData = await mediaResponse.json();
+            
+            // Get BOM data separately for real-time updates
+            let bomData = null;
+            if (this.displayNumber === 1) {
+                try {
+                    const bomResponse = await fetch(`/station/api/station/${this.stationId}/bom-data/`);
+                    if (bomResponse.ok) {
+                        bomData = await bomResponse.json();
+                    }
+                } catch (bomError) {
+                    console.log('No BOM data available:', bomError);
+                }
             }
             
-            const data = await response.json();
-            
-            // Create a hash of the data to detect changes
-            const dataHash = JSON.stringify({
-                media: data.media.map(m => ({ id: m.id, url: m.url })),
-                station: data.station_info
+            // Create separate hashes for media and BOM to track changes independently
+            const mediaHash = JSON.stringify({
+                media: mediaData.media ? mediaData.media.map(m => ({ 
+                    id: m.id, 
+                    url: m.url, 
+                    type: m.type
+                })) : [],
+                station: mediaData.station_info
             });
             
-            if (this.lastDataHash !== dataHash) {
-                this.updateAssemblyInfo(data);
-                this.updateMedia(data);
+            const bomHash = bomData ? JSON.stringify({
+                items: bomData.bom_data.map(item => ({
+                    serial: item.serial_number,
+                    code: item.item_code,
+                    quantity: item.calculated_quantity
+                })),
+                template: bomData.bom_template,
+                stage: bomData.station_info.current_stage,
+                quantity: bomData.station_info.quantity
+            }) : null;
+            
+            // Check if anything changed
+            const mediaChanged = mediaHash !== this.lastDataHash;
+            const bomChanged = bomHash !== this.lastBomHash;
+            
+            if (mediaChanged || bomChanged) {
+                console.log('Update detected:', { mediaChanged, bomChanged });
+                
+                this.updateAssemblyInfo(mediaData, bomData);
+                
+                // Always update media if anything changed (BOM or media)
+                this.updateMedia(mediaData, bomData, bomChanged);
+                
                 this.hideError();
                 this.updateConnectionStatus('connected', 'Updated');
-                this.lastDataHash = dataHash;
+                
+                // Update hashes
+                this.lastDataHash = mediaHash;
+                this.lastBomHash = bomHash;
             }
             
         } catch (error) {
@@ -464,12 +529,10 @@ class BRGMediaSliderPolling {
     }
 
     setupClickerListeners() {
-        // Forward button
         document.getElementById('forward-btn').addEventListener('click', () => {
             this.sendClickerAction('forward', 'Forward ➤');
         });
 
-        // Backward button
         document.getElementById('backward-btn').addEventListener('click', () => {
             this.sendClickerAction('backward', 'Backward ◀');
         });
@@ -491,36 +554,31 @@ class BRGMediaSliderPolling {
         if (status === 'connected') {
             setTimeout(() => {
                 this.statusElement.classList.remove('visible');
-            }, 2000);
+            }, 1500); // REDUCED: Faster status update
         }
     }
 
-    updateAssemblyInfo(data) {
+    updateAssemblyInfo(data, bomData) {
         if (data.station_info) {
             const station = data.station_info;
             
-            // Update product info
             if (station.current_product) {
                 this.productCodeElement.textContent = station.current_product.code;
             }
             
-            // Update process info
             if (station.current_stage && station.current_process) {
                 this.processInfoElement.textContent = 
                     `${station.current_stage.name} - ${station.current_process.display_name}`;
             }
             
-            // Update quantity
             this.quantityInfoElement.textContent = `Quantity: ${station.quantity || 0}`;
             
-            // Update loop indicator
             if (station.loop_mode) {
                 this.loopIndicatorElement.classList.remove('hidden');
             } else {
                 this.loopIndicatorElement.classList.add('hidden');
             }
             
-            // Update navigation hints and clicker controls visibility
             if (station.clicker_enabled) {
                 this.navigationHintsElement.classList.remove('hidden');
                 this.leftControlsElement.classList.remove('hidden');
@@ -530,24 +588,76 @@ class BRGMediaSliderPolling {
                 this.leftControlsElement.classList.add('hidden');
                 this.rightControlsElement.classList.add('hidden');
             }
+            
+            // Update BOM status for Display 1
+            if (bomData && bomData.bom_data && this.bomStatusElement) {
+                const bomType = bomData.bom_template ? bomData.bom_template.bom_type : 'Unknown';
+                this.bomStatusElement.textContent = `📋 BOM: ${bomData.bom_data.length} items (${bomType})`;
+                this.bomStatusElement.classList.remove('hidden');
+            } else if (this.bomStatusElement) {
+                this.bomStatusElement.classList.add('hidden');
+            }
         }
     }
 
-    updateMedia(data) {
-        if (!data.media || data.media.length === 0) {
+    updateMedia(data, bomData, forceUpdate = false) {
+        // Combine regular media with BOM data for Display 1
+        let allMedia = [];
+        
+        // Add BOM as first item for Display 1 if available
+        if (this.displayNumber === 1 && bomData && bomData.bom_data && bomData.bom_data.length > 0) {
+            allMedia.push({
+                id: 'database_bom',
+                url: `/station/${this.stationId}/bom-render/`,
+                type: 'bom',
+                duration: 30,
+                media_type: 'Database BOM',
+                is_bom_data: true,
+                bom_items: bomData.bom_data.length,
+                bom_hash: this.lastBomHash // Add hash for tracking
+            });
+        }
+        
+        // Add regular media (videos, documents - no PDF BOMs)
+        if (data.media && data.media.length > 0) {
+            allMedia = allMedia.concat(data.media.filter(m => m.media_type !== 'Bill of Material'));
+        }
+        
+        if (allMedia.length === 0) {
             this.showError('No media available for current configuration');
             return;
         }
 
-        // Check if media has changed
         const currentUrls = this.mediaElements.map(el => el.dataset.url);
-        const newUrls = data.media.map(m => m.url);
+        const newUrls = allMedia.map(m => m.url);
+        
+        // Force update if BOM changed or media changed
+        const shouldUpdate = forceUpdate || JSON.stringify(currentUrls) !== JSON.stringify(newUrls);
 
-        if (JSON.stringify(currentUrls) !== JSON.stringify(newUrls)) {
+        if (shouldUpdate) {
+            console.log('Updating media elements...');
+            const wasPlayingBom = this.isCurrentlyShowingBOM();
+            
             this.clearCurrentMedia();
-            this.createNewMediaElements(data.media);
+            this.createNewMediaElements(allMedia);
+            
+            // If we were showing BOM and BOM changed, stay on BOM
+            if (wasPlayingBom && this.hasBOMElement()) {
+                this.currentIndex = 0; // BOM is always first
+            }
+            
             this.playCurrentMedia();
         }
+    }
+
+    isCurrentlyShowingBOM() {
+        if (this.mediaElements.length === 0 || this.currentIndex >= this.mediaElements.length) return false;
+        const currentElement = this.mediaElements[this.currentIndex];
+        return currentElement && currentElement.dataset.mediaType === 'Database BOM';
+    }
+
+    hasBOMElement() {
+        return this.mediaElements.some(el => el.dataset.mediaType === 'Database BOM');
     }
 
     clearCurrentMedia() {
@@ -555,7 +665,7 @@ class BRGMediaSliderPolling {
             clearTimeout(this.slideshowTimer);
         }
         this.stopCurrentMedia();
-        // Clear media but preserve clicker controls
+        
         const mediaChildren = Array.from(this.containerElement.children).filter(
             child => !child.classList.contains('clicker-controls') && 
                      !child.classList.contains('error-message')
@@ -577,41 +687,55 @@ class BRGMediaSliderPolling {
 
     createMediaElement(media, index) {
         let element;
-        const type = media.type.toLowerCase();
+        let indicator;
 
-        // Create media type indicator
-        const indicator = document.createElement('div');
-        indicator.className = 'media-type-indicator';
-        
-        if (['mp4', 'mov'].includes(type)) {
-            element = document.createElement('video');
-            element.src = media.url;
-            element.className = 'media-element';
-            element.controls = false;
-            element.loop = false;
-            element.muted = true;
-            element.playsInline = true;
-            element.addEventListener('ended', () => this.switchMedia());
-            element.addEventListener('error', (e) => this.handleMediaError(e));
+        if (media.is_bom_data || media.type === 'bom') {
+            // Create Database BOM element
+            element = document.createElement('div');
+            element.className = 'media-element bom';
+            element.dataset.url = media.url;
+            element.dataset.duration = media.duration * 1000;
+            element.dataset.mediaType = 'Database BOM';
+            element.dataset.bomHash = media.bom_hash || ''; // Track BOM changes
             
-            indicator.textContent = '🎥 Video';
-            indicator.className += ' video-indicator';
-        } else if (type === 'pdf') {
-            element = document.createElement('embed');
-            element.src = media.url + '#toolbar=0&navpanes=0';
-            element.className = 'media-element pdf';
-            element.type = 'application/pdf';
+            // Load BOM content via fetch
+            this.loadBOMContent(element, media);
             
-            if (media.media_type === 'Bill of Material') {
-                indicator.textContent = '📋 BOM';
-                indicator.className += ' bom-indicator';
-            } else {
-                indicator.textContent = '📄 Document';
-                indicator.className += ' doc-indicator';
-            }
+            indicator = document.createElement('div');
+            indicator.className = 'media-type-indicator bom-indicator';
+            indicator.textContent = '📋 Real-time BOM';
+            
         } else {
-            console.warn(`Unsupported media type: ${type}`);
-            return null;
+            const type = media.type.toLowerCase();
+            
+            if (['mp4', 'mov'].includes(type)) {
+                element = document.createElement('video');
+                element.src = media.url;
+                element.className = 'media-element';
+                element.controls = false;
+                element.loop = false;
+                element.muted = true;
+                element.playsInline = true;
+                element.addEventListener('ended', () => this.switchMedia());
+                element.addEventListener('error', (e) => this.handleMediaError(e));
+                
+                indicator = document.createElement('div');
+                indicator.className = 'media-type-indicator video-indicator';
+                indicator.textContent = '🎥 Video';
+                
+            } else if (type === 'pdf') {
+                element = document.createElement('embed');
+                element.src = media.url + '#toolbar=0&navpanes=0';
+                element.className = 'media-element pdf';
+                element.type = 'application/pdf';
+                
+                indicator = document.createElement('div');
+                indicator.className = 'media-type-indicator doc-indicator';
+                indicator.textContent = '📄 Document';
+            } else {
+                console.warn(`Unsupported media type: ${type}`);
+                return null;
+            }
         }
 
         element.dataset.duration = media.duration * 1000;
@@ -619,10 +743,39 @@ class BRGMediaSliderPolling {
         element.dataset.mediaType = media.media_type;
         element.className += index === 0 ? ' active' : '';
         
-        // Add indicator to element
-        element.appendChild(indicator);
+        if (indicator) {
+            element.appendChild(indicator);
+        }
         
         return element;
+    }
+
+    async loadBOMContent(element, media) {
+        try {
+            // Add timestamp to prevent caching for real-time updates
+            const timestamp = new Date().getTime();
+            const response = await fetch(`/station/${this.stationId}/bom-render/?t=${timestamp}`);
+            
+            if (response.ok) {
+                const bomHTML = await response.text();
+                element.innerHTML = bomHTML;
+                console.log('BOM content refreshed');
+            } else {
+                element.innerHTML = '<div class="bom-error" style="color: white; text-align: center; padding: 50px;">Failed to load BOM data</div>';
+            }
+        } catch (error) {
+            console.error('Error loading BOM content:', error);
+            element.innerHTML = '<div class="bom-error" style="color: white; text-align: center; padding: 50px;">Error loading BOM data</div>';
+        }
+    }
+
+    async refreshCurrentBOMContent() {
+        // NEW: Method to refresh BOM content without rebuilding entire media
+        const currentElement = this.mediaElements[this.currentIndex];
+        if (currentElement && currentElement.dataset.mediaType === 'Database BOM') {
+            console.log('Refreshing current BOM content...');
+            await this.loadBOMContent(currentElement, {});
+        }
     }
 
     playCurrentMedia() {
@@ -639,7 +792,6 @@ class BRGMediaSliderPolling {
                 this.switchMedia();
             });
         } else {
-            // For PDFs and other static content, set timer
             this.slideshowTimer = setTimeout(() => this.switchMedia(), duration);
         }
     }
@@ -660,6 +812,10 @@ class BRGMediaSliderPolling {
     switchMedia() {
         if (this.mediaElements.length === 0) return;
         if (this.mediaElements.length === 1) {
+            // If only one element and it's BOM, refresh its content periodically
+            if (this.isCurrentlyShowingBOM()) {
+                this.refreshCurrentBOMContent();
+            }
             this.stopCurrentMedia();
             this.playCurrentMedia();
             return;
@@ -678,6 +834,12 @@ class BRGMediaSliderPolling {
         if (nextMedia) {
             nextMedia.classList.remove('fade-out');
             nextMedia.classList.add('active');
+            
+            // If switching to BOM, refresh its content
+            if (nextMedia.dataset.mediaType === 'Database BOM') {
+                this.loadBOMContent(nextMedia, {});
+            }
+            
             this.playCurrentMedia();
         }
     }
@@ -713,8 +875,12 @@ class BRGMediaSliderPolling {
                 this.updateConnectionStatus('connected', 
                     `${action.charAt(0).toUpperCase() + action.slice(1)} - Success`);
                 this.showClickAlert(alertMessage || 'Action Completed!');
+                
                 // Force immediate update after clicker action
-                await this.pollForUpdates();
+                setTimeout(async () => {
+                    await this.pollForUpdates();
+                }, 100);
+                
             } else {
                 this.showError(result.error || 'Clicker action failed');
                 this.showClickAlert('Action Failed!', true);
@@ -738,11 +904,11 @@ class BRGMediaSliderPolling {
     }
 }
 
-// Initialize the slider when page loads
+// Initialize the enhanced slider when page loads
 document.addEventListener('DOMContentLoaded', () => {
     const stationId = {{ station.id }};
     const displayNumber = {{ station.display_number }};
-    window.mediaSlider = new BRGMediaSliderPolling(stationId, displayNumber);
+    window.mediaSlider = new BRGMediaSliderWithBOM(stationId, displayNumber);
 });
 
 // Clean up on page unload
@@ -752,6 +918,5 @@ window.addEventListener('beforeunload', () => {
     }
 });
 </script>
-
 </body>
 </html>

@@ -1,45 +1,47 @@
-<!-- templates/bom_slider_fragment.html - UPDATED with increased height -->
+<!-- templates/bom_slider_fragment.html - OPTIMIZED FOR LARGE SCREENS WITH MULTIPLE COLUMNS -->
 <div class="bom-container-slider">
     <style>
         .bom-container-slider {
             width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vw; /* CHANGED: Use viewport width for rotated display */
+            background: linear-gradient(135deg, #1a1a1a 0%, #2c2c2c 100%); /* CHANGED: Much darker background */
             color: white;
             overflow: hidden;
             position: relative;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
         }
         
         .bom-header-slider {
             background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
-            padding: 15px 20px;
+            padding: 20px 30px;
             text-align: center;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
             flex-shrink: 0;
         }
         
         .bom-title-slider {
-            font-size: 1.8em;
+            font-size: 2.8em; /* Slightly reduced to save space */
             font-weight: bold;
             margin: 0;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
         }
         
         .bom-subtitle-slider {
-            font-size: 0.9em;
-            margin: 5px 0 0 0;
+            font-size: 1.4em;
+            margin: 8px 0 0 0;
             opacity: 0.9;
         }
         
         .bom-info-slider {
             display: flex;
             justify-content: space-around;
-            padding: 12px;
-            background: rgba(0,0,0,0.2);
-            border-bottom: 2px solid rgba(255,255,255,0.1);
+            padding: 15px 30px;
+            background: rgba(0,0,0,0.6); /* CHANGED: Much darker info section */
+            border-bottom: 2px solid rgba(255,255,255,0.2); /* INCREASED: More visible border */
             flex-shrink: 0;
         }
         
@@ -48,132 +50,338 @@
         }
         
         .bom-info-label {
-            font-size: 0.7em;
+            font-size: 1.0em;
             opacity: 0.8;
-            margin-bottom: 3px;
+            margin-bottom: 5px;
             font-weight: bold;
         }
         
         .bom-info-value {
-            font-size: 1.1em;
+            font-size: 1.8em;
             font-weight: bold;
         }
         
         .bom-table-container-slider {
-            height: calc(100% - 120px); /* INCREASED: More space for table */
-            overflow-y: auto;
-            padding: 0;
             flex: 1;
+            overflow: hidden;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
         }
         
         .bom-table-slider {
             width: 100%;
             border-collapse: collapse;
-            font-size: 12px; /* DECREASED: Smaller font to fit more content */
-            background: rgba(255,255,255,0.95);
-            color: #2c3e50;
+            background: rgba(255,255,255,0.98); /* INCREASED: More opaque white background */
+            color: #1a1a1a; /* CHANGED: Darker text for better contrast */
+            flex: 1;
+            display: table;
+            table-layout: fixed; /* CRITICAL: Fixed layout for consistent column widths */
+            font-size: calc(1.4rem + 0.8vw); /* INCREASED: Much larger base font size */
+            box-shadow: 0 0 20px rgba(0,0,0,0.3); /* ADDED: Table shadow for depth */
         }
         
         .bom-table-slider th {
-            background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+            background: linear-gradient(135deg, #1a1a1a 0%, #2c2c2c 100%); /* CHANGED: Dark header background */
             color: white;
-            padding: 10px 6px; /* DECREASED: Less padding for more rows */
-            text-align: left;
+            padding: 18px 12px; /* INCREASED: Much larger padding */
+            text-align: center;
             font-weight: bold;
-            font-size: 19px; /* DECREASED: Smaller header text */
-            border-bottom: 2px solid #2c3e50;
+            font-size: calc(1.6rem + 0.6vw); /* INCREASED: Much larger header font size */
+            border-bottom: 4px solid #444; /* INCREASED: Thicker border */
+            border-right: 2px solid rgba(255,255,255,0.3); /* INCREASED: More visible border */
             position: sticky;
             top: 0;
             z-index: 10;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7); /* INCREASED: Stronger text shadow */
         }
         
         .bom-table-slider td {
-            padding: 22px 16px; /* DECREASED: Less padding for more rows */
-            border-bottom: 1px solid #e9ecef;
-            vertical-align: top;
-            font-size: 2.1em;
-
+            padding: 16px 10px; /* INCREASED: Much larger padding */
+            border-bottom: 3px solid #ddd; /* INCREASED: Much thicker border */
+            border-right: 3px solid #ddd; /* INCREASED: Much thicker border */
+            vertical-align: middle;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: calc(1.2rem + 0.6vw); /* ADDED: Explicit larger font size for tbody */
+            line-height: 1.4; /* ADDED: Better line spacing */
+        }
+        
+        .bom-table-slider tbody {
+            display: table-row-group;
+        }
+        
+        .bom-table-slider tbody tr {
+            display: table-row;
+            height: calc((100vw - 220px) / var(--visible-rows, 8)); /* CHANGED: Use viewport width for rotated display */
         }
         
         .bom-table-slider tbody tr:nth-child(even) {
-            background-color: rgba(248, 249, 250, 0.8);
+            background-color: rgba(245, 245, 245, 0.98); /* CHANGED: Lighter and more opaque even rows */
         }
         
         .bom-table-slider tbody tr:hover {
-            background-color: rgba(227, 242, 253, 0.9);
-            transform: scale(1.01);
+            background-color: rgba(52, 152, 219, 0.3); /* INCREASED: Stronger blue hover */
+            transform: scale(1.002); /* INCREASED: Slightly more scale */
             transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2); /* INCREASED: Stronger hover shadow */
         }
         
+        /* COLUMN SPECIFIC STYLES - Auto-adjusting based on number of columns */
+        /* ENHANCED: Special emphasis on photo and description columns */
+        
+        /* For 5 columns - ENHANCED LAYOUT */
+        .bom-table-slider.cols-5 th:nth-child(1), /* S.NO */
+        .bom-table-slider.cols-5 td:nth-child(1) {
+            width: 8%; /* REDUCED: Make serial number smaller */
+        }
+        
+        .bom-table-slider.cols-5 th:nth-child(2), /* PHOTO */
+        .bom-table-slider.cols-5 td:nth-child(2) {
+            width: 28%; /* INCREASED: Much larger photo column */
+        }
+        
+        .bom-table-slider.cols-5 th:nth-child(3), /* DESCRIPTION */
+        .bom-table-slider.cols-5 td:nth-child(3) {
+            width: 35%; /* INCREASED: Much larger description column */
+        }
+        
+        .bom-table-slider.cols-5 th:nth-child(4), /* PART NO */
+        .bom-table-slider.cols-5 td:nth-child(4) {
+            width: 17%; /* ADJUSTED: Medium part number column */
+        }
+        
+        .bom-table-slider.cols-5 th:nth-child(5), /* QTY */
+        .bom-table-slider.cols-5 td:nth-child(5) {
+            width: 12%; /* ADJUSTED: Smaller quantity column */
+        }
+        
+        /* For 6 columns */
+        .bom-table-slider.cols-6 th,
+        .bom-table-slider.cols-6 td {
+            width: 16.67%;
+        }
+        
+        .bom-table-slider.cols-6 th:nth-child(2), /* PHOTO */
+        .bom-table-slider.cols-6 td:nth-child(2) {
+            width: 22%; /* INCREASED: Larger photo column for 6 cols */
+        }
+        
+        .bom-table-slider.cols-6 th:nth-child(3), /* DESCRIPTION */
+        .bom-table-slider.cols-6 td:nth-child(3) {
+            width: 26%; /* INCREASED: Larger description column for 6 cols */
+        }
+        
+        /* For 7 columns */
+        .bom-table-slider.cols-7 th,
+        .bom-table-slider.cols-7 td {
+            width: 14.29%;
+        }
+        
+        .bom-table-slider.cols-7 th:nth-child(2), /* PHOTO */
+        .bom-table-slider.cols-7 td:nth-child(2) {
+            width: 20%; /* INCREASED: Larger photo column for 7 cols */
+        }
+        
+        .bom-table-slider.cols-7 th:nth-child(3), /* DESCRIPTION */
+        .bom-table-slider.cols-7 td:nth-child(3) {
+            width: 22%; /* INCREASED: Larger description column for 7 cols */
+        }
+        
+        /* For 8 columns */
+        .bom-table-slider.cols-8 th,
+        .bom-table-slider.cols-8 td {
+            width: 12.5%;
+        }
+        
+        .bom-table-slider.cols-8 th:nth-child(2), /* PHOTO */
+        .bom-table-slider.cols-8 td:nth-child(2) {
+            width: 18%; /* INCREASED: Larger photo column for 8 cols */
+        }
+        
+        .bom-table-slider.cols-8 th:nth-child(3), /* DESCRIPTION */
+        .bom-table-slider.cols-8 td:nth-child(3) {
+            width: 20%; /* INCREASED: Larger description column for 8 cols */
+        }
+        
+        /* For 9 columns */
+        .bom-table-slider.cols-9 th,
+        .bom-table-slider.cols-9 td {
+            width: 11.11%;
+        }
+        
+        .bom-table-slider.cols-9 th:nth-child(2), /* PHOTO */
+        .bom-table-slider.cols-9 td:nth-child(2) {
+            width: 16%; /* INCREASED: Larger photo column for 9 cols */
+        }
+        
+        .bom-table-slider.cols-9 th:nth-child(3), /* DESCRIPTION */
+        .bom-table-slider.cols-9 td:nth-child(3) {
+            width: 18%; /* INCREASED: Larger description column for 9 cols */
+        }
+        
+        /* For 10 columns */
+        .bom-table-slider.cols-10 th,
+        .bom-table-slider.cols-10 td {
+            width: 10%;
+        }
+        
+        .bom-table-slider.cols-10 th:nth-child(2), /* PHOTO */
+        .bom-table-slider.cols-10 td:nth-child(2) {
+            width: 15%; /* INCREASED: Larger photo column for 10 cols */
+        }
+        
+        .bom-table-slider.cols-10 th:nth-child(3), /* DESCRIPTION */
+        .bom-table-slider.cols-10 td:nth-child(3) {
+            width: 17%; /* INCREASED: Larger description column for 10 cols */
+        }
+        
+        /* For 11+ columns (flexible) */
+        .bom-table-slider.cols-11 th,
+        .bom-table-slider.cols-11 td {
+            width: calc(100% / 11);
+        }
+        
+        .bom-table-slider.cols-12 th,
+        .bom-table-slider.cols-12 td {
+            width: calc(100% / 12);
+        }
+        
+        /* SPECIAL COLUMN STYLES */
         .serial-number-slider {
             font-weight: bold;
-            color: #2c3e50;
-            text-align: center;
-            width: 40px; /* DECREASED: Narrower column */
-            background: #ecf0f1;
+            color: #1a1a1a; /* CHANGED: Darker text */
+            background: #f5f5f5; /* CHANGED: Lighter background for better contrast */
+            font-size: calc(1.6rem + 0.8vw); /* INCREASED: Much larger serial number font */
+            min-width: 60px; /* REDUCED: Smaller serial number column */
         }
         
         .item-photo-slider {
-            width: 90px; /* DECREASED: Smaller photos */
-            height: 90px;
+            width: calc(180px + 6vw); /* MASSIVELY INCREASED: Much larger photos */
+            height: calc(180px + 6vw);
+            max-width: 350px; /* MASSIVELY INCREASED: Much larger maximum size */
+            max-height: 350px;
             object-fit: cover;
-            border-radius: 6px;
-            border: 2px solid #bdc3c7;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 12px; /* INCREASED: More rounded corners */
+            border: 4px solid #bdc3c7; /* INCREASED: Thicker border */
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3); /* INCREASED: Stronger shadow */
+            display: block;
+            margin: 8px auto; /* INCREASED: More margin */
         }
         
         .item-photo-placeholder-slider {
-            width: 50px; /* DECREASED: Smaller placeholder */
-            height: 50px;
-            background: #ecf0f1;
-            border: 2px dashed #bdc3c7;
-            border-radius: 6px;
+            width: calc(180px + 6vw); /* MASSIVELY INCREASED: Much larger placeholder */
+            height: calc(180px + 6vw);
+            max-width: 350px; /* MASSIVELY INCREASED: Much larger maximum size */
+            max-height: 350px;
+            background: #e0e0e0; /* CHANGED: Lighter placeholder background */
+            border: 4px dashed #999; /* INCREASED: Thicker dashed border */
+            border-radius: 12px; /* INCREASED: More rounded corners */
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #7f8c8d;
-            font-size: 9px;
+            color: #555; /* CHANGED: Darker placeholder text */
+            font-size: calc(1.4rem + 0.6vw); /* MASSIVELY INCREASED: Much larger placeholder text */
             text-align: center;
+            margin: 8px auto; /* INCREASED: More margin */
+            font-weight: bold;
+        }
+        
+        .photo-column {
+            text-align: center;
+            min-width: calc(200px + 6vw); /* MASSIVELY INCREASED: Much wider photo column */
+            max-width: calc(380px + 6vw); /* ADDED: Maximum width for photo column */
         }
         
         .item-description-slider {
             font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 2px;
-            font-size: 15px; /* DECREASED: Smaller text */
-            line-height: 1.2;
+            color: #1a1a1a; /* CHANGED: Much darker text for better contrast */
+            margin-bottom: 8px; /* INCREASED: More spacing */
+            font-size: calc(1.8rem + 0.8vw); /* MASSIVELY INCREASED: Much larger description font */
+            line-height: 1.4; /* INCREASED: Better line spacing */
+            white-space: normal; /* Allow wrapping for descriptions */
+            overflow: visible;
+            text-overflow: clip;
+            text-align: left; /* ADDED: Left align for better readability */
+            padding: 4px 8px; /* ADDED: Padding for better spacing */
         }
         
         .item-code-slider {
-            font-size: 13px; /* DECREASED: Smaller code text */
-            color: #7f8c8d;
+            font-size: calc(1.4rem + 0.6vw); /* MASSIVELY INCREASED: Much larger code font */
+            color: #444; /* CHANGED: Darker code text */
             font-family: 'Courier New', monospace;
+            font-weight: 600; /* ADDED: Semi-bold for better visibility */
+            text-align: left; /* ADDED: Left align for better readability */
+            padding: 2px 8px; /* ADDED: Padding for better spacing */
+            background: rgba(240,240,240,0.8); /* ADDED: Light background for code */
+            border-radius: 4px; /* ADDED: Rounded corners for code */
+            margin-top: 4px; /* ADDED: Margin for separation */
+        }
+        
+        .description-column {
+            text-align: left;
+            white-space: normal;
+            overflow: visible;
+            min-width: calc(220px + 8vw); /* MASSIVELY INCREASED: Much wider description column */
+            max-width: calc(450px + 8vw); /* ADDED: Maximum width for description column */
+            padding: 12px 16px; /* INCREASED: More padding for descriptions */
         }
         
         .part-number-slider {
             font-family: 'Courier New', monospace;
             font-weight: bold;
-            color: #e74c3c;
-            font-size: 10px; /* DECREASED: Smaller part number */
+            color: #d32f2f; /* CHANGED: Darker red for better contrast */
+            font-size: calc(1.3rem + 0.5vw); /* INCREASED: Much larger part number font */
         }
         
         .quantity-slider {
-            font-size: 12px;
+            font-size: calc(1.6rem + 0.7vw); /* INCREASED: Much larger quantity font */
             font-weight: bold;
-            color: #27ae60;
-            text-align: center;
+            color: #1b5e20; /* CHANGED: Darker green for better contrast */
         }
         
         .supplier-slider {
-            font-size: 9px; /* DECREASED: Smaller supplier text */
-            color: #7f8c8d;
+            font-size: calc(1.2rem + 0.4vw); /* INCREASED: Much larger supplier font */
+            color: #333; /* CHANGED: Darker supplier text */
+            font-weight: 600; /* ADDED: Semi-bold */
         }
         
         .notes-slider {
-            font-size: 9px; /* DECREASED: Smaller notes text */
-            color: #7f8c8d;
+            font-size: calc(1.0rem + 0.4vw); /* INCREASED: Much larger notes font */
+            color: #333; /* CHANGED: Darker notes text */
             font-style: italic;
-            max-width: 120px; /* DECREASED: Narrower notes column */
+            white-space: normal;
+            overflow: visible;
+            font-weight: 500; /* ADDED: Medium weight for better visibility */
+        }
+        
+        .status-slider {
+            font-size: calc(1.2rem + 0.4vw); /* INCREASED: Much larger status font */
+            font-weight: bold;
+            padding: 6px 12px; /* INCREASED: Larger padding */
+            border-radius: 6px; /* INCREASED: More rounded */
+            text-transform: uppercase;
+            background: #f5f5f5; /* CHANGED: Lighter background for status */
+            color: #1a1a1a; /* ADDED: Dark text for status */
+            border: 2px solid #ddd; /* ADDED: Border for definition */
+        }
+        
+        .location-slider {
+            font-size: calc(1.2rem + 0.4vw); /* INCREASED: Much larger location font */
+            color: #1565c0; /* CHANGED: Darker blue for better contrast */
+            font-weight: bold;
+        }
+        
+        .cost-slider {
+            font-size: calc(1.3rem + 0.5vw); /* INCREASED: Much larger cost font */
+            color: #4a148c; /* CHANGED: Darker purple for better contrast */
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
         }
         
         .no-bom-data-slider {
@@ -187,55 +395,166 @@
         }
         
         .no-bom-icon-slider {
-            font-size: 4em;
-            margin-bottom: 20px;
+            font-size: 6em;
+            margin-bottom: 30px;
             opacity: 0.6;
+        }
+        
+        .no-bom-data-slider h3 {
+            font-size: 2.2em;
+            margin-bottom: 20px;
+        }
+        
+        .no-bom-data-slider p {
+            font-size: 1.3em;
+            margin: 10px 0;
         }
         
         .bom-watermark {
             position: absolute;
-            bottom: 5px;
-            right: 15px;
-            font-size: 0.7em;
-            opacity: 0.6;
-            background: rgba(0,0,0,0.3);
-            padding: 3px 8px;
-            border-radius: 8px;
+            bottom: 10px;
+            right: 20px;
+            font-size: calc(0.8rem + 0.2vw);
+            opacity: 0.9; /* INCREASED: More visible watermark */
+            background: rgba(0,0,0,0.8); /* CHANGED: Darker watermark background */
+            color: white; /* ADDED: White text for contrast */
+            padding: 8px 15px; /* INCREASED: Larger padding */
+            border-radius: 10px; /* INCREASED: More rounded */
+            border: 1px solid rgba(255,255,255,0.2); /* ADDED: Subtle border */
         }
         
-        /* ENHANCED: Better scrollbar styling */
-        .bom-table-container-slider::-webkit-scrollbar {
-            width: 6px;
-        }
-        
-        .bom-table-container-slider::-webkit-scrollbar-track {
-            background: rgba(0,0,0,0.1);
-            border-radius: 3px;
-        }
-        
-        .bom-table-container-slider::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.4);
-            border-radius: 3px;
-        }
-        
-        .bom-table-container-slider::-webkit-scrollbar-thumb:hover {
-            background: rgba(255,255,255,0.6);
-        }
-        
-        /* ADDED: Compact mode for better space utilization */
-        .compact-row {
-            height: auto;
-            min-height: 35px;
-        }
-        
-        /* ADDED: Stage indicator styling */
         .stage-indicator {
             background: rgba(255,255,255,0.2);
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 0.8em;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.6em;
             display: inline-block;
-            margin-left: 10px;
+            margin-left: 12px;
+        }
+        
+        /* RESPONSIVE BREAKPOINTS FOR ROTATED DISPLAY */
+        
+        /* Large screens (1920px+) - ROTATED */
+        @media screen and (min-width: 1920px) {
+            .bom-table-slider {
+                font-size: calc(1.6rem + 0.6vw); /* INCREASED: Even larger fonts for rotated display */
+            }
+            .bom-table-slider th {
+                font-size: calc(1.8rem + 0.4vw); /* INCREASED: Larger headers */
+                padding: 20px 15px; /* INCREASED: More padding */
+            }
+            .bom-table-slider td {
+                font-size: calc(1.4rem + 0.4vw); /* INCREASED: Larger cell text */
+                padding: 18px 12px; /* INCREASED: More padding */
+            }
+            .item-photo-slider, .item-photo-placeholder-slider {
+                width: calc(220px + 5vw); /* MASSIVELY INCREASED: Even larger images */
+                height: calc(220px + 5vw);
+                max-width: 400px; /* MASSIVELY INCREASED: Much larger maximum */
+                max-height: 400px;
+            }
+            .serial-number-slider {
+                font-size: calc(1.8rem + 0.6vw); /* INCREASED: Larger serial numbers */
+            }
+            .item-description-slider {
+                font-size: calc(2.0rem + 0.6vw); /* MASSIVELY INCREASED: Much larger descriptions */
+            }
+            .item-code-slider {
+                font-size: calc(1.6rem + 0.4vw); /* MASSIVELY INCREASED: Much larger code text */
+            }
+            .quantity-slider {
+                font-size: calc(1.8rem + 0.5vw); /* INCREASED: Larger quantities */
+            }
+        }
+        
+        /* Extra large screens (2560px+) - ROTATED */
+        @media screen and (min-width: 2560px) {
+            .bom-title-slider { font-size: 4em; /* INCREASED */ }
+            .bom-subtitle-slider { font-size: 2.2em; /* INCREASED */ }
+            .bom-info-value { font-size: 2.8em; /* INCREASED */ }
+            .bom-table-slider {
+                font-size: calc(1.8rem + 0.4vw); /* INCREASED */
+            }
+            .bom-table-slider th {
+                font-size: calc(2.0rem + 0.3vw); /* INCREASED: Much larger headers */
+                padding: 24px 18px; /* INCREASED: Even more padding */
+            }
+            .bom-table-slider td {
+                font-size: calc(1.6rem + 0.3vw); /* INCREASED: Much larger cell text */
+                padding: 20px 15px; /* INCREASED: Even more padding */
+            }
+            .item-photo-slider, .item-photo-placeholder-slider {
+                width: calc(260px + 4vw); /* MASSIVELY INCREASED: Massive photos */
+                height: calc(260px + 4vw);
+                max-width: 450px; /* MASSIVELY INCREASED: Much larger maximum */
+                max-height: 450px;
+            }
+            .serial-number-slider {
+                font-size: calc(2.0rem + 0.5vw); /* INCREASED: Much larger serial numbers */
+            }
+            .item-description-slider {
+                font-size: calc(2.4rem + 0.5vw); /* MASSIVELY INCREASED: Massive descriptions */
+            }
+            .item-code-slider {
+                font-size: calc(1.8rem + 0.3vw); /* MASSIVELY INCREASED: Massive code text */
+            }
+            .quantity-slider {
+                font-size: calc(2.0rem + 0.4vw); /* INCREASED: Much larger quantities */
+            }
+        }
+        
+        /* Ultra-wide screens (3440px+) - ROTATED */
+        @media screen and (min-width: 3440px) {
+            .bom-title-slider { font-size: 5em; /* INCREASED */ }
+            .bom-subtitle-slider { font-size: 2.8em; /* INCREASED */ }
+            .bom-info-value { font-size: 3.5em; /* INCREASED */ }
+            .bom-table-slider {
+                font-size: calc(2.0rem + 0.3vw); /* INCREASED */
+            }
+            .bom-table-slider th {
+                font-size: calc(2.4rem + 0.2vw); /* INCREASED: Massive headers */
+                padding: 28px 20px; /* INCREASED: Maximum padding */
+            }
+            .bom-table-slider td {
+                font-size: calc(1.8rem + 0.2vw); /* INCREASED: Massive cell text */
+                padding: 24px 18px; /* INCREASED: Maximum padding */
+            }
+            .item-photo-slider, .item-photo-placeholder-slider {
+                width: calc(300px + 3vw); /* MASSIVELY INCREASED: Ultra-large photos */
+                height: calc(300px + 3vw);
+                max-width: 500px; /* MASSIVELY INCREASED: Maximum size for ultra-wide */
+                max-height: 500px;
+            }
+            .serial-number-slider {
+                font-size: calc(2.4rem + 0.4vw); /* INCREASED: Massive serial numbers */
+            }
+            .item-description-slider {
+                font-size: calc(2.8rem + 0.4vw); /* MASSIVELY INCREASED: Ultra-large descriptions */
+            }
+            .item-code-slider {
+                font-size: calc(2.0rem + 0.2vw); /* MASSIVELY INCREASED: Ultra-large code text */
+            }
+            .quantity-slider {
+                font-size: calc(2.4rem + 0.3vw); /* INCREASED: Massive quantities */
+            }
+        }
+        
+        /* DYNAMIC ROW SIZING BASED ON DATA COUNT - ROTATED DISPLAY */
+        .bom-table-container-slider[data-row-count="1"] .bom-table-slider tbody tr { height: calc(100vw - 220px); }
+        .bom-table-container-slider[data-row-count="2"] .bom-table-slider tbody tr { height: calc((100vw - 220px) / 2); }
+        .bom-table-container-slider[data-row-count="3"] .bom-table-slider tbody tr { height: calc((100vw - 220px) / 3); }
+        .bom-table-container-slider[data-row-count="4"] .bom-table-slider tbody tr { height: calc((100vw - 220px) / 4); }
+        .bom-table-container-slider[data-row-count="5"] .bom-table-slider tbody tr { height: calc((100vw - 220px) / 5); }
+        .bom-table-container-slider[data-row-count="6"] .bom-table-slider tbody tr { height: calc((100vw - 220px) / 6); }
+        .bom-table-container-slider[data-row-count="7"] .bom-table-slider tbody tr { height: calc((100vw - 220px) / 7); }
+        .bom-table-container-slider[data-row-count="8"] .bom-table-slider tbody tr { height: calc((100vw - 220px) / 8); }
+        .bom-table-container-slider[data-row-count="9"] .bom-table-slider tbody tr { height: calc((100vw - 220px) / 9); }
+        .bom-table-container-slider[data-row-count="10"] .bom-table-slider tbody tr { height: calc((100vw - 220px) / 10); }
+        
+        /* For more rows, set minimum readable height */
+        .bom-table-container-slider[data-row-count] .bom-table-slider tbody tr {
+            min-height: 120px; /* MASSIVELY INCREASED: Much larger minimum height for better image/text visibility */
+            height: max(120px, calc((100vw - 220px) / var(--row-count, 8)));
         }
     </style>
     
@@ -243,11 +562,8 @@
     <div class="bom-header-slider">
         <h1 class="bom-title-slider">
             Bill of Material
-            {% if stage %}
-            <span class="stage-indicator">{{ stage.display_name }}</span>
-            {% endif %}
+          
         </h1>
-        <p class="bom-subtitle-slider">{{ product.code }} - {{ product.name }}</p>
     </div>
     
     <div class="bom-info-slider">
@@ -269,23 +585,30 @@
         </div>
     </div>
     
-    <div class="bom-table-container-slider">
-        <table class="bom-table-slider">
+    <div class="bom-table-container-slider" data-row-count="{{ bom_data|length }}">
+        <table class="bom-table-slider cols-{{ num_columns|default:5 }}">
             <thead>
                 <tr>
-                    <th>S.NO</th>
-                    <th>PHOTO</th>
-                    <th>DESCRIPTION</th>
-                    <th>PART NO.</th>
-                    <th>QTY</th>
-
+                    <th class="serial-number-slider">S.NO</th>
+                    <th class="photo-column">PHOTO</th>
+                    <th class="description-column">DESCRIPTION</th>
+                    <th class="part-number-slider">PART NO.</th>
+                    <th class="quantity-slider">QTY</th>
+                    {% comment %}
+                    <!-- ADD MORE COLUMNS AS NEEDED -->
+                    <th class="supplier-slider">SUPPLIER</th>
+                    <th class="location-slider">LOCATION</th>
+                    <th class="status-slider">STATUS</th>
+                    <th class="cost-slider">COST</th>
+                    <th class="notes-slider">NOTES</th>
+                    {% endcomment %}
                 </tr>
             </thead>
             <tbody>
                 {% for item_data in bom_data %}
-                <tr class="compact-row">
+                <tr>
                     <td class="serial-number-slider">{{ item_data.serial_number|stringformat:"02d" }}</td>
-                    <td>
+                    <td class="photo-column">
                         {% if item_data.item.item_photo %}
                         <img src="{{ item_data.item.item_photo.url }}" 
                              alt="{{ item_data.item.item_description }}" 
@@ -296,13 +619,20 @@
                         </div>
                         {% endif %}
                     </td>
-                    <td>
+                    <td class="description-column">
                         <div class="item-description-slider">{{ item_data.item.item_description }}</div>
                         <div class="item-code-slider">{{ item_data.item.item_code }}</div>
                     </td>
                     <td class="part-number-slider">{{ item_data.item.part_number }}</td>
                     <td class="quantity-slider">{{ item_data.formatted_quantity }}</td>
-          
+                    {% comment %}
+                    <!-- ADD MORE DATA COLUMNS AS NEEDED -->
+                    <td class="supplier-slider">{{ item_data.item.supplier|default:"--" }}</td>
+                    <td class="location-slider">{{ item_data.item.location|default:"--" }}</td>
+                    <td class="status-slider">{{ item_data.item.status|default:"--" }}</td>
+                    <td class="cost-slider">${{ item_data.item.cost|default:"0.00" }}</td>
+                    <td class="notes-slider">{{ item_data.item.notes|default:"--" }}</td>
+                    {% endcomment %}
                 </tr>
                 {% endfor %}
             </tbody>
@@ -321,4 +651,31 @@
         <p>Check station configuration in admin panel.</p>
     </div>
     {% endif %}
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const table = document.querySelector('.bom-table-slider');
+            const container = document.querySelector('.bom-table-container-slider');
+            
+            if (table && container) {
+                // Count columns
+                const headerCells = table.querySelectorAll('thead th');
+                const columnCount = headerCells.length;
+                table.classList.add('cols-' + columnCount);
+                
+                // Count rows
+                const dataRows = table.querySelectorAll('tbody tr');
+                const rowCount = dataRows.length;
+                container.setAttribute('data-row-count', rowCount);
+                
+                // Set CSS custom property for row calculation
+                document.documentElement.style.setProperty('--row-count', rowCount);
+                
+                console.log('BOM Table initialized:', {
+                    columns: columnCount,
+                    rows: rowCount
+                });
+            }
+        });
+    </script>
 </div>

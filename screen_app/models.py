@@ -514,7 +514,7 @@ class Station(models.Model):
                     return process_list[-1]
         
         # Normal previous process logic
-        # Look for previous process in current stage
+        # Look for previous process in current stage 
         prev_process = AssemblyProcess.objects.filter(
             stage=self.current_stage,
             order__lt=self.current_process.order
