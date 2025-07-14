@@ -1,4 +1,4 @@
-<!-- templates/bom_slider_fragment.html - ENHANCED WITH SPLIT DISPLAY LOGIC -->
+<!-- templates/bom_slider_fragment.html - FIXED FOR 11-12 ITEMS DISPLAY -->
 <div class="bom-container-slider">
     <style>
         .bom-container-slider {
@@ -15,14 +15,14 @@
         
         .bom-header-slider {
             background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
-            padding: 20px 30px;
+            padding: 15px 25px; /* REDUCED: Smaller header padding to save space */
             text-align: center;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
             flex-shrink: 0;
         }
         
         .bom-title-slider {
-            font-size: 2.8em; /* Slightly reduced to save space */
+            font-size: 2.4em; /* REDUCED: Smaller title to save space */
             font-weight: bold;
             margin: 0;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
@@ -31,8 +31,8 @@
         }
         
         .bom-subtitle-slider {
-            font-size: 1.4em;
-            margin: 8px 0 0 0;
+            font-size: 1.2em; /* REDUCED: Smaller subtitle */
+            margin: 6px 0 0 0; /* REDUCED: Less margin */
             opacity: 0.9;
         }
         
@@ -40,11 +40,11 @@
         .split-indicator {
             background: rgba(255, 165, 0, 0.9);
             color: white;
-            padding: 8px 15px;
+            padding: 6px 12px; /* REDUCED: Smaller padding */
             border-radius: 20px;
-            font-size: 1.0em;
+            font-size: 0.9em; /* REDUCED: Smaller indicator */
             font-weight: bold;
-            margin-top: 10px;
+            margin-top: 8px; /* REDUCED: Less margin */
             display: inline-block;
             border: 2px solid rgba(255, 255, 255, 0.3);
         }
@@ -56,7 +56,7 @@
         .bom-info-slider {
             display: flex;
             justify-content: space-around;
-            padding: 15px 30px;
+            padding: 10px 25px; /* REDUCED: Smaller info section padding */
             background: rgba(0,0,0,0.6); /* CHANGED: Much darker info section */
             border-bottom: 2px solid rgba(255,255,255,0.2); /* INCREASED: More visible border */
             flex-shrink: 0;
@@ -67,14 +67,14 @@
         }
         
         .bom-info-label {
-            font-size: 1.0em;
+            font-size: 0.9em; /* REDUCED: Smaller info labels */
             opacity: 0.8;
-            margin-bottom: 5px;
+            margin-bottom: 4px; /* REDUCED: Less margin */
             font-weight: bold;
         }
         
         .bom-info-value {
-            font-size: 1.8em;
+            font-size: 1.6em; /* REDUCED: Smaller info values */
             font-weight: bold;
         }
         
@@ -94,17 +94,17 @@
             flex: 1;
             display: table;
             table-layout: fixed; /* CRITICAL: Fixed layout for consistent column widths */
-            font-size: calc(1.4rem + 0.8vw); /* INCREASED: Much larger base font size */
+            font-size: calc(1.4rem + 0.8vw); /* KEPT: Same font size as before */
             box-shadow: 0 0 20px rgba(0,0,0,0.3); /* ADDED: Table shadow for depth */
         }
         
         .bom-table-slider th {
             background: linear-gradient(135deg, #1a1a1a 0%, #2c2c2c 100%); /* CHANGED: Dark header background */
             color: white;
-            padding: 18px 12px; /* INCREASED: Much larger padding */
+            padding: 12px 8px; /* REDUCED: Smaller header padding to fit more rows */
             text-align: center;
             font-weight: bold;
-            font-size: calc(1.6rem + 0.6vw); /* INCREASED: Much larger header font size */
+            font-size: calc(1.6rem + 0.6vw); /* KEPT: Same header font size */
             border-bottom: 4px solid #444; /* INCREASED: Thicker border */
             border-right: 2px solid rgba(255,255,255,0.3); /* INCREASED: More visible border */
             position: sticky;
@@ -117,16 +117,16 @@
         }
         
         .bom-table-slider td {
-            padding: 16px 10px; /* INCREASED: Much larger padding */
-            border-bottom: 3px solid #ddd; /* INCREASED: Much thicker border */
-            border-right: 3px solid #ddd; /* INCREASED: Much thicker border */
+            padding: 8px 6px; /* REDUCED: Much smaller cell padding to fit more rows */
+            border-bottom: 2px solid #ddd; /* REDUCED: Thinner borders to save space */
+            border-right: 2px solid #ddd; /* REDUCED: Thinner borders to save space */
             vertical-align: middle;
             text-align: center;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            font-size: calc(1.2rem + 0.6vw); /* ADDED: Explicit larger font size for tbody */
-            line-height: 1.4; /* ADDED: Better line spacing */
+            font-size: calc(1.2rem + 0.6vw); /* KEPT: Same cell font size */
+            line-height: 1.2; /* REDUCED: Tighter line spacing to save space */
         }
         
         .bom-table-slider tbody {
@@ -135,15 +135,13 @@
         
         .bom-table-slider tbody tr {
             display: table-row;
-            height: calc((100vw - 220px) / var(--visible-rows, 8)); /* CHANGED: Use viewport width for rotated display */
+            height: calc((100vw - 180px) / var(--visible-rows, 12)); /* CHANGED: Reduced header space (180px instead of 220px) and target 12 rows */
         }
         
         .bom-table-slider tbody tr:nth-child(even) {
-            background-color: rgba(245, 245, 245, 0.98); /* CHANGED: Lighter and more opaque even rows */
         }
         
         .bom-table-slider tbody tr:hover {
-            background-color: rgba(52, 152, 219, 0.3); /* INCREASED: Stronger blue hover */
             transform: scale(1.002); /* INCREASED: Slightly more scale */
             transition: all 0.2s;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2); /* INCREASED: Stronger hover shadow */
@@ -199,90 +197,90 @@
             font-weight: bold;
             color: #1a1a1a; /* CHANGED: Darker text */
             background: #f5f5f5; /* CHANGED: Lighter background for better contrast */
-            font-size: calc(1.8rem + 0.8vw) !important; /* FORCED: Same as item-description-slider with !important */
+            font-size: calc(1.8rem + 0.8vw) !important; /* KEPT: Same serial number font size */
             min-width: 60px; /* REDUCED: Smaller serial number column */
         }
         
         .item-photo-slider {
-            width: calc(180px + 6vw); /* MASSIVELY INCREASED: Much larger photos */
-            height: calc(180px + 6vw);
-            max-width: 350px; /* MASSIVELY INCREASED: Much larger maximum size */
-            max-height: 350px;
+            width: calc(120px + 4vw); /* REDUCED: Smaller photos to fit more rows */
+            height: calc(120px + 4vw);
+            max-width: 220px; /* REDUCED: Smaller maximum photo size */
+            max-height: 220px;
             object-fit: contain;
-            border-radius: 12px; /* INCREASED: More rounded corners */
-            border: 4px solid #bdc3c7; /* INCREASED: Thicker border */
-            box-shadow: 0 6px 12px rgba(0,0,0,0.3); /* INCREASED: Stronger shadow */
+            border-radius: 8px; /* REDUCED: Smaller rounded corners */
+            border: 3px solid #bdc3c7; /* REDUCED: Thinner border */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3); /* REDUCED: Smaller shadow */
             display: block;
-            margin: 8px auto; /* INCREASED: More margin */
+            margin: 4px auto; /* REDUCED: Less margin */
         }
         
         .item-photo-placeholder-slider {
-            width: calc(180px + 6vw); /* MASSIVELY INCREASED: Much larger placeholder */
-            height: calc(180px + 6vw);
-            max-width: 350px; /* MASSIVELY INCREASED: Much larger maximum size */
-            max-height: 350px;
+            width: calc(120px + 4vw); /* REDUCED: Smaller placeholder */
+            height: calc(120px + 4vw);
+            max-width: 220px; /* REDUCED: Smaller maximum placeholder size */
+            max-height: 220px;
             background: #e0e0e0; /* CHANGED: Lighter placeholder background */
-            border: 4px dashed #999; /* INCREASED: Thicker dashed border */
-            border-radius: 12px; /* INCREASED: More rounded corners */
+            border: 3px dashed #999; /* REDUCED: Thinner dashed border */
+            border-radius: 8px; /* REDUCED: Smaller rounded corners */
             display: flex;
             align-items: center;
             justify-content: center;
             color: #555; /* CHANGED: Darker placeholder text */
-            font-size: calc(1.4rem + 0.6vw); /* MASSIVELY INCREASED: Much larger placeholder text */
+            font-size: calc(1.0rem + 0.4vw); /* REDUCED: Smaller placeholder text */
             text-align: center;
-            margin: 8px auto; /* INCREASED: More margin */
+            margin: 4px auto; /* REDUCED: Less margin */
             font-weight: bold;
         }
         
         .photo-column {
             text-align: center;
-            min-width: calc(200px + 6vw); /* MASSIVELY INCREASED: Much wider photo column */
-            max-width: calc(380px + 6vw); /* ADDED: Maximum width for photo column */
+            min-width: calc(140px + 4vw); /* REDUCED: Narrower photo column */
+            max-width: calc(250px + 4vw); /* REDUCED: Smaller maximum width for photo column */
         }
         
         .item-description-slider {
             font-weight: bold;
             color: #1a1a1a; /* CHANGED: Much darker text for better contrast */
-            margin-bottom: 8px; /* INCREASED: More spacing */
-            font-size: calc(1.8rem + 0.8vw); /* MASSIVELY INCREASED: Much larger description font */
-            line-height: 1.4; /* INCREASED: Better line spacing */
+            margin-bottom: 4px; /* REDUCED: Less spacing to save space */
+            font-size: calc(1.8rem + 0.8vw); /* KEPT: Same description font size */
+            line-height: 1.2; /* REDUCED: Tighter line spacing */
             white-space: normal; /* Allow wrapping for descriptions */
             overflow: visible;
             text-overflow: clip;
             text-align: left; /* ADDED: Left align for better readability */
-            padding: 4px 8px; /* ADDED: Padding for better spacing */
+            padding: 2px 6px; /* REDUCED: Less padding to save space */
         }
         
         .item-code-slider {
-            font-size: calc(1.4rem + 0.6vw); /* MASSIVELY INCREASED: Much larger code font */
+            font-size: calc(1.4rem + 0.6vw); /* KEPT: Same code font size */
             color: #444; /* CHANGED: Darker code text */
             font-family: 'Courier New', monospace;
             font-weight: 600; /* ADDED: Semi-bold for better visibility */
             text-align: left; /* ADDED: Left align for better readability */
-            padding: 2px 8px; /* ADDED: Padding for better spacing */
+            padding: 1px 6px; /* REDUCED: Less padding to save space */
             background: rgba(240,240,240,0.8); /* ADDED: Light background for code */
-            border-radius: 4px; /* ADDED: Rounded corners for code */
-            margin-top: 4px; /* ADDED: Margin for separation */
+            border-radius: 3px; /* REDUCED: Smaller rounded corners */
+            margin-top: 2px; /* REDUCED: Less margin */
         }
         
         .description-column {
             text-align: left;
             white-space: normal;
             overflow: visible;
-            min-width: calc(220px + 8vw); /* MASSIVELY INCREASED: Much wider description column */
-            max-width: calc(450px + 8vw); /* ADDED: Maximum width for description column */
-            padding: 12px 16px; /* INCREASED: More padding for descriptions */
+            min-width: calc(220px + 8vw); /* KEPT: Same description column width */
+            max-width: calc(450px + 8vw); /* KEPT: Same maximum width for description column */
+            padding: 6px 12px; /* REDUCED: Less padding for descriptions */
         }
         
         .part-number-slider {
             font-family: 'Courier New', monospace;
             font-weight: bold;
             color: #d32f2f; /* CHANGED: Darker red for better contrast */
-            font-size: calc(1.8rem + 0.8vw) !important; /* FORCED: Same as item-description-slider with !important */
+            font-size: calc(1.8rem + 0.8vw) !important; /* KEPT: Same part number font size */
         }
         
         .quantity-slider {
-            font-size: calc(1.8rem + 0.8vw) !important; /* FORCED: Same as item-description-slider with !important */
+            font-size: calc(1.8rem + 0.8vw) !important; /* KEPT: Same quantity font size */
             font-weight: bold;
             color: #1b5e20; /* CHANGED: Darker green for better contrast */
         }
@@ -315,24 +313,24 @@
         
         .bom-watermark {
             position: absolute;
-            bottom: 10px;
-            right: 20px;
-            font-size: calc(0.8rem + 0.2vw);
+            bottom: 8px; /* REDUCED: Smaller bottom margin */
+            right: 15px; /* REDUCED: Smaller right margin */
+            font-size: calc(0.7rem + 0.15vw); /* REDUCED: Smaller watermark */
             opacity: 0.9; /* INCREASED: More visible watermark */
             background: rgba(0,0,0,0.8); /* CHANGED: Darker watermark background */
             color: white; /* ADDED: White text for contrast */
-            padding: 8px 15px; /* INCREASED: Larger padding */
-            border-radius: 10px; /* INCREASED: More rounded */
+            padding: 6px 12px; /* REDUCED: Smaller padding */
+            border-radius: 8px; /* REDUCED: Less rounded */
             border: 1px solid rgba(255,255,255,0.2); /* ADDED: Subtle border */
         }
         
         .stage-indicator {
             background: rgba(255,255,255,0.2);
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 0.6em;
+            padding: 3px 10px; /* REDUCED: Smaller padding */
+            border-radius: 10px; /* REDUCED: Less rounded */
+            font-size: 0.5em; /* REDUCED: Smaller indicator */
             display: inline-block;
-            margin-left: 12px;
+            margin-left: 10px; /* REDUCED: Less margin */
         }
         
         /* NEW: No items message for split displays */
@@ -371,94 +369,96 @@
         /* Large screens (1920px+) - ROTATED */
         @media screen and (min-width: 1920px) {
             .bom-table-slider {
-                font-size: calc(1.6rem + 0.6vw); /* INCREASED: Even larger fonts for rotated display */
+                font-size: calc(1.6rem + 0.6vw); /* KEPT: Same fonts for rotated display */
             }
             .bom-table-slider th {
-                font-size: calc(1.8rem + 0.4vw); /* INCREASED: Larger headers */
-                padding: 20px 15px; /* INCREASED: More padding */
+                font-size: calc(1.8rem + 0.4vw); /* KEPT: Same headers */
+                padding: 14px 10px; /* REDUCED: Less padding for more rows */
             }
             .bom-table-slider td {
-                font-size: calc(1.4rem + 0.4vw); /* INCREASED: Larger cell text */
-                padding: 18px 12px; /* INCREASED: More padding */
+                font-size: calc(1.4rem + 0.4vw); /* KEPT: Same cell text */
+                padding: 10px 8px; /* REDUCED: Less padding for more rows */
             }
             .item-photo-slider, .item-photo-placeholder-slider {
-                width: calc(220px + 5vw); /* MASSIVELY INCREASED: Even larger images */
-                height: calc(220px + 5vw);
-                max-width: 400px; /* MASSIVELY INCREASED: Much larger maximum */
-                max-height: 400px;
+                width: calc(140px + 3vw); /* REDUCED: Smaller images for more rows */
+                height: calc(140px + 3vw);
+                max-width: 250px; /* REDUCED: Smaller maximum */
+                max-height: 250px;
             }
             .serial-number-slider {
-                font-size: calc(2.0rem + 0.6vw) !important; /* FORCED: Same as item-description-slider for large screens with !important */
+                font-size: calc(2.0rem + 0.6vw) !important; /* KEPT: Same serial number font */
             }
             .item-description-slider {
-                font-size: calc(2.0rem + 0.6vw); /* MASSIVELY INCREASED: Much larger descriptions */
+                font-size: calc(2.0rem + 0.6vw); /* KEPT: Same descriptions */
             }
             .item-code-slider {
-                font-size: calc(1.6rem + 0.4vw); /* MASSIVELY INCREASED: Much larger code text */
+                font-size: calc(1.6rem + 0.4vw); /* KEPT: Same code text */
             }
             .part-number-slider {
-                font-size: calc(2.0rem + 0.6vw) !important; /* FORCED: Same as item-description-slider for large screens with !important */
+                font-size: calc(2.0rem + 0.6vw) !important; /* KEPT: Same part number font */
             }
             .quantity-slider {
-                font-size: calc(2.0rem + 0.6vw) !important; /* FORCED: Same as item-description-slider for large screens with !important */
+                font-size: calc(2.0rem + 0.6vw) !important; /* KEPT: Same quantity font */
             }
         }
         
         /* Extra large screens (2560px+) - ROTATED */
         @media screen and (min-width: 2560px) {
-            .bom-title-slider { font-size: 4em; /* INCREASED */ }
-            .bom-subtitle-slider { font-size: 2.2em; /* INCREASED */ }
-            .bom-info-value { font-size: 2.8em; /* INCREASED */ }
+            .bom-title-slider { font-size: 3.2em; /* REDUCED: Smaller title for extra large screens */ }
+            .bom-subtitle-slider { font-size: 1.8em; /* REDUCED: Smaller subtitle */ }
+            .bom-info-value { font-size: 2.4em; /* REDUCED: Smaller info values */ }
             .bom-table-slider {
-                font-size: calc(1.8rem + 0.4vw); /* INCREASED */
+                font-size: calc(1.8rem + 0.4vw); /* KEPT: Same table font */
             }
             .bom-table-slider th {
-                font-size: calc(2.0rem + 0.3vw); /* INCREASED: Much larger headers */
-                padding: 24px 18px; /* INCREASED: Even more padding */
+                font-size: calc(2.0rem + 0.3vw); /* KEPT: Same headers */
+                padding: 16px 12px; /* REDUCED: Less padding for more rows */
             }
             .bom-table-slider td {
-                font-size: calc(1.6rem + 0.3vw); /* INCREASED: Much larger cell text */
-                padding: 20px 15px; /* INCREASED: Even more padding */
+                font-size: calc(1.6rem + 0.3vw); /* KEPT: Same cell text */
+                padding: 12px 10px; /* REDUCED: Less padding for more rows */
             }
             .item-photo-slider, .item-photo-placeholder-slider {
-                width: calc(260px + 4vw); /* MASSIVELY INCREASED: Massive photos */
-                height: calc(260px + 4vw);
-                max-width: 450px; /* MASSIVELY INCREASED: Much larger maximum */
-                max-height: 450px;
+                width: calc(160px + 2vw); /* REDUCED: Smaller photos for more rows */
+                height: calc(160px + 2vw);
+                max-width: 280px; /* REDUCED: Smaller maximum */
+                max-height: 280px;
             }
             .serial-number-slider {
-                font-size: calc(2.4rem + 0.5vw) !important; /* FORCED: Same as item-description-slider for extra large screens with !important */
+                font-size: calc(2.4rem + 0.5vw) !important; /* KEPT: Same serial number font */
             }
             .item-description-slider {
-                font-size: calc(2.4rem + 0.5vw); /* MASSIVELY INCREASED: Massive descriptions */
+                font-size: calc(2.4rem + 0.5vw); /* KEPT: Same descriptions */
             }
             .item-code-slider {
-                font-size: calc(1.8rem + 0.3vw); /* MASSIVELY INCREASED: Massive code text */
+                font-size: calc(1.8rem + 0.3vw); /* KEPT: Same code text */
             }
             .part-number-slider {
-                font-size: calc(2.4rem + 0.5vw) !important; /* FORCED: Same as item-description-slider for extra large screens with !important */
+                font-size: calc(2.4rem + 0.5vw) !important; /* KEPT: Same part number font */
             }
             .quantity-slider {
-                font-size: calc(2.4rem + 0.5vw); /* MATCHED: Same as item-description-slider for extra large screens */
+                font-size: calc(2.4rem + 0.5vw); /* KEPT: Same quantity font */
             }
         }
         
-        /* DYNAMIC ROW SIZING BASED ON DATA COUNT - ROTATED DISPLAY */
-        .bom-table-container-slider[data-row-count="1"] .bom-table-slider tbody tr { height: calc(100vw - 220px); }
-        .bom-table-container-slider[data-row-count="2"] .bom-table-slider tbody tr { height: calc((100vw - 220px) / 2); }
-        .bom-table-container-slider[data-row-count="3"] .bom-table-slider tbody tr { height: calc((100vw - 220px) / 3); }
-        .bom-table-container-slider[data-row-count="4"] .bom-table-slider tbody tr { height: calc((100vw - 220px) / 4); }
-        .bom-table-container-slider[data-row-count="5"] .bom-table-slider tbody tr { height: calc((100vw - 220px) / 5); }
-        .bom-table-container-slider[data-row-count="6"] .bom-table-slider tbody tr { height: calc((100vw - 220px) / 6); }
-        .bom-table-container-slider[data-row-count="7"] .bom-table-slider tbody tr { height: calc((100vw - 220px) / 7); }
-        .bom-table-container-slider[data-row-count="8"] .bom-table-slider tbody tr { height: calc((100vw - 220px) / 8); }
-        .bom-table-container-slider[data-row-count="9"] .bom-table-slider tbody tr { height: calc((100vw - 220px) / 9); }
-        .bom-table-container-slider[data-row-count="10"] .bom-table-slider tbody tr { height: calc((100vw - 220px) / 10); }
+        /* DYNAMIC ROW SIZING BASED ON DATA COUNT - ROTATED DISPLAY - OPTIMIZED FOR 11-12 ITEMS */
+        .bom-table-container-slider[data-row-count="1"] .bom-table-slider tbody tr { height: calc(100vw - 180px); }
+        .bom-table-container-slider[data-row-count="2"] .bom-table-slider tbody tr { height: calc((100vw - 180px) / 2); }
+        .bom-table-container-slider[data-row-count="3"] .bom-table-slider tbody tr { height: calc((100vw - 180px) / 3); }
+        .bom-table-container-slider[data-row-count="4"] .bom-table-slider tbody tr { height: calc((100vw - 180px) / 4); }
+        .bom-table-container-slider[data-row-count="5"] .bom-table-slider tbody tr { height: calc((100vw - 180px) / 5); }
+        .bom-table-container-slider[data-row-count="6"] .bom-table-slider tbody tr { height: calc((100vw - 180px) / 6); }
+        .bom-table-container-slider[data-row-count="7"] .bom-table-slider tbody tr { height: calc((100vw - 180px) / 7); }
+        .bom-table-container-slider[data-row-count="8"] .bom-table-slider tbody tr { height: calc((100vw - 180px) / 8); }
+        .bom-table-container-slider[data-row-count="9"] .bom-table-slider tbody tr { height: calc((100vw - 180px) / 9); }
+        .bom-table-container-slider[data-row-count="10"] .bom-table-slider tbody tr { height: calc((100vw - 180px) / 10); }
+        .bom-table-container-slider[data-row-count="11"] .bom-table-slider tbody tr { height: calc((100vw - 180px) / 11); }
+        .bom-table-container-slider[data-row-count="12"] .bom-table-slider tbody tr { height: calc((100vw - 180px) / 12); }
         
-        /* For more rows, set minimum readable height */
+        /* For more rows, set minimum readable height - REDUCED FOR MORE ITEMS */
         .bom-table-container-slider[data-row-count] .bom-table-slider tbody tr {
-            min-height: 120px; /* MASSIVELY INCREASED: Much larger minimum height for better image/text visibility */
-            height: max(120px, calc((100vw - 220px) / var(--row-count, 8)));
+            min-height: 80px; /* REDUCED: Smaller minimum height to allow more rows */
+            height: max(80px, calc((100vw - 180px) / var(--row-count, 12)));
         }
     </style>
     
@@ -516,7 +516,6 @@
                     <td class="serial-number-slider">{{ item_data.serial_number|stringformat:"02d" }}</td>
                     <td class="description-column">
                         <div class="item-description-slider">{{ item_data.item.item_description }}</div>
-                        <div class="item-code-slider">{{ item_data.item.item_code }}</div>
                     </td>
                     <td class="part-number-slider">{{ item_data.item.part_number }}</td>
                     <td class="quantity-slider">{{ item_data.formatted_quantity }}</td>
@@ -589,4 +588,3 @@
             }
         });
     </script>
-</div>

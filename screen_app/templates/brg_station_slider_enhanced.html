@@ -13,7 +13,7 @@ body, html {
     height: 100vh;
     width: 100vw;
     overflow: hidden;
-    background-color: #ffffff;
+    background-color: #ffffff !important;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
@@ -28,7 +28,7 @@ body {
     left: 50%;
     margin-top: -50vw;
     margin-left: -50vh;
-    background-color: #ffffff;
+    background-color: #ffffff !important;
 }
 
 .main-container {
@@ -311,7 +311,7 @@ body {
 
 /* COMPACT: Reduced status bar height to reclaim space */
 .status-bar {
-    background: rgba(0,0,0,0.9);
+    background: rgba(246, 246, 246, 0.9);
     color: white;
     padding: 8px 25px;
     display: flex;
@@ -417,7 +417,7 @@ body {
 .bom-status {
     background: rgba(52, 152, 219, 0.8);
     color: white;
-    padding: 2px 20px;
+    padding: 8px 20px;
     border-radius: 20px;
     font-size: 14px;
     font-weight: bold;
@@ -564,20 +564,20 @@ body {
         <!-- Media Slider -->
         <div class="slider-container" id="slider-container">
             <!-- Left Clicker Controls -->
-            <div class="clicker-controls clicker-left {% if not clicker_enabled %}hidden{% endif %}" id="left-controls">
-                <button class="clicker-btn" id="backward-btn" title="Previous Process">
-                    &#8592;
-                </button>
-                <div class="clicker-hint">← Previous</div>
-            </div>
+<div class="clicker-controls clicker-left {% if not clicker_enabled or station.display_number != 2 %}hidden{% endif %}" id="left-controls">
+    <button class="clicker-btn" id="backward-btn" title="Previous Process">
+        &#8592;
+    </button>
+    <div class="clicker-hint">← Previous</div>
+</div>
 
             <!-- Right Clicker Controls -->
-            <div class="clicker-controls clicker-right {% if not clicker_enabled %}hidden{% endif %}" id="right-controls">
-                <button class="clicker-btn" id="forward-btn" title="Next Process">
-                    &#8594;
-                </button>
-                <div class="clicker-hint">Next →</div>
-            </div>
+<div class="clicker-controls clicker-right {% if not clicker_enabled or station.display_number != 2 %}hidden{% endif %}" id="right-controls">
+    <button class="clicker-btn" id="forward-btn" title="Next Process">
+        &#8594;
+    </button>
+    <div class="clicker-hint">Next →</div>
+</div>
 
             <div class="error-message hidden" id="error-message">
                 <div>⚠️ Connection Error</div>
@@ -852,7 +852,7 @@ async pollForUpdates() {
                 this.loopIndicatorElement.classList.add('hidden');
             }
             
-            if (station.clicker_enabled) {
+            if (station.clicker_enabled && this.displayNumber === 2) {
                 this.leftControlsElement.classList.remove('hidden');
                 this.rightControlsElement.classList.remove('hidden');
             } else {

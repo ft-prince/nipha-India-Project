@@ -607,7 +607,7 @@ def station_media_stream(request, station_id):
 @csrf_exempt
 @require_http_methods(["POST"])
 def clicker_action(request, station_id):
-    """Enhanced clicker action handling for BRG workflow"""
+    """Enhanced clicker action handling for BRG workflow - SYNCS ALL STATIONS"""
     station = get_object_or_404(Station, pk=station_id)
     
     if not station.clicker_enabled:
@@ -621,30 +621,51 @@ def clicker_action(request, station_id):
             next_process = station.get_next_process()
             if next_process:
                 # Special handling for exiting loop mode
+                exit_loop_mode = False
                 if (station.loop_mode and 
                     station.current_process and 
                     station.current_process.loop_group == 'final_assembly_1abc' and
                     next_process.name == 'PROCESS 2 OF 6'):
-                    station.loop_mode = False
+                    exit_loop_mode = True
                 
-                station.current_process = next_process
+                # UPDATE ALL STATIONS - not just the current one
+                all_stations = Station.objects.all()
+                updated_stations = []
                 
-                # Update stage if process belongs to different stage
-                if next_process.stage != station.current_stage:
-                    station.current_stage = next_process.stage
-                
-                station.save()
+                for st in all_stations:
+                    # Skip stations that don't have the same product (optional check)
+                    if st.current_product != station.current_product:
+                        continue
+                        
+                    st.current_process = next_process
+                    
+                    # Update stage if process belongs to different stage
+                    if next_process.stage != st.current_stage:
+                        st.current_stage = next_process.stage
+                    
+                    # Apply loop mode changes to all stations
+                    if exit_loop_mode:
+                        st.loop_mode = False
+                    
+                    st.save()
+                    updated_stations.append({
+                        'id': st.id,
+                        'name': st.name,
+                        'display_number': st.display_number
+                    })
                 
                 return JsonResponse({
                     'success': True,
+                    'message': f'All stations moved to {next_process.display_name}',
                     'current_process': {
-                        'id': station.current_process.id,
-                        'name': station.current_process.name,
-                        'display_name': station.current_process.display_name,
-                        'stage': station.current_stage.display_name,
-                        'is_looped': station.current_process.is_looped
+                        'id': next_process.id,
+                        'name': next_process.name,
+                        'display_name': next_process.display_name,
+                        'stage': next_process.stage.display_name,
+                        'is_looped': next_process.is_looped
                     },
-                    'loop_mode': station.loop_mode,
+                    'loop_mode': not exit_loop_mode and station.loop_mode,
+                    'updated_stations': updated_stations,
                     'next_process': {
                         'id': station.get_next_process().id,
                         'name': station.get_next_process().name
@@ -656,38 +677,72 @@ def clicker_action(request, station_id):
         elif action == 'backward':
             previous_process = station.get_previous_process()
             if previous_process:
-                station.current_process = previous_process
+                # UPDATE ALL STATIONS
+                all_stations = Station.objects.all()
+                updated_stations = []
                 
-                # Update stage if process belongs to different stage
-                if previous_process.stage != station.current_stage:
-                    station.current_stage = previous_process.stage
-                
-                station.save()
+                for st in all_stations:
+                    # Skip stations that don't have the same product (optional check)
+                    if st.current_product != station.current_product:
+                        continue
+                        
+                    st.current_process = previous_process
+                    
+                    # Update stage if process belongs to different stage
+                    if previous_process.stage != st.current_stage:
+                        st.current_stage = previous_process.stage
+                    
+                    st.save()
+                    updated_stations.append({
+                        'id': st.id,
+                        'name': st.name,
+                        'display_number': st.display_number
+                    })
                 
                 return JsonResponse({
                     'success': True,
+                    'message': f'All stations moved to {previous_process.display_name}',
                     'current_process': {
-                        'id': station.current_process.id,
-                        'name': station.current_process.name,
-                        'display_name': station.current_process.display_name,
-                        'stage': station.current_stage.display_name,
-                        'is_looped': station.current_process.is_looped
-                    }
+                        'id': previous_process.id,
+                        'name': previous_process.name,
+                        'display_name': previous_process.display_name,
+                        'stage': previous_process.stage.display_name,
+                        'is_looped': previous_process.is_looped
+                    },
+                    'updated_stations': updated_stations
                 })
             else:
                 return JsonResponse({'error': 'No previous process available'}, status=400)
                 
         elif action == 'toggle_loop':
-            # Toggle loop mode for processes 1A, 1B, 1C
+            # Toggle loop mode for processes 1A, 1B, 1C on ALL stations
             if (station.current_process and 
                 station.current_process.loop_group == 'final_assembly_1abc'):
-                station.loop_mode = not station.loop_mode
-                station.save()
+                
+                new_loop_mode = not station.loop_mode
+                
+                # UPDATE ALL STATIONS
+                all_stations = Station.objects.all()
+                updated_stations = []
+                
+                for st in all_stations:
+                    # Only update stations with the same product and in loop processes
+                    if (st.current_product == station.current_product and
+                        st.current_process and 
+                        st.current_process.loop_group == 'final_assembly_1abc'):
+                        st.loop_mode = new_loop_mode
+                        st.save()
+                        updated_stations.append({
+                            'id': st.id,
+                            'name': st.name,
+                            'display_number': st.display_number
+                        })
                 
                 return JsonResponse({
                     'success': True,
-                    'loop_mode': station.loop_mode,
-                    'message': f"Loop mode {'enabled' if station.loop_mode else 'disabled'}"
+                    'loop_mode': new_loop_mode,
+                    'message': f"Loop mode {'enabled' if new_loop_mode else 'disabled'} on all stations",
+                    'updated_stations': updated_stations
                 })
             else:
                 return JsonResponse({'error': 'Loop mode only available for processes 1A, 1B, 1C'}, status=400)
@@ -701,7 +756,8 @@ def clicker_action(request, station_id):
         return JsonResponse({'error': 'Invalid quantity value'}, status=400)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-
+    
+    
 def get_assembly_options(request, station_id):
     """Get available options for BRG assembly configuration"""
     station = get_object_or_404(Station, pk=station_id)
@@ -2138,5 +2194,9 @@ def debug_bom_stage(request, station_id):
         return JsonResponse({'error': 'Station not found'}, status=404)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+
+
+
 
 
