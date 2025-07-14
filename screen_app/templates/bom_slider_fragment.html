@@ -152,30 +152,30 @@
         /* COLUMN SPECIFIC STYLES - Auto-adjusting based on number of columns */
         /* ENHANCED: Special emphasis on photo and description columns */
         
-        /* For 5 columns - ENHANCED LAYOUT */
+        /* For 5 columns - PHOTO MOVED TO LAST POSITION */
         .bom-table-slider.cols-5 th:nth-child(1), /* S.NO */
         .bom-table-slider.cols-5 td:nth-child(1) {
             width: 8%; /* REDUCED: Make serial number smaller */
         }
         
-        .bom-table-slider.cols-5 th:nth-child(2), /* PHOTO */
+        .bom-table-slider.cols-5 th:nth-child(2), /* DESCRIPTION */
         .bom-table-slider.cols-5 td:nth-child(2) {
-            width: 28%; /* INCREASED: Much larger photo column */
-        }
-        
-        .bom-table-slider.cols-5 th:nth-child(3), /* DESCRIPTION */
-        .bom-table-slider.cols-5 td:nth-child(3) {
             width: 35%; /* INCREASED: Much larger description column */
         }
         
-        .bom-table-slider.cols-5 th:nth-child(4), /* PART NO */
-        .bom-table-slider.cols-5 td:nth-child(4) {
+        .bom-table-slider.cols-5 th:nth-child(3), /* PART NO */
+        .bom-table-slider.cols-5 td:nth-child(3) {
             width: 17%; /* ADJUSTED: Medium part number column */
         }
         
-        .bom-table-slider.cols-5 th:nth-child(5), /* QTY */
-        .bom-table-slider.cols-5 td:nth-child(5) {
+        .bom-table-slider.cols-5 th:nth-child(4), /* QTY */
+        .bom-table-slider.cols-5 td:nth-child(4) {
             width: 12%; /* ADJUSTED: Smaller quantity column */
+        }
+        
+        .bom-table-slider.cols-5 th:nth-child(5), /* PHOTO - NOW LAST */
+        .bom-table-slider.cols-5 td:nth-child(5) {
+            width: 28%; /* INCREASED: Much larger photo column */
         }
         
         /* For 6 columns */
@@ -184,14 +184,14 @@
             width: 16.67%;
         }
         
-        .bom-table-slider.cols-6 th:nth-child(2), /* PHOTO */
+        .bom-table-slider.cols-6 th:nth-child(2), /* DESCRIPTION */
         .bom-table-slider.cols-6 td:nth-child(2) {
-            width: 22%; /* INCREASED: Larger photo column for 6 cols */
+            width: 26%; /* INCREASED: Larger description column for 6 cols */
         }
         
-        .bom-table-slider.cols-6 th:nth-child(3), /* DESCRIPTION */
-        .bom-table-slider.cols-6 td:nth-child(3) {
-            width: 26%; /* INCREASED: Larger description column for 6 cols */
+        .bom-table-slider.cols-6 th:nth-child(6), /* PHOTO - LAST */
+        .bom-table-slider.cols-6 td:nth-child(6) {
+            width: 22%; /* INCREASED: Larger photo column for 6 cols */
         }
         
         /* SPECIAL COLUMN STYLES */
@@ -199,7 +199,7 @@
             font-weight: bold;
             color: #1a1a1a; /* CHANGED: Darker text */
             background: #f5f5f5; /* CHANGED: Lighter background for better contrast */
-            font-size: calc(1.6rem + 0.8vw); /* INCREASED: Much larger serial number font */
+            font-size: calc(1.8rem + 0.8vw) !important; /* FORCED: Same as item-description-slider with !important */
             min-width: 60px; /* REDUCED: Smaller serial number column */
         }
         
@@ -208,7 +208,7 @@
             height: calc(180px + 6vw);
             max-width: 350px; /* MASSIVELY INCREASED: Much larger maximum size */
             max-height: 350px;
-            object-fit: cover;
+            object-fit: contain;
             border-radius: 12px; /* INCREASED: More rounded corners */
             border: 4px solid #bdc3c7; /* INCREASED: Thicker border */
             box-shadow: 0 6px 12px rgba(0,0,0,0.3); /* INCREASED: Stronger shadow */
@@ -278,11 +278,11 @@
             font-family: 'Courier New', monospace;
             font-weight: bold;
             color: #d32f2f; /* CHANGED: Darker red for better contrast */
-            font-size: calc(1.3rem + 0.5vw); /* INCREASED: Much larger part number font */
+            font-size: calc(1.8rem + 0.8vw) !important; /* FORCED: Same as item-description-slider with !important */
         }
         
         .quantity-slider {
-            font-size: calc(1.6rem + 0.7vw); /* INCREASED: Much larger quantity font */
+            font-size: calc(1.8rem + 0.8vw) !important; /* FORCED: Same as item-description-slider with !important */
             font-weight: bold;
             color: #1b5e20; /* CHANGED: Darker green for better contrast */
         }
@@ -388,7 +388,7 @@
                 max-height: 400px;
             }
             .serial-number-slider {
-                font-size: calc(1.8rem + 0.6vw); /* INCREASED: Larger serial numbers */
+                font-size: calc(2.0rem + 0.6vw) !important; /* FORCED: Same as item-description-slider for large screens with !important */
             }
             .item-description-slider {
                 font-size: calc(2.0rem + 0.6vw); /* MASSIVELY INCREASED: Much larger descriptions */
@@ -396,8 +396,11 @@
             .item-code-slider {
                 font-size: calc(1.6rem + 0.4vw); /* MASSIVELY INCREASED: Much larger code text */
             }
+            .part-number-slider {
+                font-size: calc(2.0rem + 0.6vw) !important; /* FORCED: Same as item-description-slider for large screens with !important */
+            }
             .quantity-slider {
-                font-size: calc(1.8rem + 0.5vw); /* INCREASED: Larger quantities */
+                font-size: calc(2.0rem + 0.6vw) !important; /* FORCED: Same as item-description-slider for large screens with !important */
             }
         }
         
@@ -424,7 +427,7 @@
                 max-height: 450px;
             }
             .serial-number-slider {
-                font-size: calc(2.0rem + 0.5vw); /* INCREASED: Much larger serial numbers */
+                font-size: calc(2.4rem + 0.5vw) !important; /* FORCED: Same as item-description-slider for extra large screens with !important */
             }
             .item-description-slider {
                 font-size: calc(2.4rem + 0.5vw); /* MASSIVELY INCREASED: Massive descriptions */
@@ -432,8 +435,11 @@
             .item-code-slider {
                 font-size: calc(1.8rem + 0.3vw); /* MASSIVELY INCREASED: Massive code text */
             }
+            .part-number-slider {
+                font-size: calc(2.4rem + 0.5vw) !important; /* FORCED: Same as item-description-slider for extra large screens with !important */
+            }
             .quantity-slider {
-                font-size: calc(2.0rem + 0.4vw); /* INCREASED: Much larger quantities */
+                font-size: calc(2.4rem + 0.5vw); /* MATCHED: Same as item-description-slider for extra large screens */
             }
         }
         
@@ -498,16 +504,22 @@
             <thead>
                 <tr>
                     <th class="serial-number-slider">S.NO</th>
-                    <th class="photo-column">PHOTO</th>
                     <th class="description-column">DESCRIPTION</th>
                     <th class="part-number-slider">PART NO.</th>
                     <th class="quantity-slider">QTY</th>
+                    <th class="photo-column">PHOTO</th>
                 </tr>
             </thead>
             <tbody>
                 {% for item_data in bom_data %}
                 <tr>
                     <td class="serial-number-slider">{{ item_data.serial_number|stringformat:"02d" }}</td>
+                    <td class="description-column">
+                        <div class="item-description-slider">{{ item_data.item.item_description }}</div>
+                        <div class="item-code-slider">{{ item_data.item.item_code }}</div>
+                    </td>
+                    <td class="part-number-slider">{{ item_data.item.part_number }}</td>
+                    <td class="quantity-slider">{{ item_data.formatted_quantity }}</td>
                     <td class="photo-column">
                         {% if item_data.item.item_photo %}
                         <img src="{{ item_data.item.item_photo.url }}" 
@@ -519,12 +531,6 @@
                         </div>
                         {% endif %}
                     </td>
-                    <td class="description-column">
-                        <div class="item-description-slider">{{ item_data.item.item_description }}</div>
-                        <div class="item-code-slider">{{ item_data.item.item_code }}</div>
-                    </td>
-                    <td class="part-number-slider">{{ item_data.item.part_number }}</td>
-                    <td class="quantity-slider">{{ item_data.formatted_quantity }}</td>
                 </tr>
                 {% endfor %}
             </tbody>

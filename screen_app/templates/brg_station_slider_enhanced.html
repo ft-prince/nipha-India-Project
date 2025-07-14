@@ -112,12 +112,11 @@ body {
     max-height: 100% !important;
     
     position: absolute;
-    top: 0 !important;
-    left: 0 !important;
-    transform: none !important;
-    
+    top: 57%;
+    left: 53.5%;
+
     /* ENHANCED: Better PDF rendering */
-    object-fit: fill;
+    object-fit: cover;
     border: none;
     background-color: white;
     
@@ -129,11 +128,12 @@ body {
     image-rendering: crisp-edges;
     
     /* REMOVE: Any margins or padding that might interfere */
-    margin: 0 !important;
+    margin: 0 0 0 0 !important;
     padding: 0 !important;
-    
-    /* ENSURE: PDF is displayed with maximum zoom */
-    zoom: 1;
+    /* Centered zoom */
+    transform: scale(1.08) translate(-50%, -50%);
+    transform-origin: center center;
+
 }
 
 /* ALTERNATIVE: PDF iframe for better control */
@@ -417,7 +417,7 @@ body {
 .bom-status {
     background: rgba(52, 152, 219, 0.8);
     color: white;
-    padding: 8px 20px;
+    padding: 2px 20px;
     border-radius: 20px;
     font-size: 14px;
     font-weight: bold;

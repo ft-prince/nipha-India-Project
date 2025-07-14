@@ -912,8 +912,18 @@
                 
                 showSystemAlert(`Bulk: Auto-selected "${firstProcess.name}"`, 'info');
             }
-        }
 
+            // Add event listener for manual process changes
+            bulkProcessSelect.addEventListener('change', function() {
+                const selectedProcessId = this.value;
+                selectedBulkProcess = selectedBulkStage.processes.find(p => p.id == selectedProcessId);
+                
+                if (selectedBulkProcess) {
+                    showSystemAlert(`Bulk: Manually selected "${selectedBulkProcess.name}"`, 'info');
+                    this.classList.remove('auto-selected');
+                }
+            });
+        }
         // Load assembly options with stage buttons
         async function loadAssemblyOptions() {
             try {
