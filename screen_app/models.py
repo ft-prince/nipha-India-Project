@@ -7,6 +7,7 @@ from django.urls import reverse
 import zipfile
 import os
 from django.core.files.base import ContentFile
+import math
 
 class Product(models.Model):
     code = models.CharField(max_length=20, unique=True)
@@ -18,7 +19,9 @@ class Product(models.Model):
 class AssemblyStage(models.Model):
     """Main assembly stages (Sub Assembly 1, Sub Assembly 2, Final Assembly)"""
     STAGE_CHOICES = [
+        
         ('SUB_ASSEMBLY_1', 'Sub Assembly 1'),
+        ('BOM_DISPLAY', 'BOM_DISPLAY'),
         ('SUB_ASSEMBLY_2', 'Sub Assembly 2'), 
         ('FINAL_ASSEMBLY', 'Final Assembly'),
     ]
@@ -118,6 +121,58 @@ class BOMTemplate(models.Model):
     
     def __str__(self):
         return f"{self.product.code} - {self.get_bom_type_display()}"
+    
+    def should_split_across_displays(self):
+        """Determine if this BOM should be split across displays"""
+        return self.bom_type in ['SINGLE_UNIT', 'BATCH_50']
+    
+    def get_items_for_display(self, display_number, quantity=1):
+        """Get BOM items specific to a display number (for split BOMs)"""
+        if not self.should_split_across_displays():
+            # Stage-specific BOMs show complete on Display 1 only
+            if display_number == 1:
+                return self.generate_bom_for_quantity(quantity)
+            else:
+                return []
+        
+        # Split logic for SINGLE_UNIT and BATCH_50
+        all_items = self.generate_bom_for_quantity(quantity)
+        total_items = len(all_items)
+        
+        if total_items == 0:
+            return []
+        
+        # Calculate items per display (distribute as evenly as possible)
+        items_per_display = math.ceil(total_items / 3)
+        
+        # Calculate start and end indices for this display
+        start_idx = (display_number - 1) * items_per_display
+        end_idx = min(start_idx + items_per_display, total_items)
+        
+        # Return the slice for this display
+        return all_items[start_idx:end_idx]
+    
+    def get_display_info_for_split(self):
+        """Get information about how items are distributed across displays"""
+        if not self.should_split_across_displays():
+            return None
+        
+        total_items = self.bom_items.filter(is_active=True).count()
+        items_per_display = math.ceil(total_items / 3)
+        
+        distribution = {}
+        for display in [1, 2, 3]:
+            start_idx = (display - 1) * items_per_display
+            end_idx = min(start_idx + items_per_display, total_items)
+            item_count = max(0, end_idx - start_idx)
+            
+            distribution[f'display_{display}'] = {
+                'start_serial': start_idx + 1 if item_count > 0 else 0,
+                'end_serial': end_idx if item_count > 0 else 0,
+                'item_count': item_count
+            }
+        
+        return distribution
     
     def generate_bom_for_quantity(self, quantity=1):
         """Generate BOM items with calculated quantities"""
@@ -291,19 +346,22 @@ class Station(models.Model):
         return f"{self.name} - Display {self.display_number}"
     
     def get_current_bom_data(self):
-        """Get current BOM data based on station settings and quantity - FIXED VERSION"""
-        if not self.current_product:
+        """Get current BOM data based on station settings, quantity, and display number"""
+        if not self.current_product or not self.display_number:
             return None
 
+        print(f"DEBUG: Station {self.name}, Display {self.display_number}")
+        
         # Priority order for BOM selection:
-        # 1. Stage-specific BOM (highest priority if current stage exists)
-        # 2. Single unit BOM (if enabled)
-        # 3. Batch BOM (if enabled)
+        # 1. Stage-specific BOM (only on Display 1, complete)
+        # 2. Single unit BOM (split across all displays if enabled)
+        # 3. Batch BOM (split across all displays if enabled)
         
         quantity = self.product_quantity
         
         # First, check if we have a stage-specific BOM and we're in a specific stage
-        if self.current_stage:
+        # Stage-specific BOMs only show on Display 1 (complete, not split)
+        if self.current_stage and self.display_number == 1:
             stage_bom_type = self.current_stage.name  # SUB_ASSEMBLY_1, SUB_ASSEMBLY_2, FINAL_ASSEMBLY
             try:
                 stage_template = BOMTemplate.objects.get(
@@ -311,29 +369,34 @@ class Station(models.Model):
                     bom_type=stage_bom_type,
                     is_active=True
                 )
-                print(f"DEBUG: Found stage-specific BOM: {stage_bom_type}")
-                # Found stage-specific BOM, use it with current quantity
+                print(f"DEBUG: Found stage-specific BOM: {stage_bom_type} for Display 1 (complete)")
+                # Stage-specific BOMs show complete on Display 1
                 return stage_template.generate_bom_for_quantity(quantity)
             except BOMTemplate.DoesNotExist:
                 print(f"DEBUG: No stage-specific BOM found for {stage_bom_type}")
                 # No stage-specific BOM found, fall back to general BOMs
                 pass
+        elif self.current_stage and self.display_number in [2, 3]:
+            # For displays 2 and 3, don't show stage-specific BOMs
+            print(f"DEBUG: Stage-specific BOM not shown on Display {self.display_number}")
+            # Check if we should show split general BOMs instead
+            pass
         
-        # Fall back to general BOM settings
+        # Fall back to general BOM settings (these get split across displays)
         bom_type = None
         if self.show_single_unit_bom:
             bom_type = 'SINGLE_UNIT'
             quantity = 1
-            print(f"DEBUG: Using single unit BOM")
+            print(f"DEBUG: Using single unit BOM (will be split across displays)")
         elif self.show_batch_bom:
             bom_type = 'BATCH_50'
             quantity = self.product_quantity
-            print(f"DEBUG: Using batch BOM with quantity {quantity}")
+            print(f"DEBUG: Using batch BOM with quantity {quantity} (will be split across displays)")
         else:
             print(f"DEBUG: No BOM type selected")
             return None
         
-        # Find the general BOM template
+        # Find the general BOM template and get items for this specific display
         try:
             bom_template = BOMTemplate.objects.get(
                 product=self.current_product,
@@ -341,18 +404,24 @@ class Station(models.Model):
                 is_active=True
             )
             print(f"DEBUG: Found general BOM template: {bom_type}")
-            return bom_template.generate_bom_for_quantity(quantity)
+            
+            # Get items specific to this display (split logic)
+            display_items = bom_template.get_items_for_display(self.display_number, quantity)
+            print(f"DEBUG: Display {self.display_number} gets {len(display_items)} items")
+            
+            return display_items
+            
         except BOMTemplate.DoesNotExist:
             print(f"DEBUG: No BOM template found for {bom_type}")
             return None
 
     def get_current_bom_info(self):
-        """Get information about the currently selected BOM"""
+        """Get information about the currently selected BOM including split info"""
         if not self.current_product:
             return None
         
-        # Check for stage-specific BOM first
-        if self.current_stage:
+        # Check for stage-specific BOM first (only on Display 1)
+        if self.current_stage and self.display_number == 1:
             try:
                 stage_template = BOMTemplate.objects.get(
                     product=self.current_product,
@@ -364,12 +433,14 @@ class Station(models.Model):
                     'type': 'stage_specific',
                     'display_name': f"{self.current_stage.display_name}",
                     'quantity': self.product_quantity,
-                    'items_count': stage_template.bom_items.filter(is_active=True).count()
+                    'items_count': stage_template.bom_items.filter(is_active=True).count(),
+                    'is_split': False,
+                    'display_info': f"Complete BOM on Display {self.display_number}"
                 }
             except BOMTemplate.DoesNotExist:
                 pass
         
-        # Fall back to general BOM
+        # Fall back to general BOM (these get split)
         if self.show_single_unit_bom:
             try:
                 template = BOMTemplate.objects.get(
@@ -377,12 +448,20 @@ class Station(models.Model):
                     bom_type='SINGLE_UNIT',
                     is_active=True
                 )
+                
+                # Get split information
+                split_info = template.get_display_info_for_split()
+                current_display_info = split_info[f'display_{self.display_number}'] if split_info else None
+                
                 return {
                     'template': template,
                     'type': 'single_unit',
-                    'display_name': 'Single Unit',
+                    'display_name': 'Single Unit (Split)',
                     'quantity': 1,
-                    'items_count': template.bom_items.filter(is_active=True).count()
+                    'items_count': current_display_info['item_count'] if current_display_info else 0,
+                    'is_split': True,
+                    'display_info': f"Items {current_display_info['start_serial']}-{current_display_info['end_serial']}" if current_display_info and current_display_info['item_count'] > 0 else "No items",
+                    'split_info': split_info
                 }
             except BOMTemplate.DoesNotExist:
                 pass
@@ -393,12 +472,20 @@ class Station(models.Model):
                     bom_type='BATCH_50',
                     is_active=True
                 )
+                
+                # Get split information
+                split_info = template.get_display_info_for_split()
+                current_display_info = split_info[f'display_{self.display_number}'] if split_info else None
+                
                 return {
                     'template': template,
                     'type': 'batch',
-                    'display_name': f'{self.product_quantity} Units Batch',
+                    'display_name': f'{self.product_quantity} Units Batch (Split)',
                     'quantity': self.product_quantity,
-                    'items_count': template.bom_items.filter(is_active=True).count()
+                    'items_count': current_display_info['item_count'] if current_display_info else 0,
+                    'is_split': True,
+                    'display_info': f"Items {current_display_info['start_serial']}-{current_display_info['end_serial']}" if current_display_info and current_display_info['item_count'] > 0 else "No items",
+                    'split_info': split_info
                 }
             except BOMTemplate.DoesNotExist:
                 pass

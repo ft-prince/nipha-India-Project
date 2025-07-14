@@ -1,4 +1,4 @@
-<!-- templates/bom_slider_fragment.html - OPTIMIZED FOR LARGE SCREENS WITH MULTIPLE COLUMNS -->
+<!-- templates/bom_slider_fragment.html - ENHANCED WITH SPLIT DISPLAY LOGIC -->
 <div class="bom-container-slider">
     <style>
         .bom-container-slider {
@@ -34,6 +34,23 @@
             font-size: 1.4em;
             margin: 8px 0 0 0;
             opacity: 0.9;
+        }
+        
+        /* NEW: Split display indicator */
+        .split-indicator {
+            background: rgba(255, 165, 0, 0.9);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 1.0em;
+            font-weight: bold;
+            margin-top: 10px;
+            display: inline-block;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .split-indicator.stage-bom {
+            background: rgba(46, 204, 113, 0.9);
         }
         
         .bom-info-slider {
@@ -177,81 +194,6 @@
             width: 26%; /* INCREASED: Larger description column for 6 cols */
         }
         
-        /* For 7 columns */
-        .bom-table-slider.cols-7 th,
-        .bom-table-slider.cols-7 td {
-            width: 14.29%;
-        }
-        
-        .bom-table-slider.cols-7 th:nth-child(2), /* PHOTO */
-        .bom-table-slider.cols-7 td:nth-child(2) {
-            width: 20%; /* INCREASED: Larger photo column for 7 cols */
-        }
-        
-        .bom-table-slider.cols-7 th:nth-child(3), /* DESCRIPTION */
-        .bom-table-slider.cols-7 td:nth-child(3) {
-            width: 22%; /* INCREASED: Larger description column for 7 cols */
-        }
-        
-        /* For 8 columns */
-        .bom-table-slider.cols-8 th,
-        .bom-table-slider.cols-8 td {
-            width: 12.5%;
-        }
-        
-        .bom-table-slider.cols-8 th:nth-child(2), /* PHOTO */
-        .bom-table-slider.cols-8 td:nth-child(2) {
-            width: 18%; /* INCREASED: Larger photo column for 8 cols */
-        }
-        
-        .bom-table-slider.cols-8 th:nth-child(3), /* DESCRIPTION */
-        .bom-table-slider.cols-8 td:nth-child(3) {
-            width: 20%; /* INCREASED: Larger description column for 8 cols */
-        }
-        
-        /* For 9 columns */
-        .bom-table-slider.cols-9 th,
-        .bom-table-slider.cols-9 td {
-            width: 11.11%;
-        }
-        
-        .bom-table-slider.cols-9 th:nth-child(2), /* PHOTO */
-        .bom-table-slider.cols-9 td:nth-child(2) {
-            width: 16%; /* INCREASED: Larger photo column for 9 cols */
-        }
-        
-        .bom-table-slider.cols-9 th:nth-child(3), /* DESCRIPTION */
-        .bom-table-slider.cols-9 td:nth-child(3) {
-            width: 18%; /* INCREASED: Larger description column for 9 cols */
-        }
-        
-        /* For 10 columns */
-        .bom-table-slider.cols-10 th,
-        .bom-table-slider.cols-10 td {
-            width: 10%;
-        }
-        
-        .bom-table-slider.cols-10 th:nth-child(2), /* PHOTO */
-        .bom-table-slider.cols-10 td:nth-child(2) {
-            width: 15%; /* INCREASED: Larger photo column for 10 cols */
-        }
-        
-        .bom-table-slider.cols-10 th:nth-child(3), /* DESCRIPTION */
-        .bom-table-slider.cols-10 td:nth-child(3) {
-            width: 17%; /* INCREASED: Larger description column for 10 cols */
-        }
-        
-        /* For 11+ columns (flexible) */
-        .bom-table-slider.cols-11 th,
-        .bom-table-slider.cols-11 td {
-            width: calc(100% / 11);
-        }
-        
-        .bom-table-slider.cols-12 th,
-        .bom-table-slider.cols-12 td {
-            width: calc(100% / 12);
-        }
-        
         /* SPECIAL COLUMN STYLES */
         .serial-number-slider {
             font-weight: bold;
@@ -345,45 +287,6 @@
             color: #1b5e20; /* CHANGED: Darker green for better contrast */
         }
         
-        .supplier-slider {
-            font-size: calc(1.2rem + 0.4vw); /* INCREASED: Much larger supplier font */
-            color: #333; /* CHANGED: Darker supplier text */
-            font-weight: 600; /* ADDED: Semi-bold */
-        }
-        
-        .notes-slider {
-            font-size: calc(1.0rem + 0.4vw); /* INCREASED: Much larger notes font */
-            color: #333; /* CHANGED: Darker notes text */
-            font-style: italic;
-            white-space: normal;
-            overflow: visible;
-            font-weight: 500; /* ADDED: Medium weight for better visibility */
-        }
-        
-        .status-slider {
-            font-size: calc(1.2rem + 0.4vw); /* INCREASED: Much larger status font */
-            font-weight: bold;
-            padding: 6px 12px; /* INCREASED: Larger padding */
-            border-radius: 6px; /* INCREASED: More rounded */
-            text-transform: uppercase;
-            background: #f5f5f5; /* CHANGED: Lighter background for status */
-            color: #1a1a1a; /* ADDED: Dark text for status */
-            border: 2px solid #ddd; /* ADDED: Border for definition */
-        }
-        
-        .location-slider {
-            font-size: calc(1.2rem + 0.4vw); /* INCREASED: Much larger location font */
-            color: #1565c0; /* CHANGED: Darker blue for better contrast */
-            font-weight: bold;
-        }
-        
-        .cost-slider {
-            font-size: calc(1.3rem + 0.5vw); /* INCREASED: Much larger cost font */
-            color: #4a148c; /* CHANGED: Darker purple for better contrast */
-            font-weight: bold;
-            font-family: 'Courier New', monospace;
-        }
-        
         .no-bom-data-slider {
             display: flex;
             flex-direction: column;
@@ -430,6 +333,37 @@
             font-size: 0.6em;
             display: inline-block;
             margin-left: 12px;
+        }
+        
+        /* NEW: No items message for split displays */
+        .no-items-message {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            text-align: center;
+            color: rgba(255,255,255,0.8);
+            background: rgba(52, 152, 219, 0.1);
+            border: 2px dashed rgba(52, 152, 219, 0.3);
+            border-radius: 20px;
+            margin: 20px;
+        }
+        
+        .no-items-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            opacity: 0.6;
+        }
+        
+        .no-items-message h3 {
+            font-size: 1.8em;
+            margin-bottom: 15px;
+        }
+        
+        .no-items-message p {
+            font-size: 1.1em;
+            margin: 5px 0;
         }
         
         /* RESPONSIVE BREAKPOINTS FOR ROTATED DISPLAY */
@@ -503,42 +437,6 @@
             }
         }
         
-        /* Ultra-wide screens (3440px+) - ROTATED */
-        @media screen and (min-width: 3440px) {
-            .bom-title-slider { font-size: 5em; /* INCREASED */ }
-            .bom-subtitle-slider { font-size: 2.8em; /* INCREASED */ }
-            .bom-info-value { font-size: 3.5em; /* INCREASED */ }
-            .bom-table-slider {
-                font-size: calc(2.0rem + 0.3vw); /* INCREASED */
-            }
-            .bom-table-slider th {
-                font-size: calc(2.4rem + 0.2vw); /* INCREASED: Massive headers */
-                padding: 28px 20px; /* INCREASED: Maximum padding */
-            }
-            .bom-table-slider td {
-                font-size: calc(1.8rem + 0.2vw); /* INCREASED: Massive cell text */
-                padding: 24px 18px; /* INCREASED: Maximum padding */
-            }
-            .item-photo-slider, .item-photo-placeholder-slider {
-                width: calc(300px + 3vw); /* MASSIVELY INCREASED: Ultra-large photos */
-                height: calc(300px + 3vw);
-                max-width: 500px; /* MASSIVELY INCREASED: Maximum size for ultra-wide */
-                max-height: 500px;
-            }
-            .serial-number-slider {
-                font-size: calc(2.4rem + 0.4vw); /* INCREASED: Massive serial numbers */
-            }
-            .item-description-slider {
-                font-size: calc(2.8rem + 0.4vw); /* MASSIVELY INCREASED: Ultra-large descriptions */
-            }
-            .item-code-slider {
-                font-size: calc(2.0rem + 0.2vw); /* MASSIVELY INCREASED: Ultra-large code text */
-            }
-            .quantity-slider {
-                font-size: calc(2.4rem + 0.3vw); /* INCREASED: Massive quantities */
-            }
-        }
-        
         /* DYNAMIC ROW SIZING BASED ON DATA COUNT - ROTATED DISPLAY */
         .bom-table-container-slider[data-row-count="1"] .bom-table-slider tbody tr { height: calc(100vw - 220px); }
         .bom-table-container-slider[data-row-count="2"] .bom-table-slider tbody tr { height: calc((100vw - 220px) / 2); }
@@ -562,8 +460,17 @@
     <div class="bom-header-slider">
         <h1 class="bom-title-slider">
             Bill of Material
-          
         </h1>
+        
+        {% if is_split %}
+            <div class="split-indicator">
+                📋 Display {{ station.display_number }} of 3 - Split BOM
+            </div>
+        {% elif bom_info.type == 'stage_specific' %}
+            <div class="split-indicator stage-bom">
+                🎯 {{ bom_info.display_name }} - Complete BOM
+            </div>
+        {% endif %}
     </div>
     
     <div class="bom-info-slider">
@@ -581,12 +488,13 @@
         </div>
         <div class="bom-info-item">
             <div class="bom-info-label">DISPLAY</div>
-            <div class="bom-info-value">{{ station.display_number }}</div>
+            <div class="bom-info-value">{{ station.display_number }}{% if is_split %}/3{% endif %}</div>
         </div>
     </div>
     
+    {% if bom_data|length > 0 %}
     <div class="bom-table-container-slider" data-row-count="{{ bom_data|length }}">
-        <table class="bom-table-slider cols-{{ num_columns|default:5 }}">
+        <table class="bom-table-slider cols-5">
             <thead>
                 <tr>
                     <th class="serial-number-slider">S.NO</th>
@@ -594,14 +502,6 @@
                     <th class="description-column">DESCRIPTION</th>
                     <th class="part-number-slider">PART NO.</th>
                     <th class="quantity-slider">QTY</th>
-                    {% comment %}
-                    <!-- ADD MORE COLUMNS AS NEEDED -->
-                    <th class="supplier-slider">SUPPLIER</th>
-                    <th class="location-slider">LOCATION</th>
-                    <th class="status-slider">STATUS</th>
-                    <th class="cost-slider">COST</th>
-                    <th class="notes-slider">NOTES</th>
-                    {% endcomment %}
                 </tr>
             </thead>
             <tbody>
@@ -625,22 +525,25 @@
                     </td>
                     <td class="part-number-slider">{{ item_data.item.part_number }}</td>
                     <td class="quantity-slider">{{ item_data.formatted_quantity }}</td>
-                    {% comment %}
-                    <!-- ADD MORE DATA COLUMNS AS NEEDED -->
-                    <td class="supplier-slider">{{ item_data.item.supplier|default:"--" }}</td>
-                    <td class="location-slider">{{ item_data.item.location|default:"--" }}</td>
-                    <td class="status-slider">{{ item_data.item.status|default:"--" }}</td>
-                    <td class="cost-slider">${{ item_data.item.cost|default:"0.00" }}</td>
-                    <td class="notes-slider">{{ item_data.item.notes|default:"--" }}</td>
-                    {% endcomment %}
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
+    {% else %}
+    <div class="no-items-message">
+        <div class="no-items-icon">📋</div>
+        <h3>No Items for Display {{ station.display_number }}</h3>
+        <p>This display section has no BOM items assigned.</p>
+        <p>Check other displays for remaining items.</p>
+    </div>
+    {% endif %}
     
     <div class="bom-watermark">
-        🏭 Display {{ station.display_number }} • Database BOM • {{ bom_data|length }} Items
+        🏭 Display {{ station.display_number }}{% if is_split %} of 3{% endif %} • {% if is_split %}Split {% endif %}BOM • {{ bom_data|length }} Items
+        {% if bom_info.display_info %}
+        <br>{{ bom_info.display_info }}
+        {% endif %}
     </div>
     
     {% else %}
@@ -673,7 +576,9 @@
                 
                 console.log('BOM Table initialized:', {
                     columns: columnCount,
-                    rows: rowCount
+                    rows: rowCount,
+                    display: {{ station.display_number }},
+                    is_split: {{ is_split|yesno:"true,false" }}
                 });
             }
         });

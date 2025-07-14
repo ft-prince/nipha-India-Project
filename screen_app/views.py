@@ -14,17 +14,20 @@ from .models import (Station, Product, ProductMedia, AssemblyStage,
 # for bom 
 
 def get_station_bom_data(request, station_id):
-    """Get database BOM data for a specific station"""
+    """Get database BOM data for a specific station with split logic - FIXED"""
     station = get_object_or_404(Station, pk=station_id)
     
     if not station.current_product:
         return JsonResponse({'error': 'No product selected'}, status=400)
     
-    # Get BOM data based on station settings
+    # Get BOM data based on station settings and display number
     bom_data = station.get_current_bom_data()
     
     if not bom_data:
         return JsonResponse({'error': 'No BOM data available'}, status=404)
+    
+    # Get BOM info for display context
+    bom_info = station.get_current_bom_info()
     
     # Format BOM data for frontend
     formatted_bom = []
@@ -45,8 +48,7 @@ def get_station_bom_data(request, station_id):
         }
         formatted_bom.append(item_info)
     
-    # Get BOM template information
-    bom_template_info = None
+    # Determine BOM type and quantity
     if station.show_single_unit_bom:
         bom_type = 'SINGLE_UNIT'
         quantity = 1
@@ -57,6 +59,8 @@ def get_station_bom_data(request, station_id):
         bom_type = station.current_stage.name if station.current_stage else None
         quantity = station.product_quantity
     
+    # FIXED: Get BOM template information without model objects
+    bom_template_info = None
     try:
         bom_template = BOMTemplate.objects.get(
             product=station.current_product,
@@ -69,9 +73,34 @@ def get_station_bom_data(request, station_id):
             'bom_type': bom_template.get_bom_type_display(),
             'stage': bom_template.stage.display_name if bom_template.stage else None,
             'description': bom_template.description,
+            'is_split': bom_info['is_split'] if bom_info else False,
+            'display_info': bom_info['display_info'] if bom_info else None,
+            'split_info': bom_info.get('split_info') if bom_info else None,
         }
     except BOMTemplate.DoesNotExist:
         pass
+    
+    # FIXED: Serialize bom_info properly
+    serialized_bom_info = {}
+    if bom_info:
+        for key, value in bom_info.items():
+            if hasattr(value, 'id'):  # It's a model object
+                if hasattr(value, 'template_name'):  # BOMTemplate
+                    serialized_bom_info[key] = {
+                        'id': value.id,
+                        'name': value.template_name,
+                        'bom_type': value.bom_type,
+                    }
+                elif hasattr(value, 'display_name'):  # AssemblyStage
+                    serialized_bom_info[key] = {
+                        'id': value.id,
+                        'name': value.name,
+                        'display_name': value.display_name,
+                    }
+                else:
+                    serialized_bom_info[key] = str(value)
+            else:
+                serialized_bom_info[key] = value
     
     return JsonResponse({
         'bom_data': formatted_bom,
@@ -83,6 +112,9 @@ def get_station_bom_data(request, station_id):
             'product_name': station.current_product.name,
             'quantity': quantity,
             'bom_type': bom_type,
+            'is_split_bom': bom_info['is_split'] if bom_info else False,
+            'display_info': bom_info['display_info'] if bom_info else None,
+            'bom_info': serialized_bom_info,  # FIXED: Use serialized version
         },
         'summary': {
             'total_items': len(formatted_bom),
@@ -90,26 +122,44 @@ def get_station_bom_data(request, station_id):
                 item['calculated_quantity'] * (item['cost_per_unit'] or 0) 
                 for item in formatted_bom
             ),
+            'display_context': f"Display {station.display_number}" + (
+                f" - {bom_info['display_info']}" if bom_info and bom_info.get('display_info') else ""
+            )
         }
     })
-
+    
 def render_bom_display(request, station_id):
-    """Render BOM display page for a station"""
+    """Render BOM display page for a station with split logic"""
     station = get_object_or_404(Station, pk=station_id)
     
-    # Get BOM data
+    # Get BOM data for this specific display
     bom_data = station.get_current_bom_data() if station.current_product else []
+    bom_info = station.get_current_bom_info()
     
     # Determine BOM type and quantity
     if station.show_single_unit_bom:
         bom_type = 'Single Unit'
+        if bom_info and bom_info['is_split']:
+            bom_type += f" (Display {station.display_number})"
         quantity = 1
     elif station.show_batch_bom:
         bom_type = f'{station.product_quantity} Units Batch'
+        if bom_info and bom_info['is_split']:
+            bom_type += f" (Display {station.display_number})"
         quantity = station.product_quantity
     else:
         bom_type = station.current_stage.display_name if station.current_stage else 'Unknown'
         quantity = station.product_quantity
+    
+    # Add split information to context
+    split_context = {}
+    if bom_info and bom_info.get('is_split'):
+        split_context = {
+            'is_split': True,
+            'display_info': bom_info.get('display_info', ''),
+            'split_info': bom_info.get('split_info', {}),
+            'current_display': station.display_number
+        }
     
     context = {
         'station': station,
@@ -119,6 +169,7 @@ def render_bom_display(request, station_id):
         'product': station.current_product,
         'stage': station.current_stage,
         'process': station.current_process,
+        'split_context': split_context,
     }
     
     return render(request, 'bom_display.html', context)
@@ -926,7 +977,7 @@ def stream_pdf(request, pdf_path):
 @csrf_exempt
 @require_http_methods(["POST"])
 def update_assembly_config(request, station_id):
-    """Update BRG assembly configuration"""
+    """Enhanced assembly configuration with proper BOM stage handling"""
     station = get_object_or_404(Station, pk=station_id)
     
     try:
@@ -952,6 +1003,16 @@ def update_assembly_config(request, station_id):
                 station.current_stage = stage
                 # Reset to first process of new stage
                 station.current_process = stage.processes.first()
+                
+                # Auto-configure BOM settings based on stage
+                if stage.name == 'BOM_DISPLAY':
+                    # Set default BOM display based on quantity
+                    if station.product_quantity == 1:
+                        station.show_single_unit_bom = True
+                        station.show_batch_bom = False
+                    else:
+                        station.show_single_unit_bom = False
+                        station.show_batch_bom = True
         
         # Update process
         if 'process_id' in data:
@@ -959,6 +1020,21 @@ def update_assembly_config(request, station_id):
                 process = get_object_or_404(AssemblyProcess, id=data['process_id'])
                 station.current_process = process
                 station.current_stage = process.stage
+                
+                # Handle BOM-specific processes
+                if process.stage.name == 'BOM_DISPLAY':
+                    if process.name == 'SINGLE_UNIT_BOM_DISPLAY':
+                        station.show_single_unit_bom = True
+                        station.show_batch_bom = False
+                        station.product_quantity = 1
+                    elif process.name == 'BATCH_50_BOM_DISPLAY':
+                        station.show_single_unit_bom = False
+                        station.show_batch_bom = True
+                        if station.product_quantity < 2:
+                            station.product_quantity = 50
+                    elif process.name == 'STAGE_BOM_DISPLAY':
+                        station.show_single_unit_bom = False
+                        station.show_batch_bom = False
                 
                 # Auto-enable loop mode for processes 1A, 1B, 1C
                 if process.loop_group == 'final_assembly_1abc':
@@ -971,24 +1047,38 @@ def update_assembly_config(request, station_id):
             quantity = int(data['quantity'])
             if quantity > 0:
                 station.product_quantity = quantity
-                # Update BOM display based on quantity
-                if quantity == 1:
-                    station.show_single_unit_bom = True
-                    station.show_batch_bom = False
-                else:
-                    station.show_single_unit_bom = False
-                    station.show_batch_bom = True
+                # Auto-adjust BOM display based on quantity
+                if station.current_stage and station.current_stage.name == 'BOM_DISPLAY':
+                    if quantity == 1:
+                        station.show_single_unit_bom = True
+                        station.show_batch_bom = False
+                    else:
+                        station.show_single_unit_bom = False
+                        station.show_batch_bom = True
         
         # Update BOM display settings
         if 'show_single_unit_bom' in data:
             station.show_single_unit_bom = data['show_single_unit_bom']
+            if data['show_single_unit_bom']:
+                station.show_batch_bom = False
+                station.product_quantity = 1
+                
         if 'show_batch_bom' in data:
             station.show_batch_bom = data['show_batch_bom']
+            if data['show_batch_bom']:
+                station.show_single_unit_bom = False
+                if station.product_quantity < 2:
+                    station.product_quantity = 50
             
         station.save()
         
+        # Get updated BOM data for response
+        bom_data = station.get_current_bom_data()
+        bom_info = station.get_current_bom_info()
+        
         return JsonResponse({
             'success': True,
+            'message': 'Configuration updated successfully',
             'current_state': {
                 'product': {
                     'id': station.current_product.id,
@@ -998,7 +1088,8 @@ def update_assembly_config(request, station_id):
                 'stage': {
                     'id': station.current_stage.id,
                     'name': station.current_stage.display_name,
-                    'order': station.current_stage.order
+                    'order': station.current_stage.order,
+                    'is_bom_stage': station.current_stage.name == 'BOM_DISPLAY'
                 } if station.current_stage else None,
                 'process': {
                     'id': station.current_process.id,
@@ -1011,13 +1102,21 @@ def update_assembly_config(request, station_id):
                 'bom_settings': {
                     'show_single_unit': station.show_single_unit_bom,
                     'show_batch': station.show_batch_bom
-                }
+                },
+                'bom_data_available': bool(bom_data),
+                'bom_item_count': len(bom_data) if bom_data else 0,
+                'bom_is_split': bom_info.get('is_split', False) if bom_info else False,
             }
         })
         
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
-    
+    except ValueError as e:
+        return JsonResponse({'error': f'Invalid value: {str(e)}'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
     
 def station_media_stream_enhanced(request, station_id):
     """Enhanced streaming with BOM data support"""
@@ -1188,81 +1287,158 @@ def station_media_stream_enhanced(request, station_id):
 
 
 def get_station_media_with_bom(request, station_id):
-    """Enhanced station media API that includes BOM data as virtual media"""
+    """Enhanced station media API that handles split BOM properly for all displays - FIXED"""
     station = get_object_or_404(Station, pk=station_id)
     
-    # Get regular media
+    # Get regular media (excluding PDF BOMs when we have database BOM)
     current_media = station.get_current_media()
     
     media_data = []
     
-    # Add regular media first
-    for media in current_media:
-        media_info = {
-            'id': media.id,
-            'url': media.file.url if media.file else None,
-            'type': media.file.name.split('.')[-1].lower() if media.file else 'unknown',
-            'duration': media.duration,
-            'media_type': media.get_media_type_display(),
-            'product_name': media.product.name,
-            'product_code': media.product.code,
-            'is_bom_data': False,
-        }
-        
-        if media.process:
-            media_info['process'] = {
-                'id': media.process.id,
-                'name': media.process.name,
-                'display_name': media.process.display_name,
-                'stage': media.process.stage.display_name,
-                'order': media.process.order,
-                'is_looped': media.process.is_looped,
-                'loop_group': media.process.loop_group
-            }
-        
-        if media.bom:
-            media_info['bom'] = {
-                'id': media.bom.id,
-                'type': media.bom.get_bom_type_display(),
-                'stage': media.bom.stage.display_name if media.bom.stage else None
-            }
-        
-        media_data.append(media_info)
+    # Check if we have database BOM data for this specific display
+    bom_data = station.get_current_bom_data() if station.current_product else []
+    bom_info = station.get_current_bom_info()
+    has_database_bom = bool(bom_data)
     
-    # Add BOM data as virtual media (for Display 1 primarily)
-    bom_data = station.get_current_bom_data()
-    if bom_data and station.display_number == 1:  # Show BOM primarily on Display 1
+    print(f"Station {station_id} Display {station.display_number}:")
+    print(f"  - Has BOM data: {has_database_bom}")
+    print(f"  - BOM items count: {len(bom_data) if bom_data else 0}")
+    print(f"  - Current stage: {station.current_stage.name if station.current_stage else None}")
+    
+    # ALWAYS add database BOM as first item if we have data and are in BOM stage
+    if (has_database_bom and station.current_stage and 
+        station.current_stage.name == 'BOM_DISPLAY'):
+        
+        # Determine BOM display type
+        bom_display_type = "Database BOM"
+        if station.show_single_unit_bom:
+            bom_display_type = "Single Unit BOM"
+        elif station.show_batch_bom:
+            bom_display_type = f"{station.product_quantity} Units BOM"
+        elif station.current_stage:
+            bom_display_type = f"{station.current_stage.display_name} BOM"
+        
+        # Add split information if applicable
+        display_suffix = ""
+        items_for_display = len(bom_data)
+        
+        if bom_info and bom_info.get('is_split'):
+            split_info = bom_info.get('split_info', {})
+            current_display_info = split_info.get(f'display_{station.display_number}', {})
+            items_for_display = current_display_info.get('item_count', 0)
+            
+            if items_for_display > 0:
+                display_suffix = f" (Part {station.display_number}/3 - {items_for_display} items)"
+            else:
+                display_suffix = f" (Display {station.display_number}/3 - No items)"
+        
         bom_media_info = {
-            'id': f'bom_{station.id}',
-            'url': f'/station/{station.id}/bom-render/',  # Virtual URL for BOM rendering
+            'id': f'database_bom_{station.id}',
+            'url': f'/station/{station.id}/bom-render/',
             'type': 'bom',
-            'duration': 30,  # BOM display duration
-            'media_type': 'Bill of Material',
+            'duration': 30,
+            'media_type': f'Database BOM',
             'product_name': station.current_product.name,
             'product_code': station.current_product.code,
             'is_bom_data': True,
-            'bom_items': len(bom_data),
-            'bom_type': 'Batch 50 Units' if station.show_batch_bom else 'Single Unit',
-            'bom_data': []
+            'bom_items': items_for_display,  # Items for THIS display
+            'bom_type': bom_display_type + display_suffix,
+            'is_split': bom_info.get('is_split', False) if bom_info else False,
+            'display_info': bom_info.get('display_info', '') if bom_info else '',
         }
         
-        # Add formatted BOM items
-        for item_data in bom_data:
-            bom_item = {
-                'serial_number': item_data['serial_number'],
-                'item_code': item_data['item'].item_code,
-                'item_description': item_data['item'].item_description,
-                'part_number': item_data['item'].part_number,
-                'formatted_quantity': item_data['formatted_quantity'],
-                'notes': item_data['notes'],
-                'item_photo_url': item_data['item'].item_photo.url if item_data['item'].item_photo else None,
-                'supplier': item_data['item'].supplier,
-            }
-            bom_media_info['bom_data'].append(bom_item)
+        media_data.append(bom_media_info)
+        print(f"  - Added BOM media: {bom_media_info['bom_type']}")
         
-        media_data.insert(0, bom_media_info)  # Add BOM as first item
+        # Filter out PDF BOMs from regular media when we have database BOM
+        filtered_media = current_media.exclude(media_type='Bill of Material')
+        
+        # Add remaining non-BOM media
+        for media in filtered_media:
+            media_info = {
+                'id': media.id,
+                'url': media.file.url if media.file else None,
+                'type': media.file.name.split('.')[-1].lower() if media.file else 'unknown',
+                'duration': media.duration,
+                'media_type': media.get_media_type_display(),
+                'product_name': media.product.name,
+                'product_code': media.product.code,
+                'is_bom_data': False,
+            }
+            
+            if media.process:
+                media_info['process'] = {
+                    'id': media.process.id,
+                    'name': media.process.name,
+                    'display_name': media.process.display_name,
+                    'stage': media.process.stage.display_name,
+                    'order': media.process.order,
+                    'is_looped': media.process.is_looped,
+                    'loop_group': media.process.loop_group
+                }
+            
+            media_data.append(media_info)
     
-    return JsonResponse({
+    else:
+        print(f"  - Not adding BOM: stage={station.current_stage.name if station.current_stage else None}, has_bom={has_database_bom}")
+        
+        # Regular media handling for non-BOM stages
+        for media in current_media:
+            media_info = {
+                'id': media.id,
+                'url': media.file.url if media.file else None,
+                'type': media.file.name.split('.')[-1].lower() if media.file else 'unknown',
+                'duration': media.duration,
+                'media_type': media.get_media_type_display(),
+                'product_name': media.product.name,
+                'product_code': media.product.code,
+                'is_bom_data': False,
+            }
+            
+            if media.process:
+                media_info['process'] = {
+                    'id': media.process.id,
+                    'name': media.process.name,
+                    'display_name': media.process.display_name,
+                    'stage': media.process.stage.display_name,
+                    'order': media.process.order,
+                    'is_looped': media.process.is_looped,
+                    'loop_group': media.process.loop_group
+                }
+            
+            media_data.append(media_info)
+    
+    # FIXED: Properly serialize BOM info without model objects
+    serialized_bom_info = None
+    if bom_info:
+        # Convert any model objects to serializable data
+        serialized_bom_info = {}
+        for key, value in bom_info.items():
+            if key == 'template' and value:
+                # Convert BOMTemplate to serializable dict
+                serialized_bom_info['template'] = {
+                    'id': value.id,
+                    'name': value.template_name,
+                    'bom_type': value.bom_type,
+                    'description': value.description,
+                    'product_id': value.product.id,
+                    'product_code': value.product.code,
+                    'stage_id': value.stage.id if value.stage else None,
+                    'stage_name': value.stage.name if value.stage else None,
+                }
+            elif key == 'stage' and value:
+                # Convert AssemblyStage to serializable dict
+                serialized_bom_info['stage'] = {
+                    'id': value.id,
+                    'name': value.name,
+                    'display_name': value.display_name,
+                    'order': value.order,
+                }
+            else:
+                # Copy primitive values as-is
+                serialized_bom_info[key] = value
+    
+    response_data = {
         'media': media_data,
         'station_info': {
             'name': station.name,
@@ -1291,32 +1467,78 @@ def get_station_media_with_bom(request, station_id):
             'bom_settings': {
                 'show_single_unit': station.show_single_unit_bom,
                 'show_batch': station.show_batch_bom,
-            }
+            },
+            'bom_split_info': serialized_bom_info,  # FIXED: Use serialized version
+            'has_database_bom': has_database_bom,
+            'is_bom_stage': (station.current_stage and 
+                           station.current_stage.name == 'BOM_DISPLAY')
         }
-    })
-
+    }
+    
+    print(f"  - Returning {len(media_data)} media items")
+    return JsonResponse(response_data)
+  
 def render_bom_for_slider(request, station_id):
-    """Render BOM as HTML fragment for slider integration"""
+    """Render BOM as HTML fragment for slider integration with enhanced split logic"""
     station = get_object_or_404(Station, pk=station_id)
     
     if not station.current_product:
-        return HttpResponse('<div class="bom-error">No product selected</div>')
+        return HttpResponse('''
+            <div class="bom-container-slider">
+                <div class="no-bom-data-slider">
+                    <div class="no-bom-icon-slider">📋</div>
+                    <h3>No Product Selected</h3>
+                    <p>Please select a product to view BOM data</p>
+                </div>
+            </div>
+        ''')
     
     bom_data = station.get_current_bom_data()
     
     if not bom_data:
-        return HttpResponse('<div class="bom-error">No BOM data available</div>')
+        return HttpResponse('''
+            <div class="bom-container-slider">
+                <div class="no-bom-data-slider">
+                    <div class="no-bom-icon-slider">📋</div>
+                    <h3>No BOM Data Available</h3>
+                    <p>No bill of materials configured for current settings</p>
+                    <p>Check BOM templates in admin panel</p>
+                </div>
+            </div>
+        ''')
     
-    # Determine BOM type and quantity
+    bom_info = station.get_current_bom_info()
+    
+    # Determine BOM type and quantity with split information
     if station.show_single_unit_bom:
         bom_type = 'Single Unit'
         quantity = 1
     elif station.show_batch_bom:
-        bom_type = f'{station.product_quantity} Units Batch'
+        bom_type = f'{station.product_quantity} Units'
         quantity = station.product_quantity
     else:
-        bom_type = station.current_stage.display_name if station.current_stage else 'Unknown'
+        bom_type = station.current_stage.display_name if station.current_stage else 'Stage BOM'
         quantity = station.product_quantity
+    
+    # Add split information for display
+    split_context = {'is_split': False}
+    if bom_info and bom_info.get('is_split'):
+        split_info = bom_info.get('split_info', {})
+        current_display_info = split_info.get(f'display_{station.display_number}', {})
+        
+        split_context = {
+            'is_split': True,
+            'display_info': bom_info.get('display_info', ''),
+            'current_display': station.display_number,
+            'item_count': current_display_info.get('item_count', 0),
+            'start_serial': current_display_info.get('start_serial', 0),
+            'end_serial': current_display_info.get('end_serial', 0),
+        }
+        
+        if current_display_info.get('item_count', 0) > 0:
+            bom_type += f" (Items {current_display_info['start_serial']}-{current_display_info['end_serial']})"
+        else:
+            bom_type += " (No items for this display)"
     
     context = {
         'station': station,
@@ -1325,11 +1547,15 @@ def render_bom_for_slider(request, station_id):
         'quantity': quantity,
         'product': station.current_product,
         'stage': station.current_stage,
+        'bom_info': bom_info,
+        'is_split': split_context['is_split'],
+        'split_context': split_context,
+        'has_bom_data': bool(bom_data),
     }
     
     return render(request, 'bom_slider_fragment.html', context)
 
-
+ 
 # BOM Management Dashboard
 def bom_management_dashboard(request):
     """BOM management dashboard"""
@@ -1486,7 +1712,7 @@ def station_media_slider_enhanced(request, station_id):
     
     # Get BOM data if available
     bom_data = station.get_current_bom_data()
-    has_bom_data = bool(bom_data and station.display_number == 1)
+    has_bom_data = bool(bom_data )
     
     context = {
         'station': station,
@@ -1803,3 +2029,114 @@ def workflow_guide(request):
     return render(request, 'workflow-guide.html')
 def workflow_guide2(request):
     return render(request, 'hindi.html')
+
+
+
+
+def debug_bom_stage(request, station_id):
+    """Debug endpoint to check BOM stage configuration"""
+    try:
+        station = Station.objects.get(pk=station_id)
+        
+        # Check BOM stage and processes
+        bom_stage = None
+        bom_processes = []
+        try:
+            bom_stage = AssemblyStage.objects.get(name='BOM_DISPLAY')
+            bom_processes = list(bom_stage.processes.all().values(
+                'id', 'name', 'display_name', 'order'
+            ))
+        except AssemblyStage.DoesNotExist:
+            pass
+        
+        # Check current BOM data
+        bom_data = station.get_current_bom_data() if station.current_product else []
+        bom_info = station.get_current_bom_info()
+        
+        # Check BOM templates
+        bom_templates = []
+        if station.current_product:
+            from .models import BOMTemplate
+            templates = BOMTemplate.objects.filter(
+                product=station.current_product,
+                is_active=True
+            ).values('id', 'template_name', 'bom_type', 'stage__name')
+            bom_templates = list(templates)
+        
+        debug_info = {
+            'station': {
+                'id': station.id,
+                'name': station.name,
+                'display_number': station.display_number,
+                'current_product': {
+                    'id': station.current_product.id if station.current_product else None,
+                    'code': station.current_product.code if station.current_product else None,
+                    'name': station.current_product.name if station.current_product else None,
+                },
+                'current_stage': {
+                    'id': station.current_stage.id if station.current_stage else None,
+                    'name': station.current_stage.name if station.current_stage else None,
+                    'display_name': station.current_stage.display_name if station.current_stage else None,
+                    'is_bom_stage': (station.current_stage and 
+                                   station.current_stage.name == 'BOM_DISPLAY')
+                },
+                'current_process': {
+                    'id': station.current_process.id if station.current_process else None,
+                    'name': station.current_process.name if station.current_process else None,
+                    'display_name': station.current_process.display_name if station.current_process else None,
+                },
+                'bom_settings': {
+                    'show_single_unit': station.show_single_unit_bom,
+                    'show_batch': station.show_batch_bom,
+                    'product_quantity': station.product_quantity,
+                }
+            },
+            'bom_stage': {
+                'exists': bom_stage is not None,
+                'stage_data': {
+                    'id': bom_stage.id if bom_stage else None,
+                    'name': bom_stage.name if bom_stage else None,
+                    'display_name': bom_stage.display_name if bom_stage else None,
+                } if bom_stage else None,
+                'processes': bom_processes,
+                'process_count': len(bom_processes)
+            },
+            'bom_data': {
+                'available': bool(bom_data),
+                'item_count': len(bom_data) if bom_data else 0,
+                'is_split': bom_info.get('is_split', False) if bom_info else False,
+                'display_info': bom_info.get('display_info', '') if bom_info else '',
+                'bom_info': bom_info,
+            },
+            'bom_templates': {
+                'available': len(bom_templates) > 0,
+                'count': len(bom_templates),
+                'templates': bom_templates,
+            },
+            'recommendations': []
+        }
+        
+        # Add recommendations
+        if not bom_stage:
+            debug_info['recommendations'].append(
+                "Create BOM_DISPLAY stage with processes for single unit, batch, and stage BOMs"
+            )
+        
+        if not bom_data and station.current_product:
+            debug_info['recommendations'].append(
+                f"Create BOM templates for product {station.current_product.code}"
+            )
+        
+        if station.current_stage and station.current_stage.name == 'BOM_DISPLAY' and not bom_data:
+            debug_info['recommendations'].append(
+                "Configure BOM templates or check station BOM settings"
+            )
+        
+        return JsonResponse(debug_info, json_dumps_params={'indent': 2})
+        
+    except Station.DoesNotExist:
+        return JsonResponse({'error': 'Station not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+

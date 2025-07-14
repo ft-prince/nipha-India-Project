@@ -8,7 +8,7 @@ urlpatterns = [
     path('<int:station_id>/media/', views.get_station_media, name='station_media'),
     path('<int:station_id>/slider/', views.station_media_slider_enhanced, name='station_media_slider'),
     path('<int:station_id>/stream/', views.station_media_stream, name='station_media_stream'),
-    
+    path('<int:station_id>/debug-bom/', views.debug_bom_stage, name='debug_bom_stage'),
     # MISSING: Enhanced media endpoint with BOM integration
     path('<int:station_id>/media-with-bom/', views.get_station_media_with_bom, name='station_media_with_bom'),
     path('<int:station_id>/bom-render/', views.render_bom_for_slider, name='render_bom_for_slider'),
