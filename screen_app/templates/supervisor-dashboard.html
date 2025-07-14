@@ -81,7 +81,7 @@
             font-size: 1.2em;
         }
 
-        /* NEW: BOM Type Selection */
+        /* Enhanced BOM Type Selection for Bulk */
         .bom-type-selection {
             background: #fff9c4;
             padding: 20px;
@@ -494,57 +494,22 @@
             margin-top: 20px;
         }
 
-        /* NEW: Individual BOM controls for Display 1 */
-        .bom-controls {
-            background: #fff9c4;
-            padding: 15px;
-            border-radius: 8px;
-            border: 2px solid #ffc107;
-            margin-bottom: 15px;
-        }
-
-        .bom-controls h5 {
-            color: #856404;
-            margin-bottom: 10px;
-            font-size: 1.1em;
-        }
-
-        .bom-radio-group {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .bom-radio-item {
+        .quantity-input-group {
             display: flex;
             align-items: center;
             gap: 10px;
-            padding: 10px;
-            background: white;
-            border-radius: 6px;
-            border: 2px solid #e9ecef;
-            transition: all 0.3s ease;
+            margin-bottom: 20px;
         }
 
-        .bom-radio-item:hover {
-            border-color: #ffc107;
+        .quantity-input-group label {
+            font-weight: 600;
+            color: #2c3e50;
+            min-width: 80px;
         }
 
-        .bom-radio-item.selected {
-            border-color: #28a745;
-            background: #f8fff8;
-        }
-
-        .bom-radio-item input[type="radio"] {
-            width: 16px;
-            height: 16px;
-            accent-color: #ffc107;
-        }
-
-        .bom-description {
-            font-size: 0.85em;
-            color: #666;
-            margin-top: 5px;
+        .quantity-input-group input {
+            flex: 1;
+            max-width: 120px;
         }
 
         @media (max-width: 768px) {
@@ -618,50 +583,7 @@
             <div class="bulk-controls">
                 <h3>🎛️ Easy Bulk Operations</h3>
                 
-                <!-- NEW: BOM Type Selection for Bulk Operations -->
-                <div class="bom-type-selection">
-                    <h4>📋 Select BOM Type for All Displays</h4>
-                    <div class="bom-options" id="bulk-bom-options">
-                        <div class="bom-option" onclick="selectBulkBomType('single_unit')" id="bulk-bom-single">
-                            <div class="bom-option-header">
-                                <span style="font-size: 1.5em;">📄</span>
-                                <span class="bom-option-title">Single Unit BOM</span>
-                            </div>
-                            <div class="bom-option-description">
-                                Shows BOM for 1 unit only. Great for reference and training.
-                            </div>
-                            <div class="bom-split-indicator">
-                                🔄 Split across Displays 1, 2, 3
-                            </div>
-                        </div>
-                        
-                        <div class="bom-option selected" onclick="selectBulkBomType('batch_50')" id="bulk-bom-batch">
-                            <div class="bom-option-header">
-                                <span style="font-size: 1.5em;">📦</span>
-                                <span class="bom-option-title">50 Units BOM</span>
-                            </div>
-                            <div class="bom-option-description">
-                                Shows BOM for production batch. Quantities multiplied by batch size.
-                            </div>
-                            <div class="bom-split-indicator">
-                                🔄 Split across Displays 1, 2, 3
-                            </div>
-                        </div>
-                        
-                        <div class="bom-option" onclick="selectBulkBomType('stage_specific')" id="bulk-bom-stage">
-                            <div class="bom-option-header">
-                                <span style="font-size: 1.5em;">🎯</span>
-                                <span class="bom-option-title">Stage-Specific BOM</span>
-                            </div>
-                            <div class="bom-option-description">
-                                Shows BOM specific to current assembly stage only.
-                            </div>
-                            <div class="bom-split-indicator complete">
-                                📺 Complete on Display 1 only
-                            </div>
-                        </div>
-                    </div>
-                </div>
+
 
                 <div class="quick-setup-section">
                     <h4>📋 Quick Stage Selection</h4>
@@ -682,7 +604,14 @@
                 </div>
 
                 <div class="quick-setup-section">
-                    <h4>📺 Select Displays to Update</h4>
+                    <h4>⚙️ Bulk Settings</h4>
+                    
+                    <div class="quantity-input-group">
+                        <label>Quantity:</label>
+                        <input type="number" class="form-control" id="bulk-quantity-input" value="50" min="1" max="1000">
+                        <span style="font-size: 0.9em; color: #666;">This quantity will be applied to all selected displays</span>
+                    </div>
+                    
                     <div class="checkbox-group">
                         <div class="checkbox-item">
                             <input type="checkbox" id="bulk-display-1" checked>
@@ -713,8 +642,8 @@
 
                 <div class="alert alert-info" style="margin-top: 15px;">
                     <strong>💡 How to use:</strong> 
-                    1. Select BOM type (Single Unit/50 Units split across all displays, or Stage-specific on Display 1)
-                    2. Click a stage → First process auto-selected
+                    1. Select BOM type (how BOMs are displayed across screens)
+                    2. Set quantity and click a stage → First process auto-selected
                     3. Select displays to update
                     4. Click "Apply to Selected Displays" → Done!
                 </div>
@@ -727,35 +656,8 @@
                     <h3><span class="icon">📺</span>Display 1 - BOMs & Reference</h3>
                     
                     <div class="auto-info">
-                        ✨ Stage selection auto-selects first process
-                    </div>
-                    
-                    <!-- NEW: Enhanced BOM Controls for Display 1 -->
-                    <div class="bom-controls">
-                        <h5>📋 BOM Display Type</h5>
-                        <div class="bom-radio-group">
-                            <div class="bom-radio-item" onclick="selectBomType(1, 'single')">
-                                <input type="radio" name="bom-type-1" value="single" id="bom-single-1">
-                                <div>
-                                    <strong>Single Unit BOM (Split)</strong>
-                                    <div class="bom-description">Part of items shown here, rest on Displays 2 & 3</div>
-                                </div>
-                            </div>
-                            <div class="bom-radio-item selected" onclick="selectBomType(1, 'batch')">
-                                <input type="radio" name="bom-type-1" value="batch" id="bom-batch-1" checked>
-                                <div>
-                                    <strong>50 Units BOM (Split)</strong>
-                                    <div class="bom-description">Part of items shown here, rest on Displays 2 & 3</div>
-                                </div>
-                            </div>
-                            <div class="bom-radio-item" onclick="selectBomType(1, 'stage')">
-                                <input type="radio" name="bom-type-1" value="stage" id="bom-stage-1">
-                                <div>
-                                    <strong>Stage-Specific BOM (Complete)</strong>
-                                    <div class="bom-description">All stage items shown only on Display 1</div>
-                                </div>
-                            </div>
-                        </div>
+                        ✨ Stage selection auto-selects first process<br>
+                        📋 Shows BOMs and reference materials
                     </div>
                     
                     <div class="form-group">
@@ -796,7 +698,7 @@
                     
                     <div class="auto-info">
                         ✨ Stage selection auto-selects first process<br>
-                        📋 Shows split BOM items when Single Unit or 50 Units BOM is selected
+                        📋 Shows process instructions and materials
                     </div>
                     
                     <div class="form-group">
@@ -837,7 +739,7 @@
                     
                     <div class="auto-info">
                         ✨ Stage selection auto-selects first process<br>
-                        📋 Shows split BOM items when Single Unit or 50 Units BOM is selected
+                        📋 Shows instructional videos and guides
                     </div>
                     
                     <div class="form-group">
@@ -859,7 +761,7 @@
                         <input type="number" class="form-control" id="quantity-input-3" value="50" min="1" max="1000">
                     </div>
 
-<div class="process-navigation">
+                    <div class="process-navigation">
                         <button class="btn btn-primary" onclick="previousProcess(3)">⬅️ Previous</button>
                         <button class="btn btn-primary" onclick="nextProcess(3)">➡️ Next</button>
                         <button class="btn btn-warning" onclick="updateConfiguration(3)">💾 Update</button>
@@ -890,13 +792,7 @@
         let editingTimeouts = {};
         let selectedBulkStage = null;
         let selectedBulkProcess = null;
-        let selectedBulkBomType = 'batch_50'; // Default to 50 Units BOM
-        let lastUsedQuantities = {
-            1: 50,  // Default for Display 1
-            2: 50,  // Default for Display 2
-            3: 50,  // Default for Display 3
-            bulk: 50 // Default for bulk operations
-        };
+        let selectedBulkBomType = 'batch_50';
 
         // Initialize when page loads
         document.addEventListener('DOMContentLoaded', function() {
@@ -906,9 +802,8 @@
             addEditingProtectionToInputs();
         });
 
-        // NEW: Select BOM type for bulk operations
+        // Select BOM type for bulk operations
         function selectBulkBomType(bomType) {
-            // Update visual selection
             document.querySelectorAll('.bom-option').forEach(opt => opt.classList.remove('selected'));
             document.getElementById(`bulk-bom-${bomType.replace('_', '-')}`).classList.add('selected');
             
@@ -917,10 +812,10 @@
             let message = '';
             switch(bomType) {
                 case 'single_unit':
-                    message = 'Single Unit BOM selected - will be split across all displays';
+                    message = 'Single Unit BOM selected - will be split across displays 2 & 3';
                     break;
                 case 'batch_50':
-                    message = '50 Units BOM selected - will be split across all displays';
+                    message = '50 Units BOM selected - will be split across displays 2 & 3';
                     break;
                 case 'stage_specific':
                     message = 'Stage-Specific BOM selected - complete BOM will show only on Display 1';
@@ -928,34 +823,6 @@
             }
             
             showSystemAlert(message, 'info');
-        }
-
-        // NEW: Select BOM type for individual Display 1
-        function selectBomType(displayNum, bomType) {
-            if (displayNum !== 1) return; // Only Display 1 has individual BOM controls
-            
-            // Update visual selection
-            document.querySelectorAll('.bom-radio-item').forEach(item => item.classList.remove('selected'));
-            document.querySelector(`input[name="bom-type-1"][value="${bomType}"]`).closest('.bom-radio-item').classList.add('selected');
-            
-            // Update radio button
-            document.querySelector(`input[name="bom-type-1"][value="${bomType}"]`).checked = true;
-            
-            let message = '';
-            switch(bomType) {
-                case 'single':
-                    message = 'Display 1: Single Unit BOM (Split) - shows part of items';
-                    break;
-                case 'batch':
-                    message = 'Display 1: 50 Units BOM (Split) - shows part of items';
-                    break;
-                case 'stage':
-                    message = 'Display 1: Stage-Specific BOM (Complete) - shows all stage items';
-                    break;
-            }
-            
-            showSystemAlert(message, 'success');
-            setEditingMode(displayNum, true);
         }
 
         // Enhanced stage change handler with auto-selection for individual displays
@@ -971,14 +838,12 @@
                 return;
             }
 
-            // Find the selected stage
             const selectedStage = window.stagesData.find(s => s.id == stageId);
             if (!selectedStage || !selectedStage.processes.length) {
                 processSelect.innerHTML = '<option value="">No processes available</option>';
                 return;
             }
 
-            // Populate processes
             processSelect.innerHTML = '';
             selectedStage.processes.forEach(process => {
                 const option = document.createElement('option');
@@ -987,17 +852,13 @@
                 processSelect.appendChild(option);
             });
 
-            // AUTO-SELECT the first process
             const firstProcess = selectedStage.processes[0];
             processSelect.value = firstProcess.id;
             processSelect.classList.add('auto-selected');
             
-            // USE LAST USED QUANTITY instead of default 50
-            quantityInput.value = lastUsedQuantities[displayNum];
             quantityInput.classList.add('auto-selected');
             
-            // Show visual feedback
-            showSystemAlert(`Display ${displayNum}: Auto-selected "${firstProcess.name}" with quantity ${lastUsedQuantities[displayNum]}`, 'success');
+            showSystemAlert(`Display ${displayNum}: Auto-selected "${firstProcess.name}"`, 'success');
             
             setEditingMode(displayNum, true);
         }
@@ -1025,17 +886,14 @@
 
         // Handle bulk stage selection
         function selectBulkStage(stage, buttonElement) {
-            // Update visual selection
             document.querySelectorAll('.stage-btn').forEach(btn => btn.classList.remove('selected'));
             buttonElement.classList.add('selected');
             
             selectedBulkStage = stage;
             
-            // Show process selection
             const processSelectionDiv = document.getElementById('process-selection');
             processSelectionDiv.style.display = 'block';
             
-            // Populate processes
             const bulkProcessSelect = document.getElementById('bulk-process-select');
             bulkProcessSelect.innerHTML = '';
             
@@ -1046,14 +904,13 @@
                 bulkProcessSelect.appendChild(option);
             });
 
-            // AUTO-SELECT the first process
             if (stage.processes.length > 0) {
                 const firstProcess = stage.processes[0];
                 bulkProcessSelect.value = firstProcess.id;
                 bulkProcessSelect.classList.add('auto-selected');
                 selectedBulkProcess = firstProcess;
                 
-                showSystemAlert(`Bulk: Auto-selected "${firstProcess.name}" with quantity ${lastUsedQuantities.bulk}`, 'info');
+                showSystemAlert(`Bulk: Auto-selected "${firstProcess.name}"`, 'info');
             }
         }
 
@@ -1065,15 +922,14 @@
                 
                 window.stagesData = data.stages;
                 
-                // Create stage buttons for bulk operations
                 createStageButtons();
                 
-                // Populate individual display selects
+                // Populate all three displays
                 for (let i = 1; i <= 3; i++) {
                     populateStageSelect(data.stages, i);
                 }
                 
-                // Update current config for each display
+                // Update current config for all displays
                 for (let i = 1; i <= 3; i++) {
                     const displayResponse = await fetch(`/station/${i}/assembly/options/`);
                     const displayData = await displayResponse.json();
@@ -1127,7 +983,6 @@
                 return;
             }
 
-            // Determine BOM settings based on selected BOM type
             let bomSettings = {};
             switch(selectedBulkBomType) {
                 case 'single_unit':
@@ -1150,10 +1005,12 @@
                     break;
             }
 
+            const bulkQuantity = parseInt(document.getElementById('bulk-quantity-input').value) || 50;
+
             const config = {
                 stage_id: selectedBulkStage.id,
                 process_id: selectedBulkProcess.id,
-                quantity: lastUsedQuantities.bulk,
+                quantity: bulkQuantity,
                 ...bomSettings
             };
 
@@ -1173,7 +1030,16 @@
                 
                 if (results.every(r => r.success)) {
                     const bomTypeText = selectedBulkBomType.replace('_', ' ').toUpperCase();
-                    showSystemAlert(`✅ ${bomTypeText} configuration applied successfully to displays: ${selectedDisplays.join(', ')} with quantity ${lastUsedQuantities.bulk}`, 'success');
+                    showSystemAlert(`✅ ${bomTypeText} configuration applied successfully to displays: ${selectedDisplays.join(', ')} with quantity ${bulkQuantity}`, 'success');
+                    
+                    // Update individual display quantities to match bulk
+                    selectedDisplays.forEach(displayNum => {
+                        const quantityInput = document.getElementById(`quantity-input-${displayNum}`);
+                        if (quantityInput) {
+                            quantityInput.value = bulkQuantity;
+                        }
+                    });
+                    
                     loadStationData();
                     loadAssemblyOptions();
                 } else {
@@ -1186,33 +1052,27 @@
 
         // Sync all displays to the same process
         async function syncAllDisplays() {
-            // Get the configuration from Display 1
-            const stage1 = document.getElementById('stage-select-1').value;
-            const process1 = document.getElementById('process-select-1').value;
-            const quantity1 = document.getElementById('quantity-input-1').value;
-
-            if (!stage1 || !process1) {
-                alert('Please set Display 1 configuration first, then use this to sync all displays to the same settings');
+            // Use bulk settings for sync
+            if (!selectedBulkStage || !selectedBulkProcess) {
+                alert('Please set bulk configuration first, then use this to sync all displays to the same settings');
                 return;
             }
 
-            // Get BOM type from Display 1
-            const bomType1 = document.querySelector('input[name="bom-type-1"]:checked').value;
             let bomSettings = {};
-            switch(bomType1) {
-                case 'single':
+            switch(selectedBulkBomType) {
+                case 'single_unit':
                     bomSettings = {
                         show_single_unit_bom: true,
                         show_batch_bom: false
                     };
                     break;
-                case 'batch':
+                case 'batch_50':
                     bomSettings = {
                         show_single_unit_bom: false,
                         show_batch_bom: true
                     };
                     break;
-                case 'stage':
+                case 'stage_specific':
                     bomSettings = {
                         show_single_unit_bom: false,
                         show_batch_bom: false
@@ -1220,17 +1080,19 @@
                     break;
             }
 
+            const bulkQuantity = parseInt(document.getElementById('bulk-quantity-input').value) || 50;
+
             const config = {
-                stage_id: stage1,
-                process_id: process1,
-                quantity: parseInt(quantity1),
+                stage_id: selectedBulkStage.id,
+                process_id: selectedBulkProcess.id,
+                quantity: bulkQuantity,
                 ...bomSettings
             };
 
             try {
-                showSystemAlert('Syncing all displays to Display 1 configuration...', 'info');
+                showSystemAlert('Syncing all displays to bulk configuration...', 'info');
                 
-                const promises = [2, 3].map(displayNum => 
+                const promises = [1, 2, 3].map(displayNum => 
                     fetch(`/station/${displayNum}/assembly/config/`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -1243,6 +1105,15 @@
                 
                 if (results.every(r => r.success)) {
                     showSystemAlert('✅ All displays synced successfully!', 'success');
+                    
+                    // Update individual display quantities
+                    [2, 3].forEach(displayNum => {
+                        const quantityInput = document.getElementById(`quantity-input-${displayNum}`);
+                        if (quantityInput) {
+                            quantityInput.value = bulkQuantity;
+                        }
+                    });
+                    
                     loadStationData();
                     loadAssemblyOptions();
                 } else {
@@ -1255,7 +1126,6 @@
 
         // Load current station data
         async function loadStationData() {
-            // Skip auto-refresh if user is editing
             if (isAnyDisplayBeingEdited()) {
                 return;
             }
@@ -1285,12 +1155,10 @@
             if (data.station_info) {
                 const station = data.station_info;
                 
-                // Update process display with BOM info
                 let processText = 'No process selected';
                 if (station.current_process && station.current_stage) {
                     processText = `${station.current_stage.name} - ${station.current_process.name}`;
                     
-                    // Add BOM type indicator
                     if (station.bom_settings) {
                         if (station.bom_settings.show_single_unit) {
                             processText += ' | Single Unit BOM';
@@ -1326,11 +1194,11 @@
         // Update controls based on current station status
         function updateControlsFromStatus(station, displayNum) {
             if (editingTimeouts[displayNum]) {
-                return;
+                return; // Skip displays being edited
             }
 
             const stageSelect = document.getElementById(`stage-select-${displayNum}`);
-            if (station.current_stage && stageSelect.value != station.current_stage.id) {
+            if (station.current_stage && stageSelect && stageSelect.value != station.current_stage.id) {
                 stageSelect.value = station.current_stage.id;
                 
                 if (window.stagesData) {
@@ -1342,32 +1210,16 @@
             }
             
             const processSelect = document.getElementById(`process-select-${displayNum}`);
-            if (station.current_process && processSelect.value != station.current_process.id) {
+            if (station.current_process && processSelect && processSelect.value != station.current_process.id) {
                 processSelect.value = station.current_process.id;
             }
             
             const quantityInput = document.getElementById(`quantity-input-${displayNum}`);
-            if (quantityInput.value != station.quantity) {
+            if (quantityInput && quantityInput.value != station.quantity) {
                 quantityInput.value = station.quantity;
             }
             
             updateLoopStatus(station.loop_mode, displayNum);
-            
-            // Update BOM type for Display 1
-            if (displayNum === 1 && station.bom_settings) {
-                let bomType = 'batch'; // Default
-                if (station.bom_settings.show_single_unit) {
-                    bomType = 'single';
-                } else if (!station.bom_settings.show_single_unit && !station.bom_settings.show_batch) {
-                    bomType = 'stage';
-                }
-                
-                const bomRadio = document.querySelector(`input[name="bom-type-1"][value="${bomType}"]`);
-                if (bomRadio && !bomRadio.checked) {
-                    bomRadio.checked = true;
-                    selectBomType(1, bomType);
-                }
-            }
         }
 
         // Populate process select for individual displays
@@ -1405,41 +1257,30 @@
         // Update current configuration for specific display
         function updateCurrentConfig(config, displayNum) {
             const stageSelect = document.getElementById(`stage-select-${displayNum}`);
-            stageSelect.value = config.stage_id || '';
+            if (stageSelect) {
+                stageSelect.value = config.stage_id || '';
+            }
             
             if (config.stage_id && window.stagesData) {
                 const selectedStage = window.stagesData.find(s => s.id == config.stage_id);
                 if (selectedStage) {
                     populateProcessSelect(selectedStage.processes, displayNum);
                     setTimeout(() => {
-                        document.getElementById(`process-select-${displayNum}`).value = config.process_id || '';
+                        const processSelect = document.getElementById(`process-select-${displayNum}`);
+                        if (processSelect) {
+                            processSelect.value = config.process_id || '';
+                        }
                     }, 100);
                 }
             }
             
-            // Update quantity and remember it
-            const currentQuantity = config.quantity || 50;
-            document.getElementById(`quantity-input-${displayNum}`).value = currentQuantity;
-            lastUsedQuantities[displayNum] = currentQuantity;
-            lastUsedQuantities.bulk = currentQuantity; // Also update bulk default
+            const quantityInput = document.getElementById(`quantity-input-${displayNum}`);
+            if (quantityInput) {
+                const currentQuantity = config.quantity || 50;
+                quantityInput.value = currentQuantity;
+            }
             
             updateLoopStatus(config.loop_mode, displayNum);
-            
-            // Update BOM type for Display 1
-            if (displayNum === 1 && config.bom_settings) {
-                let bomType = 'batch'; // Default
-                if (config.bom_settings.show_single_unit) {
-                    bomType = 'single';
-                } else if (!config.bom_settings.show_single_unit && !config.bom_settings.show_batch) {
-                    bomType = 'stage';
-                }
-                
-                const bomRadio = document.querySelector(`input[name="bom-type-1"][value="${bomType}"]`);
-                if (bomRadio) {
-                    bomRadio.checked = true;
-                    selectBomType(1, bomType);
-                }
-            }
         }
 
         // Set editing mode for specific display
@@ -1480,32 +1321,19 @@
                             setEditingMode(i, false);
                         }, 1000);
                     });
-                    
-                    // REMEMBER LAST USED QUANTITY when user changes it
-                    quantityInput.addEventListener('change', function() {
-                        const newQuantity = parseInt(this.value);
-                        if (newQuantity && newQuantity > 0) {
-                            lastUsedQuantities[i] = newQuantity;
-                            lastUsedQuantities.bulk = newQuantity; // Also update bulk default
-                            showSystemAlert(`✅ Quantity ${newQuantity} saved for Display ${i} and bulk operations`, 'success');
-                        }
-                    });
                 }
             }
 
-            // Add editing protection for BOM radio buttons
-            const bomRadios = document.querySelectorAll('input[name="bom-type-1"]');
-            bomRadios.forEach(radio => {
-                radio.addEventListener('focus', function() {
-                    setEditingMode(1, true);
+            // Add listener for bulk quantity input
+            const bulkQuantityInput = document.getElementById('bulk-quantity-input');
+            if (bulkQuantityInput) {
+                bulkQuantityInput.addEventListener('change', function() {
+                    const newQuantity = parseInt(this.value);
+                    if (newQuantity && newQuantity > 0) {
+                        showSystemAlert(`✅ Bulk quantity set to ${newQuantity}`, 'success');
+                    }
                 });
-                radio.addEventListener('change', function() {
-                    setEditingMode(1, true);
-                    setTimeout(() => {
-                        setEditingMode(1, false);
-                    }, 2000);
-                });
-            });
+            }
         }
 
         // Process navigation functions
@@ -1555,7 +1383,7 @@
             }
         }
 
-        // Update configuration for individual display with enhanced BOM support
+        // Update configuration for individual display
         async function updateConfiguration(displayNum) {
             const stageId = document.getElementById(`stage-select-${displayNum}`).value;
             const processId = document.getElementById(`process-select-${displayNum}`).value;
@@ -1566,53 +1394,27 @@
                 return;
             }
             
-            // Get BOM settings
+            // Use current bulk BOM settings
             let bomSettings = {};
-            if (displayNum === 1) {
-                const bomType = document.querySelector('input[name="bom-type-1"]:checked').value;
-                switch(bomType) {
-                    case 'single':
-                        bomSettings = {
-                            show_single_unit_bom: true,
-                            show_batch_bom: false
-                        };
-                        break;
-                    case 'batch':
-                        bomSettings = {
-                            show_single_unit_bom: false,
-                            show_batch_bom: true
-                        };
-                        break;
-                    case 'stage':
-                        bomSettings = {
-                            show_single_unit_bom: false,
-                            show_batch_bom: false
-                        };
-                        break;
-                }
-            } else {
-                // For displays 2 and 3, inherit BOM settings from Display 1
-                const display1BomType = document.querySelector('input[name="bom-type-1"]:checked').value;
-                switch(display1BomType) {
-                    case 'single':
-                        bomSettings = {
-                            show_single_unit_bom: true,
-                            show_batch_bom: false
-                        };
-                        break;
-                    case 'batch':
-                        bomSettings = {
-                            show_single_unit_bom: false,
-                            show_batch_bom: true
-                        };
-                        break;
-                    case 'stage':
-                        bomSettings = {
-                            show_single_unit_bom: false,
-                            show_batch_bom: false
-                        };
-                        break;
-                }
+            switch(selectedBulkBomType) {
+                case 'single_unit':
+                    bomSettings = {
+                        show_single_unit_bom: true,
+                        show_batch_bom: false
+                    };
+                    break;
+                case 'batch_50':
+                    bomSettings = {
+                        show_single_unit_bom: false,
+                        show_batch_bom: true
+                    };
+                    break;
+                case 'stage_specific':
+                    bomSettings = {
+                        show_single_unit_bom: false,
+                        show_batch_bom: false
+                    };
+                    break;
             }
 
             const config = {
@@ -1640,7 +1442,7 @@
                 const result = await response.json();
                 
                 if (result.success) {
-                    showSystemAlert(`Display ${displayNum} updated successfully with BOM settings`, 'success');
+                    showSystemAlert(`Display ${displayNum} updated successfully`, 'success');
                     await refreshSingleDisplay(displayNum);
                 } else {
                     showSystemAlert(`Display ${displayNum} update failed: ${result.error}`, 'danger');
@@ -1671,452 +1473,67 @@
             const loopStatus = document.getElementById(`loop-status-${displayNum}`);
             const loopToggleBtn = document.getElementById(`loop-toggle-btn-${displayNum}`);
             
-if (isActive) {
-            loopStatus.textContent = '🔄 Loop: Active';
-            loopStatus.className = 'loop-status loop-active';
-            loopToggleBtn.classList.add('active');
-            loopToggleBtn.textContent = 'Disable Loop';
-        } else {
-            loopStatus.textContent = '🔄 Loop: Inactive';
-            loopStatus.className = 'loop-status loop-inactive';
-            loopToggleBtn.classList.remove('active');
-            loopToggleBtn.textContent = 'Enable Loop';
-        }
-    }
-
-    // Refresh all displays
-    function refreshAllDisplays() {
-        loadStationData();
-        loadAssemblyOptions();
-        showSystemAlert('Refreshing all displays...', 'info');
-    }
-
-    // Test display
-    function testDisplay(displayNum) {
-        window.open(`/station/${displayNum}/slider/`, '_blank');
-    }
-
-    // Show system alerts with enhanced BOM information
-    function showSystemAlert(message, type) {
-        const alertDiv = document.createElement('div');
-        alertDiv.className = `alert alert-${type}`;
-        alertDiv.style.position = 'fixed';
-        alertDiv.style.top = '20px';
-        alertDiv.style.right = '20px';
-        alertDiv.style.zIndex = '9999';
-        alertDiv.style.maxWidth = '400px';
-        alertDiv.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
-        alertDiv.innerHTML = `
-            <strong>${type.charAt(0).toUpperCase() + type.slice(1)}:</strong> ${message}
-            <button onclick="this.parentElement.remove()" style="float: right; background: none; border: none; font-size: 18px; cursor: pointer;">×</button>
-        `;
-        
-        document.body.appendChild(alertDiv);
-        
-        setTimeout(() => {
-            if (alertDiv.parentElement) {
-                alertDiv.remove();
+            if (loopStatus && loopToggleBtn) {
+                if (isActive) {
+                    loopStatus.textContent = '🔄 Loop: Active';
+                    loopStatus.className = 'loop-status loop-active';
+                    loopToggleBtn.classList.add('active');
+                    loopToggleBtn.textContent = 'Disable Loop';
+                } else {
+                    loopStatus.textContent = '🔄 Loop: Inactive';
+                    loopStatus.className = 'loop-status loop-inactive';
+                    loopToggleBtn.classList.remove('active');
+                    loopToggleBtn.textContent = 'Enable Loop';
+                }
             }
-        }, 5000);
-    }
+        }
 
-    // Start periodic status updates
-    function startStatusUpdates() {
-        setInterval(async () => {
-            await loadStationData();
-        }, 3000);
-        
-        setInterval(async () => {
-            await loadAssemblyOptions();
-        }, 30000);
-    }
+        // Refresh all displays
+        function refreshAllDisplays() {
+            loadStationData();
+            loadAssemblyOptions();
+            showSystemAlert('Refreshing all displays...', 'info');
+        }
 
-    // NEW: BOM Split Testing Functions
-    function testBomSplit() {
-        showSystemAlert('Testing BOM split functionality across all displays...', 'info');
-        
-        // Open all three displays in new tabs for testing
-        for (let i = 1; i <= 3; i++) {
+        // Test display
+        function testDisplay(displayNum) {
+            window.open(`/station/${displayNum}/slider/`, '_blank');
+        }
+
+        // Show system alerts
+        function showSystemAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.style.position = 'fixed';
+            alertDiv.style.top = '20px';
+            alertDiv.style.right = '20px';
+            alertDiv.style.zIndex = '9999';
+            alertDiv.style.maxWidth = '400px';
+            alertDiv.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+            alertDiv.innerHTML = `
+                <strong>${type.charAt(0).toUpperCase() + type.slice(1)}:</strong> ${message}
+                <button onclick="this.parentElement.remove()" style="float: right; background: none; border: none; font-size: 18px; cursor: pointer;">×</button>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
             setTimeout(() => {
-                window.open(`/station/${i}/slider/`, '_blank');
-            }, i * 1000); // Stagger opening by 1 second each
+                if (alertDiv.parentElement) {
+                    alertDiv.remove();
+                }
+            }, 5000);
         }
-        
-        setTimeout(() => {
-            showSystemAlert('✅ All displays opened for BOM split testing', 'success');
-        }, 4000);
-    }
 
-    // NEW: Quick BOM Type Switch Functions
-    function quickSwitchToSingleUnit() {
-        selectBulkBomType('single_unit');
-        showSystemAlert('Quick switch: Single Unit BOM selected for bulk operations', 'info');
-    }
-
-    function quickSwitchToBatch50() {
-        selectBulkBomType('batch_50');
-        showSystemAlert('Quick switch: 50 Units BOM selected for bulk operations', 'info');
-    }
-
-    function quickSwitchToStageSpecific() {
-        selectBulkBomType('stage_specific');
-        showSystemAlert('Quick switch: Stage-Specific BOM selected for bulk operations', 'info');
-    }
-
-    // NEW: BOM Information Display
-    function showBomSplitInfo() {
-        const infoMessage = `
-            <strong>📋 BOM Split Information:</strong><br><br>
-            <strong>Single Unit BOM & 50 Units BOM:</strong><br>
-            • Items are automatically split across all 3 displays<br>
-            • Display 1: First portion of items<br>
-            • Display 2: Middle portion of items<br>
-            • Display 3: Last portion of items<br><br>
-            <strong>Stage-Specific BOMs:</strong><br>
-            • Sub Assembly 1 BOM: Complete list only on Display 1<br>
-            • Sub Assembly 2 BOM: Complete list only on Display 1<br>
-            • Final Assembly BOM: Complete list only on Display 1<br><br>
-            <strong>Benefits:</strong><br>
-            • Better visibility across workstation<br>
-            • Reduces eye strain and scrolling<br>
-            • Each operator can focus on their section
-        `;
-        
-        const alertDiv = document.createElement('div');
-        alertDiv.className = 'alert alert-info';
-        alertDiv.style.position = 'fixed';
-        alertDiv.style.top = '50%';
-        alertDiv.style.left = '50%';
-        alertDiv.style.transform = 'translate(-50%, -50%)';
-        alertDiv.style.zIndex = '10000';
-        alertDiv.style.maxWidth = '600px';
-        alertDiv.style.maxHeight = '500px';
-        alertDiv.style.overflow = 'auto';
-        alertDiv.style.boxShadow = '0 8px 30px rgba(0,0,0,0.3)';
-        alertDiv.innerHTML = `
-            ${infoMessage}
-            <button onclick="this.parentElement.remove()" style="float: right; background: #3498db; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-top: 15px;">Close</button>
-        `;
-        
-        document.body.appendChild(alertDiv);
-    }
-
-    // NEW: Bulk quantity update function
-    function updateBulkQuantity() {
-        const quantity = prompt('Enter quantity for bulk operations:', lastUsedQuantities.bulk);
-        if (quantity && !isNaN(quantity) && parseInt(quantity) > 0) {
-            const newQuantity = parseInt(quantity);
-            lastUsedQuantities.bulk = newQuantity;
+        // Start periodic status updates
+        function startStatusUpdates() {
+            setInterval(async () => {
+                await loadStationData();
+            }, 3000);
             
-            // Update all display quantities
-            for (let i = 1; i <= 3; i++) {
-                lastUsedQuantities[i] = newQuantity;
-                document.getElementById(`quantity-input-${i}`).value = newQuantity;
-            }
-            
-            showSystemAlert(`✅ Bulk quantity updated to ${newQuantity} for all displays`, 'success');
+            setInterval(async () => {
+                await loadAssemblyOptions();
+            }, 30000);
         }
-    }
-
-    // NEW: Export current configuration
-    function exportConfiguration() {
-        const config = {
-            timestamp: new Date().toISOString(),
-            displays: {},
-            bulkSettings: {
-                bomType: selectedBulkBomType,
-                stage: selectedBulkStage ? selectedBulkStage.id : null,
-                process: selectedBulkProcess ? selectedBulkProcess.id : null,
-                quantity: lastUsedQuantities.bulk
-            }
-        };
-
-        for (let i = 1; i <= 3; i++) {
-            config.displays[i] = {
-                stage: document.getElementById(`stage-select-${i}`).value,
-                process: document.getElementById(`process-select-${i}`).value,
-                quantity: document.getElementById(`quantity-input-${i}`).value,
-                bomType: i === 1 ? document.querySelector('input[name="bom-type-1"]:checked')?.value : 'inherited'
-            };
-        }
-
-        const dataStr = JSON.stringify(config, null, 2);
-        const dataBlob = new Blob([dataStr], {type: 'application/json'});
-        const url = URL.createObjectURL(dataBlob);
-        
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `brg_assembly_config_${new Date().toISOString().split('T')[0]}.json`;
-        link.click();
-        
-        URL.revokeObjectURL(url);
-        showSystemAlert('✅ Configuration exported successfully', 'success');
-    }
-
-    // NEW: Import configuration
-    function importConfiguration() {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.json';
-        input.onchange = function(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    try {
-                        const config = JSON.parse(e.target.result);
-                        loadConfigurationFromData(config);
-                        showSystemAlert('✅ Configuration imported successfully', 'success');
-                    } catch (error) {
-                        showSystemAlert('❌ Error importing configuration: Invalid file format', 'danger');
-                    }
-                };
-                reader.readAsText(file);
-            }
-        };
-        input.click();
-    }
-
-    // NEW: Load configuration from imported data
-    function loadConfigurationFromData(config) {
-        // Load bulk settings
-        if (config.bulkSettings) {
-            if (config.bulkSettings.bomType) {
-                selectBulkBomType(config.bulkSettings.bomType);
-            }
-            if (config.bulkSettings.quantity) {
-                lastUsedQuantities.bulk = config.bulkSettings.quantity;
-            }
-        }
-
-        // Load display settings
-        if (config.displays) {
-            for (let i = 1; i <= 3; i++) {
-                const displayConfig = config.displays[i];
-                if (displayConfig) {
-                    if (displayConfig.stage) {
-                        document.getElementById(`stage-select-${i}`).value = displayConfig.stage;
-                        handleStageChange(i);
-                    }
-                    setTimeout(() => {
-                        if (displayConfig.process) {
-                            document.getElementById(`process-select-${i}`).value = displayConfig.process;
-                        }
-                        if (displayConfig.quantity) {
-                            document.getElementById(`quantity-input-${i}`).value = displayConfig.quantity;
-                            lastUsedQuantities[i] = parseInt(displayConfig.quantity);
-                        }
-                        if (i === 1 && displayConfig.bomType && displayConfig.bomType !== 'inherited') {
-                            selectBomType(1, displayConfig.bomType);
-                        }
-                    }, 500);
-                }
-            }
-        }
-    }
-
-    // NEW: Reset to default configuration
-    function resetToDefaults() {
-        if (confirm('Are you sure you want to reset all settings to defaults?')) {
-            // Reset bulk settings
-            selectBulkBomType('batch_50');
-            lastUsedQuantities = {
-                1: 50,
-                2: 50,
-                3: 50,
-                bulk: 50
-            };
-
-            // Reset display settings
-            for (let i = 1; i <= 3; i++) {
-                document.getElementById(`stage-select-${i}`).value = '';
-                document.getElementById(`process-select-${i}`).innerHTML = '<option value="">Select stage first</option>';
-                document.getElementById(`quantity-input-${i}`).value = 50;
-            }
-
-            // Reset Display 1 BOM type
-            document.querySelector('input[name="bom-type-1"][value="batch"]').checked = true;
-            selectBomType(1, 'batch');
-
-            // Clear bulk stage selection
-            document.querySelectorAll('.stage-btn').forEach(btn => btn.classList.remove('selected'));
-            document.getElementById('process-selection').style.display = 'none';
-            selectedBulkStage = null;
-            selectedBulkProcess = null;
-
-            showSystemAlert('✅ All settings reset to defaults', 'success');
-        }
-    }
-
-    // NEW: Advanced debugging function
-    function debugBomSplit() {
-        console.log('=== BOM Split Debug Information ===');
-        console.log('Selected Bulk BOM Type:', selectedBulkBomType);
-        console.log('Last Used Quantities:', lastUsedQuantities);
-        
-        for (let i = 1; i <= 3; i++) {
-            console.log(`Display ${i} Configuration:`, {
-                stage: document.getElementById(`stage-select-${i}`).value,
-                process: document.getElementById(`process-select-${i}`).value,
-                quantity: document.getElementById(`quantity-input-${i}`).value,
-                bomType: i === 1 ? document.querySelector('input[name="bom-type-1"]:checked')?.value : 'inherited'
-            });
-        }
-        
-        showSystemAlert('🔧 Debug information logged to console', 'info');
-    }
-
-    // NEW: Quick action buttons setup
-    function setupQuickActions() {
-        // Add quick action buttons to the page
-        const quickActionsHtml = `
-            <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px;">
-                <h4 style="margin-bottom: 15px; color: #2c3e50;">🚀 Quick Actions</h4>
-                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button class="btn btn-primary" onclick="testBomSplit()">🧪 Test BOM Split</button>
-                    <button class="btn btn-info" onclick="showBomSplitInfo()">ℹ️ BOM Info</button>
-                    <button class="btn btn-warning" onclick="updateBulkQuantity()">📝 Bulk Quantity</button>
-                    <button class="btn btn-success" onclick="exportConfiguration()">💾 Export Config</button>
-                    <button class="btn btn-primary" onclick="importConfiguration()">📁 Import Config</button>
-                    <button class="btn btn-danger" onclick="resetToDefaults()">🔄 Reset Defaults</button>
-                    <button class="btn btn-secondary" onclick="debugBomSplit()">🔧 Debug</button>
-                </div>
-            </div>
-        `;
-        
-        // Add to the page after the bulk controls
-        const bulkControls = document.querySelector('.bulk-controls');
-        if (bulkControls) {
-            bulkControls.insertAdjacentHTML('afterend', quickActionsHtml);
-        }
-    }
-
-    // Initialize quick actions when page loads
-    document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(setupQuickActions, 1000); // Add after other initialization
-    });
-
-    // NEW: Keyboard shortcuts
-    document.addEventListener('keydown', function(event) {
-        // Ctrl + 1, 2, 3 to focus on displays
-        if (event.ctrlKey && event.key >= '1' && event.key <= '3') {
-            const displayNum = parseInt(event.key);
-            document.getElementById(`stage-select-${displayNum}`).focus();
-            showSystemAlert(`Focused on Display ${displayNum}`, 'info');
-            event.preventDefault();
-        }
-        
-        // Ctrl + B for BOM info
-        if (event.ctrlKey && event.key === 'b') {
-            showBomSplitInfo();
-            event.preventDefault();
-        }
-        
-        // Ctrl + T for test all displays
-        if (event.ctrlKey && event.key === 't') {
-            testBomSplit();
-            event.preventDefault();
-        }
-        
-        // Ctrl + R for refresh all
-        if (event.ctrlKey && event.key === 'r') {
-            refreshAllDisplays();
-            event.preventDefault();
-        }
-        
-        // Escape to close any open modals
-        if (event.key === 'Escape') {
-            document.querySelectorAll('.alert').forEach(alert => {
-                if (alert.style.position === 'fixed') {
-                    alert.remove();
-                }
-            });
-        }
-    });
-
-    // NEW: Auto-save functionality
-    function autoSaveConfiguration() {
-        const config = {
-            timestamp: new Date().toISOString(),
-            displays: {},
-            bulkSettings: {
-                bomType: selectedBulkBomType,
-                quantity: lastUsedQuantities.bulk
-            }
-        };
-
-        for (let i = 1; i <= 3; i++) {
-            config.displays[i] = {
-                stage: document.getElementById(`stage-select-${i}`).value,
-                process: document.getElementById(`process-select-${i}`).value,
-                quantity: document.getElementById(`quantity-input-${i}`).value,
-                bomType: i === 1 ? document.querySelector('input[name="bom-type-1"]:checked')?.value : 'inherited'
-            };
-        }
-
-        localStorage.setItem('brg_supervisor_config', JSON.stringify(config));
-    }
-
-    // NEW: Auto-load saved configuration
-    function autoLoadConfiguration() {
-        try {
-            const savedConfig = localStorage.getItem('brg_supervisor_config');
-            if (savedConfig) {
-                const config = JSON.parse(savedConfig);
-                // Only auto-load if it's recent (within last 24 hours)
-                const saveTime = new Date(config.timestamp);
-                const now = new Date();
-                const hoursDiff = (now - saveTime) / (1000 * 60 * 60);
-                
-                if (hoursDiff < 24) {
-                    setTimeout(() => {
-                        loadConfigurationFromData(config);
-                        showSystemAlert('✅ Auto-loaded saved configuration', 'info');
-                    }, 2000);
-                }
-            }
-        } catch (error) {
-            console.log('No valid saved configuration found');
-        }
-    }
-
-    // Start auto-save every 30 seconds
-    setInterval(autoSaveConfiguration, 30000);
-
-    // Auto-load on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(autoLoadConfiguration, 3000);
-    });
-
-    // NEW: Status indicator for BOM split
-    function updateBomSplitStatus() {
-        const statusHtml = `
-            <div style="position: fixed; bottom: 20px; left: 20px; background: rgba(0,0,0,0.8); color: white; padding: 10px 15px; border-radius: 20px; font-size: 12px; z-index: 1000;">
-                BOM: ${selectedBulkBomType.replace('_', ' ').toUpperCase()} | 
-                Auto-save: Active | 
-                Keyboard shortcuts: Ctrl+B (info), Ctrl+T (test)
-            </div>
-        `;
-        
-        // Remove existing status
-        const existingStatus = document.getElementById('bom-split-status');
-        if (existingStatus) {
-            existingStatus.remove();
-        }
-        
-        // Add new status
-        const statusDiv = document.createElement('div');
-        statusDiv.id = 'bom-split-status';
-        statusDiv.innerHTML = statusHtml;
-        document.body.appendChild(statusDiv);
-    }
-
-    // Update status every 5 seconds
-    setInterval(updateBomSplitStatus, 5000);
-
-    // Show initial status
-    setTimeout(updateBomSplitStatus, 2000);
-    
     </script>
 </body>
 </html>
