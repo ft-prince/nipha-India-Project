@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BRG Assembly 40K System Overview</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        
+        .workflow-section {
+            margin-bottom: 40px;
+            padding: 20px;
+            border-radius: 10px;
+            background: #f8f9fa;
+            border-left: 5px solid #3498db;
+        }
+        
+        .assembly-stages {
+            display: flex;
+            justify-content: space-between;
+            margin: 30px 0;
+            gap: 20px;
+        }
+        
+        .stage {
+            flex: 1;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .stage-1 { border-top: 4px solid #e74c3c; }
+        .stage-2 { border-top: 4px solid #f39c12; }
+        .stage-3 { border-top: 4px solid #27ae60; }
+        
+        .stage h3 {
+            margin: 0 0 15px 0;
+            color: #2c3e50;
+        }
+        
+        .processes {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .processes li {
+            background: #ecf0f1;
+            margin: 5px 0;
+            padding: 8px;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+        
+        .loop-process {
+            background: #fff3cd !important;
+            border: 1px solid #ffeaa7;
+            font-weight: bold;
+        }
+        
+        .displays-section {
+            display: flex;
+            justify-content: space-between;
+            margin: 30px 0;
+            gap: 20px;
+        }
+        
+        .display {
+            flex: 1;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .display-1 { background: #FF6B6B; }
+        .display-2 { background: #4ECDC4; }
+        .display-3 { background: #45B7D1; }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .feature-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-top: 4px solid #9b59b6;
+        }
+        
+        .feature-card h4 {
+            color: #2c3e50;
+            margin: 0 0 10px 0;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 30px 0;
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #3498db;
+        }
+        
+        .flow-arrow {
+            text-align: center;
+            font-size: 2em;
+            color: #3498db;
+            margin: 20px 0;
+        }
+        
+        .control-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-forward { background: #27ae60; color: white; }
+        .btn-backward { background: #e74c3c; color: white; }
+        .btn-loop { background: #f39c12; color: white; }
+        
+        .workflow-flow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        
+        .flow-step {
+            background: #3498db;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            min-width: 150px;
+            text-align: center;
+        }
+        
+        .arrow {
+            font-size: 1.5em;
+            color: #3498db;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏭 BRG Assembly 40K System Overview</h1>
+        
+        <!-- System Stats -->
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-number">1</div>
+                <div>Product</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">3</div>
+                <div>Assembly Stages</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">12</div>
+                <div>Processes</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">27</div>
+                <div>Media Files</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">3</div>
+                <div>Display Screens</div>
+            </div>
+        </div>
+
+        <!-- Assembly Workflow -->
+        <div class="workflow-section">
+            <h2>📋 Assembly Workflow</h2>
+            <div class="assembly-stages">
+                <div class="stage stage-1">
+                    <h3>Sub Assembly 1</h3>
+                    <ul class="processes">
+                        <li>Process 1 of 3</li>
+                        <li>Process 2 of 3</li>
+                        <li>Process 3 of 3</li>
+                    </ul>
+                    <div style="font-size: 0.8em; color: #7f8c8d; margin-top: 10px;">
+                        Outside Assembly Room
+                    </div>
+                </div>
+                
+                <div class="stage stage-2">
+                    <h3>Sub Assembly 2</h3>
+                    <ul class="processes">
+                        <li>Process 1 of 1</li>
+                    </ul>
+                    <div style="font-size: 0.8em; color: #7f8c8d; margin-top: 10px;">
+                        Outside Assembly Room
+                    </div>
+                </div>
+                
+                <div class="stage stage-3">
+                    <h3>Final Assembly</h3>
+                    <ul class="processes">
+                        <li class="loop-process">Process 1A of 6 🔄</li>
+                        <li class="loop-process">Process 1B of 6 🔄</li>
+                        <li class="loop-process">Process 1C of 6 🔄</li>
+                        <li>Process 2 of 6</li>
+                        <li>Process 3 of 6</li>
+                        <li>Process 4 of 6</li>
+                        <li>Process 5 of 6</li>
+                        <li>Process 6 of 6</li>
+                    </ul>
+                    <div style="font-size: 0.8em; color: #7f8c8d; margin-top: 10px;">
+                        Mixed Locations
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Display System -->
+        <div class="workflow-section">
+            <h2>📺 3-Display System</h2>
+            <div class="displays-section">
+                <div class="display display-1">
+                    <h3>Display 1</h3>
+                    <p>📋 BOMs & Reference Materials</p>
+                    <ul style="list-style: none; padding: 0; font-size: 0.9em;">
+                        <li>• Single Unit BOM</li>
+                        <li>• 50 Units BOM</li>
+                        <li>• Stage-specific BOMs</li>
+                    </ul>
+                </div>
+                
+                <div class="display display-2">
+                    <h3>Display 2</h3>
+                    <p>📄 Process Instructions</p>
+                    <ul style="list-style: none; padding: 0; font-size: 0.9em;">
+                        <li>• Step-by-step docs</li>
+                        <li>• Assembly procedures</li>
+                        <li>• Quality checkpoints</li>
+                    </ul>
+                </div>
+                
+                <div class="display display-3">
+                    <h3>Display 3</h3>
+                    <p>🎥 Instructional Videos</p>
+                    <ul style="list-style: none; padding: 0; font-size: 0.9em;">
+                        <li>• Assembly demonstrations</li>
+                        <li>• Technique videos</li>
+                        <li>• Safety procedures</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Control System -->
+        <div class="workflow-section">
+            <h2>🎮 Clicker Control System</h2>
+            <div class="control-buttons">
+                <button class="btn btn-backward">← Backward</button>
+                <button class="btn btn-loop">🔄 Loop Mode</button>
+                <button class="btn btn-forward">Forward →</button>
+            </div>
+            <div style="text-align: center; margin-top: 20px; color: #7f8c8d;">
+                Operators use physical clicker or keyboard shortcuts to navigate processes
+            </div>
+        </div>
+
+        <!-- Key Features -->
+        <div class="workflow-section">
+            <h2>🚀 Key Features Built</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h4>🔄 Loop Mode</h4>
+                    <p>Processes 1A, 1B, 1C automatically loop until operator advances to Process 2</p>
+                </div>
+                
+                <div class="feature-card">
+                    <h4>📱 Real-time Updates</h4>
+                    <p>All displays update instantly when process changes or new media is uploaded</p>
+                </div>
+                
+                <div class="feature-card">
+                    <h4>🎯 Smart Media Distribution</h4>
+                    <p>Each display shows relevant content based on your Excel workflow mapping</p>
+                </div>
+                
+                <div class="feature-card">
+                    <h4>👨‍💼 Supervisor Override</h4>
+                    <p>Manual control via Django Admin when clicker fails or configuration needed</p>
+                </div>
+                
+                <div class="feature-card">
+                    <h4>📊 Multi-Quantity BOMs</h4>
+                    <p>Automatically switches between single unit and batch quantity BOMs</p>
+                </div>
+                
+                <div class="feature-card">
+                    <h4>🔗 Process Synchronization</h4>
+                    <p>All three displays can be synchronized to the same process step</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Flow -->
+        <div class="workflow-section">
+            <h2>⚡ How It Works</h2>
+            <div class="workflow-flow">
+                <div class="flow-step">Excel Mapping</div>
+                <div class="arrow">→</div>
+                <div class="flow-step">Django Models</div>
+                <div class="arrow">→</div>
+                <div class="flow-step">3 Display Screens</div>
+                <div class="arrow">→</div>
+                <div class="flow-step">Clicker Control</div>
+                <div class="arrow">→</div>
+                <div class="flow-step">Real-time Updates</div>
+            </div>
+        </div>
+
+        <!-- What You've Achieved -->
+        <div class="workflow-section" style="background: #d1f2eb; border-left-color: #27ae60;">
+            <h2>✅ What You've Successfully Built:</h2>
+            <ul style="font-size: 1.1em; line-height: 1.8;">
+                <li><strong>Complete Assembly Management System</strong> - From Excel to working application</li>
+                <li><strong>Multi-Display Architecture</strong> - Synchronized 3-screen setup</li>
+                <li><strong>Real-time Process Control</strong> - Clicker-based navigation</li>
+                <li><strong>Smart Content Distribution</strong> - Right content on right display</li>
+                <li><strong>Loop Mode Implementation</strong> - Special handling for processes 1A-1C</li>
+                <li><strong>BOM Management</strong> - Dynamic quantity-based display</li>
+                <li><strong>Supervisor Dashboard</strong> - Full admin control panel</li>
+                <li><strong>Streaming Media Support</strong> - Videos, PDFs, documents</li>
+            </ul>
+        </div>
+
+        <!-- Next Steps -->
+        <div class="workflow-section" style="background: #fef9e7; border-left-color: #f39c12;">
+            <h2>🎯 Ready for Production:</h2>
+            <ol style="font-size: 1.1em; line-height: 1.8;">
+                <li>Upload your actual media files (PDFs, videos)</li>
+                <li>Test all three displays simultaneously</li>
+                <li>Configure physical clicker hardware</li>
+                <li>Train operators on the system</li>
+                <li>Go live with your assembly line! 🚀</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,5 +1,3 @@
-# models.py - Enhanced with Database BOM System
-
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import FileExtensionValidator
@@ -16,17 +14,22 @@ class Product(models.Model):
     def __str__(self):
         return f"{self.code} - {self.name}"
 
+
+
 class AssemblyStage(models.Model):
     """Main assembly stages (Sub Assembly 1, Sub Assembly 2, Final Assembly)"""
     STAGE_CHOICES = [
         
         ('SUB_ASSEMBLY_1', 'Sub Assembly 1'),
         ('BOM_DISPLAY', 'BOM_DISPLAY'),
-        ('SUB_ASSEMBLY_2', 'Sub Assembly 2'), 
+        ('SUB_ASSEMBLY_2', 'Sub Assembly 2'),
+        ('SUB_ASSEMBLY_3', 'Sub Assembly 3'),
+        ('SUB_ASSEMBLY_4', 'Sub Assembly 4'),
+ 
         ('FINAL_ASSEMBLY', 'Final Assembly'),
     ]
-    
-    name = models.CharField(max_length=50, choices=STAGE_CHOICES, unique=True)
+    product = models.ForeignKey(Product, related_name='assembly_product', on_delete=models.CASCADE,blank=True, null=True)
+    name = models.CharField(max_length=500)
     display_name = models.CharField(max_length=100, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     order = models.PositiveIntegerField(default=1)
@@ -35,7 +38,7 @@ class AssemblyStage(models.Model):
         ordering = ['order']
     
     def __str__(self):
-        return self.display_name
+        return self.display_name 
 
 class AssemblyProcess(models.Model):
     """Individual processes within each stage"""
@@ -88,12 +91,17 @@ class BOMItem(models.Model):
     def __str__(self):
         return f"{self.item_code} - {self.item_description}"
 
+
+
+
 class BOMTemplate(models.Model):
     """BOM Templates for different products and stages"""
     BOM_TYPE_CHOICES = [
         ('SINGLE_UNIT', 'Single Unit'),
         ('BATCH_50', '50 Units'),
         ('SUB_ASSEMBLY_1', 'Sub Assembly 1'),
+        ('SUB_ASSEMBLY_3', 'Sub Assembly 3'),
+        ('SUB_ASSEMBLY_4', 'Sub Assembly 4'),
         ('SUB_ASSEMBLY_2', 'Sub Assembly 2'),
         ('FINAL_ASSEMBLY', 'Final Assembly'),
     ]
@@ -106,6 +114,9 @@ class BOMTemplate(models.Model):
     template_name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
     
+    # duration 
+    duration =models.PositiveIntegerField(default=20, blank=True,help_text="Duration in seconds")
+    is_duration_active=models.BooleanField(default=False, help_text="Should loop until manually advanced",blank=True)    
     # Display settings
     display_screen_1 = models.BooleanField(default=False, help_text="Show on Display Screen 1")
     display_screen_2 = models.BooleanField(default=False, help_text="Show on Display Screen 2")
@@ -126,59 +137,171 @@ class BOMTemplate(models.Model):
         """Determine if this BOM should be split across displays"""
         return self.bom_type in ['SINGLE_UNIT', 'BATCH_50']
     
-    def get_items_for_display(self, display_number, quantity=1):
-        """Get BOM items specific to a display number (for split BOMs)"""
+# FIXED: Replace your BOMTemplate.get_items_for_display method with this:
+
+    def get_calculated_items(self, quantity=1):
+        """
+        Returns BOM items with calculated quantity based on product quantity.
+        Assumes BOMItem model has a field like quantity_per_unit.
+        """
+        items = self.bom_items.filter(is_active=True)  # or whatever related name you use
+        calculated = []
+        for item in items:
+            calculated.append({
+                'id': item.id,
+                'item_code': item.item_code,
+                'item_description': item.item_description,
+                'part_number': item.part_number,
+                'unit_of_measure': item.unit_of_measure,
+                'supplier': item.supplier,
+                'cost_per_unit': float(item.cost_per_unit) if item.cost_per_unit else None,
+                'weight_per_unit': float(item.weight_per_unit) if item.weight_per_unit else None,
+                'item_photo_url': item.item_photo.url if item.item_photo else None,
+                'calculated_quantity': item.quantity_per_unit * quantity if hasattr(item, 'quantity_per_unit') else None,
+            })
+        return calculated
+
+    def get_items_for_display(self, display_number, quantity=1, page=1, items_per_screen=8):
+        """Get BOM items specific to a display number with pagination - FIXED WITH STAGE-SPECIFIC PAGINATION"""
+        
         if not self.should_split_across_displays():
-            # Stage-specific BOMs show complete on Display 1 only
+            # Stage-specific BOMs (SUB_ASSEMBLY_1, SUB_ASSEMBLY_2, FINAL_ASSEMBLY) - pagination on Display 1 only
             if display_number == 1:
-                return self.generate_bom_for_quantity(quantity)
+                all_items = self.generate_bom_for_quantity(quantity)
+                total_items = len(all_items)
+                
+                # Apply pagination on Display 1 for stage-specific BOMs
+                start_idx = (page - 1) * items_per_screen
+                end_idx = min(start_idx + items_per_screen, total_items)
+                
+                if start_idx >= total_items:
+                    result = []
+                else:
+                    result = all_items[start_idx:end_idx]
+                
+                return result
             else:
                 return []
         
-        # Split logic for SINGLE_UNIT and BATCH_50
+        # Split logic for SINGLE_UNIT and BATCH_50 with FIXED 8 items per display per page
         all_items = self.generate_bom_for_quantity(quantity)
         total_items = len(all_items)
+        
         
         if total_items == 0:
             return []
         
-        # Calculate items per display (distribute as evenly as possible)
-        items_per_display = math.ceil(total_items / 3)
+        # FIXED LOGIC: Always 8 items per display, with pagination
+        max_items_per_display = 8
+        items_per_page = max_items_per_display * 3  # 8 items × 3 displays = 24 items per page
         
-        # Calculate start and end indices for this display
-        start_idx = (display_number - 1) * items_per_display
-        end_idx = min(start_idx + items_per_display, total_items)
+        # Calculate which items belong to this page
+        page_start_idx = (page - 1) * items_per_page
+        page_end_idx = min(page_start_idx + items_per_page, total_items)
+        page_items = all_items[page_start_idx:page_end_idx]
         
-        # Return the slice for this display
-        return all_items[start_idx:end_idx]
-    
-    def get_display_info_for_split(self):
-        """Get information about how items are distributed across displays"""
+        
+        if len(page_items) == 0:
+            return []
+        
+        # Calculate which items from this page belong to this display
+        display_start_idx = (display_number - 1) * max_items_per_display
+        display_end_idx = min(display_start_idx + max_items_per_display, len(page_items))
+        
+        if display_start_idx >= len(page_items):
+            result = []
+        else:
+            result = page_items[display_start_idx:display_end_idx]
+            # Calculate actual item numbers for debugging
+            actual_start = page_start_idx + display_start_idx + 1
+            actual_end = page_start_idx + display_end_idx        
+        return result
+
+    def get_pagination_info_for_split(self, quantity=1, items_per_screen=8):
+        """Get pagination information for split BOMs - UPDATED FOR STAGE-SPECIFIC PAGINATION"""
+        total_items = len(self.generate_bom_for_quantity(quantity))
+        
+        if not self.should_split_across_displays():
+            # Stage-specific BOMs: pagination on Display 1 only
+            total_pages = math.ceil(total_items / items_per_screen) if total_items > 0 else 1
+            return {
+                'total_pages': total_pages,
+                'items_per_page': items_per_screen,  # Items per page on Display 1
+                'items_per_screen': items_per_screen,
+                'total_items': total_items
+            }
+        
+        # BOM Display BOMs: pagination across 3 displays (8 items each = 24 per page)
+        max_items_per_display = 8
+        items_per_page = max_items_per_display * 3  # 24 items per page (8 per display)
+        
+        total_pages = math.ceil(total_items / items_per_page) if total_items > 0 else 1
+        
+        return {
+            'total_pages': total_pages,
+            'items_per_page': items_per_page,
+            'items_per_screen': max_items_per_display,
+            'total_items': total_items
+        }
+
+    def get_display_info_for_split(self, page=1, quantity=1):
+        """Get information about how items are distributed across displays for a specific page"""
         if not self.should_split_across_displays():
             return None
         
-        total_items = self.bom_items.filter(is_active=True).count()
-        items_per_display = math.ceil(total_items / 3)
+        all_items = self.generate_bom_for_quantity(quantity)
+        total_items = len(all_items)
+        
+        max_items_per_display = 8
+        items_per_page = max_items_per_display * 3  # 24 items per page
+        
+        # Calculate which items belong to this page
+        page_start_idx = (page - 1) * items_per_page
+        page_end_idx = min(page_start_idx + items_per_page, total_items)
+        page_items_count = page_end_idx - page_start_idx
         
         distribution = {}
+        
         for display in [1, 2, 3]:
-            start_idx = (display - 1) * items_per_display
-            end_idx = min(start_idx + items_per_display, total_items)
-            item_count = max(0, end_idx - start_idx)
+            display_start_idx = (display - 1) * max_items_per_display
+            display_end_idx = min(display_start_idx + max_items_per_display, page_items_count)
             
-            distribution[f'display_{display}'] = {
-                'start_serial': start_idx + 1 if item_count > 0 else 0,
-                'end_serial': end_idx if item_count > 0 else 0,
-                'item_count': item_count
-            }
+            if display_start_idx < page_items_count:
+                item_count = display_end_idx - display_start_idx
+                # Calculate actual serial numbers
+                actual_start_serial = page_start_idx + display_start_idx + 1
+                actual_end_serial = page_start_idx + display_end_idx
+                
+                distribution[f'display_{display}'] = {
+                    'start_serial': actual_start_serial,
+                    'end_serial': actual_end_serial,
+                    'item_count': item_count
+                }
+            else:
+                distribution[f'display_{display}'] = {
+                    'start_serial': 0,
+                    'end_serial': 0,
+                    'item_count': 0
+                }
         
         return distribution
-    
+
     def generate_bom_for_quantity(self, quantity=1):
         """Generate BOM items with calculated quantities"""
         bom_items = []
+        
+        # FIXED: For stage-specific BOMs, always use quantity = 1 (don't multiply)
+        stage_specific_bom_types = ['SUB_ASSEMBLY_1', 'SUB_ASSEMBLY_2', 'SUB_ASSEMBLY_3','SUB_ASSEMBLY_4','FINAL_ASSEMBLY']
+        
+        if self.bom_type in stage_specific_bom_types:
+            # For stage-specific BOMs, always use base quantity (no multiplication)
+            effective_quantity = 1
+        else:
+            # For unit-based BOMs (SINGLE_UNIT, BATCH_50), use the provided quantity
+            effective_quantity = quantity
+        
         for item_line in self.bom_items.filter(is_active=True).order_by('serial_number'):
-            calculated_qty = item_line.base_quantity * quantity
+            calculated_qty = item_line.base_quantity * effective_quantity
             
             # Handle different unit types
             if item_line.item.unit_of_measure in ['KGS', 'GM', 'LTR']:
@@ -198,14 +321,17 @@ class BOMTemplate(models.Model):
             })
         
         return bom_items
-
+    
+    
+    
+    
 class BOMTemplateItem(models.Model):
     """Items within a BOM template"""
     bom_template = models.ForeignKey(BOMTemplate, related_name='bom_items', on_delete=models.CASCADE)
     item = models.ForeignKey(BOMItem, on_delete=models.CASCADE)
     
     # Quantity for single unit (will be multiplied based on production quantity)
-    base_quantity = models.DecimalField(max_digits=10, decimal_places=4, help_text="Quantity for single unit")
+    base_quantity = models.DecimalField(max_digits=10, default=1,decimal_places=4, help_text="Quantity for single unit")
     
     # BOM line details
     serial_number = models.PositiveIntegerField(help_text="S.NO in BOM")
@@ -225,7 +351,9 @@ class BOMTemplateItem(models.Model):
         """Calculate quantity needed for given production quantity"""
         return self.base_quantity * production_quantity
 
-# Updated BillOfMaterial to support both PDF and Database modes
+
+
+
 class BillOfMaterial(models.Model):
     """Bill of Materials - supports both PDF files and database templates"""
     BOM_TYPE_CHOICES = [
@@ -233,6 +361,8 @@ class BillOfMaterial(models.Model):
         ('BATCH_50', '50 Units'),
         ('SUB_ASSEMBLY_1', 'Sub Assembly 1'),
         ('SUB_ASSEMBLY_2', 'Sub Assembly 2'),
+        ('SUB_ASSEMBLY_3', 'Sub Assembly 3'),
+        ('SUB_ASSEMBLY_4', 'Sub Assembly 4'),
         ('FINAL_ASSEMBLY', 'Final Assembly'),
     ]
     
@@ -306,8 +436,7 @@ class ProductMedia(models.Model):
         if self.display_screen_2: displays.append(2)
         if self.display_screen_3: displays.append(3)
         return displays
-
-#  Pervious One <>No need to change here<>
+  
 
 
 
@@ -345,152 +474,123 @@ class Station(models.Model):
     def __str__(self):
         return f"{self.name} - Display {self.display_number}"
     
-    def get_current_bom_data(self):
-        """Get current BOM data based on station settings, quantity, and display number"""
+
+    def get_current_bom_data(self, page=1):
         if not self.current_product or not self.display_number:
             return None
 
-        print(f"DEBUG: Station {self.name}, Display {self.display_number}")
-        
-        # Priority order for BOM selection:
-        # 1. Stage-specific BOM (only on Display 1, complete)
-        # 2. Single unit BOM (split across all displays if enabled)
-        # 3. Batch BOM (split across all displays if enabled)
-        
-        quantity = self.product_quantity
-        
-        # First, check if we have a stage-specific BOM and we're in a specific stage
-        # Stage-specific BOMs only show on Display 1 (complete, not split)
-        if self.current_stage and self.display_number == 1:
-            stage_bom_type = self.current_stage.name  # SUB_ASSEMBLY_1, SUB_ASSEMBLY_2, FINAL_ASSEMBLY
-            try:
-                stage_template = BOMTemplate.objects.get(
-                    product=self.current_product,
-                    bom_type=stage_bom_type,
-                    is_active=True
-                )
-                print(f"DEBUG: Found stage-specific BOM: {stage_bom_type} for Display 1 (complete)")
-                # Stage-specific BOMs show complete on Display 1
-                return stage_template.generate_bom_for_quantity(quantity)
-            except BOMTemplate.DoesNotExist:
-                print(f"DEBUG: No stage-specific BOM found for {stage_bom_type}")
-                # No stage-specific BOM found, fall back to general BOMs
-                pass
-        elif self.current_stage and self.display_number in [2, 3]:
-            # For displays 2 and 3, don't show stage-specific BOMs
-            print(f"DEBUG: Stage-specific BOM not shown on Display {self.display_number}")
-            # Check if we should show split general BOMs instead
-            pass
-        
-        # Fall back to general BOM settings (these get split across displays)
-        bom_type = None
-        if self.show_single_unit_bom:
-            bom_type = 'SINGLE_UNIT'
-            quantity = 1
-            print(f"DEBUG: Using single unit BOM (will be split across displays)")
-        elif self.show_batch_bom:
-            bom_type = 'BATCH_50'
-            quantity = self.product_quantity
-            print(f"DEBUG: Using batch BOM with quantity {quantity} (will be split across displays)")
-        else:
-            print(f"DEBUG: No BOM type selected")
-            return None
-        
-        # Find the general BOM template and get items for this specific display
-        try:
-            bom_template = BOMTemplate.objects.get(
+        quantity = 1 if self.show_single_unit_bom else self.product_quantity
+        bom_type = 'SINGLE_UNIT' if self.show_single_unit_bom else 'BATCH_50' if self.show_batch_bom else None
+
+        # Try stage-specific BOM first
+        stage_template = None
+        if self.current_stage:
+            stage_template = BOMTemplate.objects.filter(
                 product=self.current_product,
-                bom_type=bom_type,
+                stage=self.current_stage,
                 is_active=True
-            )
-            print(f"DEBUG: Found general BOM template: {bom_type}")
-            
-            # Get items specific to this display (split logic)
-            display_items = bom_template.get_items_for_display(self.display_number, quantity)
-            print(f"DEBUG: Display {self.display_number} gets {len(display_items)} items")
-            
-            return display_items
-            
-        except BOMTemplate.DoesNotExist:
-            print(f"DEBUG: No BOM template found for {bom_type}")
+            ).first()
+
+        # Fallback to non-stage BOM
+        if not stage_template:
+            stage_template = BOMTemplate.objects.filter(
+                product=self.current_product,
+                is_active=True
+            ).first()
+
+        # If still nothing, return None
+        if not stage_template:
             return None
 
-    def get_current_bom_info(self):
-        """Get information about the currently selected BOM including split info"""
+        return stage_template.get_items_for_display(
+            display_number=self.display_number,
+            quantity=quantity,
+            page=page,
+            items_per_screen=8
+        )
+
+
+    def get_current_bom_info(self, page=1):
         if not self.current_product:
             return None
-        
-        # Check for stage-specific BOM first (only on Display 1)
-        if self.current_stage and self.display_number == 1:
-            try:
-                stage_template = BOMTemplate.objects.get(
-                    product=self.current_product,
-                    bom_type=self.current_stage.name,
-                    is_active=True
-                )
-                return {
-                    'template': stage_template,
-                    'type': 'stage_specific',
-                    'display_name': f"{self.current_stage.display_name}",
-                    'quantity': self.product_quantity,
-                    'items_count': stage_template.bom_items.filter(is_active=True).count(),
-                    'is_split': False,
-                    'display_info': f"Complete BOM on Display {self.display_number}"
-                }
-            except BOMTemplate.DoesNotExist:
-                pass
-        
-        # Fall back to general BOM (these get split)
-        if self.show_single_unit_bom:
-            try:
-                template = BOMTemplate.objects.get(
-                    product=self.current_product,
-                    bom_type='SINGLE_UNIT',
-                    is_active=True
-                )
-                
-                # Get split information
-                split_info = template.get_display_info_for_split()
-                current_display_info = split_info[f'display_{self.display_number}'] if split_info else None
-                
-                return {
-                    'template': template,
-                    'type': 'single_unit',
-                    'display_name': 'Single Unit (Split)',
-                    'quantity': 1,
-                    'items_count': current_display_info['item_count'] if current_display_info else 0,
-                    'is_split': True,
-                    'display_info': f"Items {current_display_info['start_serial']}-{current_display_info['end_serial']}" if current_display_info and current_display_info['item_count'] > 0 else "No items",
-                    'split_info': split_info
-                }
-            except BOMTemplate.DoesNotExist:
-                pass
-        elif self.show_batch_bom:
-            try:
-                template = BOMTemplate.objects.get(
-                    product=self.current_product,
-                    bom_type='BATCH_50',
-                    is_active=True
-                )
-                
-                # Get split information
-                split_info = template.get_display_info_for_split()
-                current_display_info = split_info[f'display_{self.display_number}'] if split_info else None
-                
-                return {
-                    'template': template,
-                    'type': 'batch',
-                    'display_name': f'{self.product_quantity} Units Batch (Split)',
-                    'quantity': self.product_quantity,
-                    'items_count': current_display_info['item_count'] if current_display_info else 0,
-                    'is_split': True,
-                    'display_info': f"Items {current_display_info['start_serial']}-{current_display_info['end_serial']}" if current_display_info and current_display_info['item_count'] > 0 else "No items",
-                    'split_info': split_info
-                }
-            except BOMTemplate.DoesNotExist:
-                pass
-        
-        return None
+
+        quantity = 1 if self.show_single_unit_bom else self.product_quantity
+        bom_type = 'SINGLE_UNIT' if self.show_single_unit_bom else 'BATCH_50' if self.show_batch_bom else None
+
+        # Try to get stage-specific BOM
+        template = None
+        if self.current_stage:
+            template = BOMTemplate.objects.filter(
+                product=self.current_product,
+                stage=self.current_stage,
+                is_active=True
+            ).first()
+
+        # Fallback to any BOM for the product
+        if not template:
+            template = BOMTemplate.objects.filter(
+                product=self.current_product,
+                is_active=True
+            ).first()
+
+        if not template:
+            return None
+
+        # Pagination and split info
+        pagination_info = template.get_pagination_info_for_split(quantity=quantity, items_per_screen=8)
+        split_info = template.get_display_info_for_split(page=page, quantity=quantity)
+        current_display_info = split_info.get(f'display_{self.display_number}') if split_info else None
+
+        is_split = len(split_info) > 1 if split_info else False
+
+        return {
+            'template': template,
+            'type': bom_type.lower() if bom_type else 'unknown',
+            'display_name': f"{quantity} Units BOM" + (" (Split)" if is_split else ""),
+            'quantity': quantity,
+            'items_count': current_display_info['item_count'] if current_display_info else 0,
+            'is_split': is_split,
+            'display_info': (
+                f"Page {page} - Items {current_display_info['start_serial']}-{current_display_info['end_serial']}"
+                if current_display_info and current_display_info['item_count'] > 0
+                else f"Page {page} - No items"
+            ),
+            'split_info': split_info,
+            'pagination_info': pagination_info
+        }
+  
+    def get_bom_pagination_info(self):
+        if not self.current_product:
+            return None
+
+        quantity = 1 if self.show_single_unit_bom else self.product_quantity
+        bom_type = 'SINGLE_UNIT' if self.show_single_unit_bom else 'BATCH_50' if self.show_batch_bom else None
+
+        template = None
+        if self.current_stage:
+            template = BOMTemplate.objects.filter(
+                product=self.current_product,
+                stage=self.current_stage,
+                is_active=True
+            ).first()
+
+        if not template:
+            template = BOMTemplate.objects.filter(
+                product=self.current_product,
+                is_active=True
+            ).first()
+
+        if not template:
+            return {
+                'total_pages': 1,
+                'items_per_page': 0,
+                'supports_pagination': False
+            }
+
+        pagination_info = template.get_pagination_info_for_split(quantity=quantity, items_per_screen=8)
+        pagination_info['supports_pagination'] = True
+        return pagination_info
+
 
 # Replace the get_current_media method in your Station model
 
@@ -532,19 +632,20 @@ class Station(models.Model):
     def get_next_process(self):
         """Get next process, handling loops and stage transitions"""
         if not self.current_stage:
-            # No current stage, start with first stage and first process
-            first_stage = AssemblyStage.objects.first()
-            if first_stage:
-                return first_stage.processes.first()
+            # No current stage, start with first stage of the current product
+            if self.current_product:
+                first_stage = AssemblyStage.objects.filter(product=self.current_product).order_by('order').first()
+                if first_stage:
+                    return first_stage.processes.order_by('order').first()
             return None
-        
+
         # If in loop mode and current process has loop_group, stay in loop
         if self.loop_mode and self.current_process and self.current_process.loop_group:
             loop_processes = AssemblyProcess.objects.filter(
                 stage=self.current_stage,
                 loop_group=self.current_process.loop_group
             ).order_by('order')
-            
+
             if loop_processes.exists():
                 process_list = list(loop_processes)
                 try:
@@ -554,7 +655,7 @@ class Station(models.Model):
                 except ValueError:
                     # Current process not in loop, return first loop process
                     return process_list[0]
-        
+
         # Normal next process logic
         if self.current_process:
             # Look for next process in current stage
@@ -562,12 +663,13 @@ class Station(models.Model):
                 stage=self.current_stage,
                 order__gt=self.current_process.order
             ).order_by('order').first()
-            
+
             if next_process:
                 return next_process
             else:
-                # Move to next stage
+                # Move to next stage of the current product
                 next_stage = AssemblyStage.objects.filter(
+                    product=self.current_product,
                     order__gt=self.current_stage.order
                 ).order_by('order').first()
                 if next_stage:
@@ -575,21 +677,23 @@ class Station(models.Model):
         else:
             # No current process, return first process of current stage
             return self.current_stage.processes.order_by('order').first()
-        
+
         return None
+
+    
     
     def get_previous_process(self):
         """Get previous process, handling loops and stage transitions"""
         if not self.current_process:
             return None
-        
+
         # If in loop mode and current process has loop_group, navigate within loop
         if self.loop_mode and self.current_process.loop_group:
             loop_processes = AssemblyProcess.objects.filter(
                 stage=self.current_stage,
                 loop_group=self.current_process.loop_group
             ).order_by('order')
-            
+
             if loop_processes.exists():
                 process_list = list(loop_processes)
                 try:
@@ -599,64 +703,70 @@ class Station(models.Model):
                 except ValueError:
                     # Current process not in loop, return last loop process
                     return process_list[-1]
-        
+
         # Normal previous process logic
-        # Look for previous process in current stage 
         prev_process = AssemblyProcess.objects.filter(
             stage=self.current_stage,
             order__lt=self.current_process.order
         ).order_by('-order').first()
-        
+
         if prev_process:
             return prev_process
         else:
-            # Move to previous stage's last process
+            # Move to previous stage of the current product
             prev_stage = AssemblyStage.objects.filter(
+                product=self.current_product,
                 order__lt=self.current_stage.order
             ).order_by('-order').first()
             if prev_stage:
                 return prev_stage.processes.order_by('-order').first()
-        
+
         return None
+
     
     def advance_to_next_process(self):
         """Advance station to next process and update stage if necessary"""
         next_process = self.get_next_process()
         if next_process:
             self.current_process = next_process
-            # Update stage if process belongs to different stage
+
+            # Update stage if process belongs to a different stage
             if next_process.stage != self.current_stage:
                 self.current_stage = next_process.stage
-                # Auto-disable loop mode when moving to new stage
+
+                # Auto-disable loop mode when leaving a loop group
                 if self.loop_mode and not next_process.loop_group:
                     self.loop_mode = False
-            
+
             # Auto-enable loop mode for looped processes
             if next_process.is_looped and next_process.loop_group:
                 self.loop_mode = True
-            
+
             self.save()
             return True
         return False
+    
     
     def go_back_to_previous_process(self):
         """Go back to previous process and update stage if necessary"""
         prev_process = self.get_previous_process()
         if prev_process:
             self.current_process = prev_process
-            # Update stage if process belongs to different stage
+
+            # Update stage if process belongs to a different stage
             if prev_process.stage != self.current_stage:
                 self.current_stage = prev_process.stage
-            
+
             # Handle loop mode
             if prev_process.is_looped and prev_process.loop_group:
                 self.loop_mode = True
             elif not prev_process.loop_group:
                 self.loop_mode = False
-            
+
             self.save()
             return True
         return False
+
     
     def toggle_loop_mode(self):
         """Toggle loop mode if current process supports it"""
@@ -768,7 +878,7 @@ class Station(models.Model):
                 'loop_group': self.current_process.loop_group if self.current_process else None
             }
         }
-   
+     
   
 class AssemblySession(models.Model):
     """Track assembly sessions across all displays"""

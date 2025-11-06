@@ -1,0 +1,126 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_modify %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    &rsaquo; <a href="{% url 'admin:app_list' app_label='screen_app' %}">Screen App</a>
+    &rsaquo; <a href="{% url 'admin:screen_app_product_changelist' %}">Products</a>
+    &rsaquo; <a href="{% url 'admin:screen_app_product_change' product.pk %}">{{ product.name }}</a>
+    &rsaquo; {{ title }}
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <div class="module">
+        <h2>{{ title }}</h2>
+        
+        <div class="form-row">
+            <div class="help">
+                <p><strong>Instructions:</strong></p>
+                <ul>
+                    <li>Upload a zip file containing PDF and video files</li>
+                    <li>PDF files will automatically be marked as "Process Documents"</li>
+                    <li>Video files (.mp4, .mov, .avi, .mkv, .wmv, .flv, .webm) will be marked as "Videos"</li>
+                    <li>Other file types will be skipped</li>
+                    <li>All files will be assigned to the selected process/BOM and display screens</li>
+                </ul>
+            </div>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" class="aligned">
+            {% csrf_token %}
+            
+            <div class="form-row">
+                <div>
+                    <label for="{{ form.zip_file.id_for_label }}" class="required">{{ form.zip_file.label }}:</label>
+                    {{ form.zip_file }}
+                    {% if form.zip_file.help_text %}
+                        <p class="help">{{ form.zip_file.help_text }}</p>
+                    {% endif %}
+                    {% if form.zip_file.errors %}
+                        <ul class="errorlist">
+                            {% for error in form.zip_file.errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            </div>
+
+            <fieldset class="module aligned">
+                <h2>Assignment Options (Optional)</h2>
+                
+                <div class="form-row">
+                    <div>
+                        <label for="{{ form.process.id_for_label }}">{{ form.process.label }}:</label>
+                        {{ form.process }}
+                        {% if form.process.help_text %}
+                            <p class="help">{{ form.process.help_text }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div>
+                        <label for="{{ form.bom.id_for_label }}">{{ form.bom.label }}:</label>
+                        {{ form.bom }}
+                        {% if form.bom.help_text %}
+                            <p class="help">{{ form.bom.help_text }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div>
+                        <label for="{{ form.default_duration.id_for_label }}">{{ form.default_duration.label }}:</label>
+                        {{ form.default_duration }}
+                        {% if form.default_duration.help_text %}
+                            <p class="help">{{ form.default_duration.help_text }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset class="module aligned">
+                <h2>Display Assignment</h2>
+                <div class="form-row">
+                    <div class="checkbox-row">
+                        {{ form.display_screen_1 }} <label for="{{ form.display_screen_1.id_for_label }}">{{ form.display_screen_1.label }}</label>
+                    </div>
+                    <div class="checkbox-row">
+                        {{ form.display_screen_2 }} <label for="{{ form.display_screen_2.id_for_label }}">{{ form.display_screen_2.label }}</label>
+                    </div>
+                    <div class="checkbox-row">
+                        {{ form.display_screen_3 }} <label for="{{ form.display_screen_3.id_for_label }}">{{ form.display_screen_3.label }}</label>
+                    </div>
+                </div>
+            </fieldset>
+
+            <div class="submit-row">
+                <input type="submit" value="Upload and Process Zip" class="default" />
+                <a href="{% url 'admin:screen_app_product_change' product.pk %}" class="button cancel-link">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.help ul {
+    margin: 0.5em 0;
+    padding-left: 1.5em;
+}
+.help li {
+    margin: 0.25em 0;
+}
+.checkbox-row {
+    margin: 0.5em 0;
+}
+.checkbox-row input[type="checkbox"] {
+    margin-right: 0.5em;
+}
+</style>
+{% endblock %}

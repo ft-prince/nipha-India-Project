@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BRG Assembly 40K - Complete Workflow</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            animation: slideDown 0.8s ease-out;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header .subtitle {
+            color: #7f8c8d;
+            font-size: 1.2em;
+        }
+
+        .workflow-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .section-title {
+            font-size: 1.8em;
+            color: #2c3e50;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .section-title .icon {
+            font-size: 1.5em;
+        }
+
+        .process-flow {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+            margin: 30px 0;
+        }
+
+        .process-box {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            min-width: 200px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .process-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .process-box.stage1 {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .process-box.stage2 {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .process-box.stage3 {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .process-box.loop {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+            border: 3px dashed #fff;
+            animation: pulse 2s infinite;
+        }
+
+        .arrow {
+            font-size: 2em;
+            color: #3498db;
+            animation: bounce 2s infinite;
+        }
+
+        .display-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin: 30px 0;
+        }
+
+        .display-screen {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .display-screen:hover {
+            transform: scale(1.05);
+        }
+
+        .display-screen h3 {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+        }
+
+        .display-screen.screen1 {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+            color: #333;
+        }
+
+        .display-screen.screen2 {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            color: #333;
+        }
+
+        .display-screen.screen3 {
+            background: linear-gradient(135deg, #d299c2 0%, #fef9d7 100%);
+            color: #333;
+        }
+
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 25px 0;
+        }
+
+        .feature-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 5px solid #3498db;
+            transition: all 0.3s ease;
+        }
+
+        .feature-item:hover {
+            background: #e3f2fd;
+            transform: translateX(5px);
+        }
+
+        .setup-steps {
+            counter-reset: step-counter;
+        }
+
+        .step {
+            counter-increment: step-counter;
+            background: #f8f9fa;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 10px;
+            border-left: 5px solid #27ae60;
+            position: relative;
+        }
+
+        .step::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: -15px;
+            top: 15px;
+            background: #27ae60;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .loop-indicator {
+            display: inline-block;
+            background: #f39c12;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            margin-left: 10px;
+            animation: blink 1.5s infinite;
+        }
+
+        .command-box {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        .success-message {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 20px 0;
+            font-size: 1.1em;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.5; }
+        }
+
+        .hindi-text {
+            color: #7f8c8d;
+            font-style: italic;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .interactive-flow {
+            position: relative;
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 30px 0;
+        }
+
+        .flow-line {
+            position: absolute;
+            height: 2px;
+            background: #3498db;
+            top: 50%;
+            left: 0;
+            right: 0;
+            z-index: 1;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin: 5px;
+        }
+
+        .status-created {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-configured {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        .status-ready {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        @media (max-width: 768px) {
+            .process-flow {
+                flex-direction: column;
+            }
+            
+            .display-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🏭 BRG Assembly 40K Workflow</h1>
+            <div class="subtitle">Complete System Setup & Process Flow</div>
+            <div class="hindi-text">संपूर्ण सिस्टम सेटअप और प्रक्रिया प्रवाह</div>
+        </div>
+
+        <!-- What We Created -->
+        <div class="workflow-section">
+            <h2 class="section-title">
+                <span class="icon">✅</span>
+                What We Created / हमने क्या बनाया
+            </h2>
+            
+            <div class="feature-list">
+                <div class="feature-item">
+                    <h3>🏷️ Product</h3>
+                    <p><strong>BRG-40K</strong> - BRG Assembly 40K</p>
+                    <div class="hindi-text">उत्पाद बनाया गया</div>
+                </div>
+                
+                <div class="feature-item">
+                    <h3>🔄 Assembly Stages</h3>
+                    <p>3 Main Stages Created</p>
+                    <div class="hindi-text">3 मुख्य चरण</div>
+                </div>
+                
+                <div class="feature-item">
+                    <h3>⚙️ Processes</h3>
+                    <p>12 Assembly Processes</p>
+                    <div class="hindi-text">12 असेंबली प्रक्रियाएं</div>
+                </div>
+                
+                <div class="feature-item">
+                    <h3>📋 BOMs</h3>
+                    <p>5 Bill of Materials</p>
+                    <div class="hindi-text">5 सामग्री सूची</div>
+                </div>
+                
+                <div class="feature-item">
+                    <h3>📱 Media Files</h3>
+                    <p>30+ Videos, PDFs & Documents</p>
+                    <div class="hindi-text">30+ मीडिया फाइलें</div>
+                </div>
+                
+                <div class="feature-item">
+                    <h3>🖥️ Display Stations</h3>
+                    <p>3 Smart Display Screens</p>
+                    <div class="hindi-text">3 डिस्प्ले स्क्रीन</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assembly Flow -->
+        <div class="workflow-section">
+            <h2 class="section-title">
+                <span class="icon">🔄</span>
+                Complete Assembly Flow / संपूर्ण असेंबली प्रवाह
+            </h2>
+            
+            <div class="process-flow">
+                <div class="process-box stage1">
+                    <h3>Sub Assembly 1</h3>
+                    <p>3 Processes</p>
+                    <div class="hindi-text">उप असेंबली 1</div>
+                    <div style="margin-top: 10px;">
+                        <div>Process 1 of 3</div>
+                        <div>Process 2 of 3</div>
+                        <div>Process 3 of 3</div>
+                    </div>
+                </div>
+                
+                <div class="arrow">➡️</div>
+                
+                <div class="process-box stage2">
+                    <h3>Sub Assembly 2</h3>
+                    <p>1 Process</p>
+                    <div class="hindi-text">उप असेंबली 2</div>
+                    <div style="margin-top: 10px;">
+                        <div>Process 1 of 1</div>
+                    </div>
+                </div>
+                
+                <div class="arrow">➡️</div>
+                
+                <div class="process-box stage3">
+                    <h3>Final Assembly</h3>
+                    <p>8 Processes</p>
+                    <div class="hindi-text">अंतिम असेंबली</div>
+                </div>
+            </div>
+
+            <!-- Final Assembly Detail -->
+            <div class="interactive-flow">
+                <h3 style="text-align: center; margin-bottom: 30px;">Final Assembly Process Detail</h3>
+                
+                <div class="process-flow">
+                    <div class="process-box loop">
+                        <h4>Process 1A</h4>
+                        <div class="loop-indicator">LOOP</div>
+                        <div class="hindi-text">प्रक्रिया 1A</div>
+                    </div>
+                    
+                    <div class="arrow">⟲</div>
+                    
+                    <div class="process-box loop">
+                        <h4>Process 1B</h4>
+                        <div class="loop-indicator">LOOP</div>
+                        <div class="hindi-text">प्रक्रिया 1B</div>
+                    </div>
+                    
+                    <div class="arrow">⟲</div>
+                    
+                    <div class="process-box loop">
+                        <h4>Process 1C</h4>
+                        <div class="loop-indicator">LOOP</div>
+                        <div class="hindi-text">प्रक्रिया 1C</div>
+                    </div>
+                    
+                    <div class="arrow" style="color: #e74c3c;">⬇️</div>
+                    
+                    <div style="text-align: center; font-weight: bold; color: #e74c3c;">
+                        Manual Advance Required<br>
+                        <span class="hindi-text">मैन्युअल आगे बढ़ाना आवश्यक</span>
+                    </div>
+                </div>
+                
+                <div class="process-flow" style="margin-top: 30px;">
+                    <div class="process-box stage3">
+                        <h4>Process 2</h4>
+                        <div class="hindi-text">प्रक्रिया 2</div>
+                    </div>
+                    
+                    <div class="arrow">➡️</div>
+                    
+                    <div class="process-box stage3">
+                        <h4>Process 3</h4>
+                        <div class="hindi-text">प्रक्रिया 3</div>
+                    </div>
+                    
+                    <div class="arrow">➡️</div>
+                    
+                    <div class="process-box stage3">
+                        <h4>Process 4</h4>
+                        <div class="hindi-text">प्रक्रिया 4</div>
+                    </div>
+                    
+                    <div class="arrow">➡️</div>
+                    
+                    <div class="process-box stage3">
+                        <h4>Process 5</h4>
+                        <div class="hindi-text">प्रक्रिया 5</div>
+                    </div>
+                    
+                    <div class="arrow">➡️</div>
+                    
+                    <div class="process-box stage3">
+                        <h4>Process 6</h4>
+                        <div class="hindi-text">प्रक्रिया 6</div>
+                    </div>
+                    
+                    <div class="arrow">🏁</div>
+                    
+                    <div style="text-align: center; font-weight: bold; color: #27ae60;">
+                        COMPLETE!<br>
+                        <span class="hindi-text">पूर्ण!</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Display Configuration -->
+        <div class="workflow-section">
+            <h2 class="section-title">
+                <span class="icon">🖥️</span>
+                3 Display Screen Setup / 3 डिस्प्ले स्क्रीन सेटअप
+            </h2>
+            
+            <div class="display-grid">
+                <div class="display-screen screen1">
+                    <h3>📋 Display Screen 1</h3>
+                    <p><strong>BOMs & Reference Materials</strong></p>
+                    <div class="hindi-text">सामग्री सूची और संदर्भ सामग्री</div>
+                    <div style="margin-top: 15px;">
+                        <div>✓ Single Unit BOM</div>
+                        <div>✓ 50 Units BOM</div>
+                        <div>✓ Stage-specific BOMs</div>
+                        <div>✓ Reference Documents</div>
+                    </div>
+                </div>
+                
+                <div class="display-screen screen2">
+                    <h3>📖 Display Screen 2</h3>
+                    <p><strong>Process Documents & Instructions</strong></p>
+                    <div class="hindi-text">प्रक्रिया दस्तावेज और निर्देश</div>
+                    <div style="margin-top: 15px;">
+                        <div>✓ Step-by-step Instructions</div>
+                        <div>✓ Process Documents</div>
+                        <div>✓ Safety Guidelines</div>
+                        <div>✓ Quality Checkpoints</div>
+                    </div>
+                </div>
+                
+                <div class="display-screen screen3">
+                    <h3>🎬 Display Screen 3</h3>
+                    <p><strong>Instructional Videos</strong></p>
+                    <div class="hindi-text">शिक्षण वीडियो</div>
+                    <div style="margin-top: 15px;">
+                        <div>✓ Assembly Demonstrations</div>
+                        <div>✓ Technique Videos</div>
+                        <div>✓ Training Materials</div>
+                        <div>✓ Best Practices</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- How We Did It -->
+        <div class="workflow-section">
+            <h2 class="section-title">
+                <span class="icon">⚙️</span>
+                How We Set It Up / हमने इसे कैसे सेटअप किया
+            </h2>
+            
+            <div class="command-box">
+                <div style="color: #3498db; font-weight: bold;">$ Command to Setup Everything:</div>
+                <div style="margin: 10px 0;">python manage.py setup_brg_assembly</div>
+            </div>
+            
+            <div class="setup-steps">
+                <div class="step">
+                    <h3>Create Product</h3>
+                    <p>Created <strong>BRG-40K</strong> product with name "BRG Assembly 40K"</p>
+                    <div class="hindi-text">उत्पाद बनाया गया</div>
+                    <span class="status-badge status-created">✓ Created</span>
+                </div>
+                
+                <div class="step">
+                    <h3>Setup Assembly Stages</h3>
+                    <p>Created 3 stages: Sub Assembly 1, Sub Assembly 2, Final Assembly</p>
+                    <div class="hindi-text">3 असेंबली चरण बनाए गए</div>
+                    <span class="status-badge status-created">✓ Created</span>
+                </div>
+                
+                <div class="step">
+                    <h3>Create Assembly Processes</h3>
+                    <p>12 processes created with proper ordering and loop configuration</p>
+                    <div class="hindi-text">12 प्रक्रियाएं बनाई गईं</div>
+                    <span class="status-badge status-configured">✓ Configured</span>
+                </div>
+                
+                <div class="step">
+                    <h3>Setup Bill of Materials (BOMs)</h3>
+                    <p>5 different BOMs created for different quantities and stages</p>
+                    <div class="hindi-text">5 सामग्री सूची बनाई गईं</div>
+                    <span class="status-badge status-created">✓ Created</span>
+                </div>
+                
+                <div class="step">
+                    <h3>Upload Media Files</h3>
+                    <p>30+ media files mapped to specific displays and processes</p>
+                    <div class="hindi-text">30+ मीडिया फाइलें अपलोड की गईं</div>
+                    <span class="status-badge status-configured">✓ Mapped</span>
+                </div>
+                
+                <div class="step">
+                    <h3>Configure Display Stations</h3>
+                    <p>3 display stations created with initial configuration</p>
+                    <div class="hindi-text">3 डिस्प्ले स्टेशन कॉन्फ़िगर किए गए</div>
+                    <span class="status-badge status-ready">✓ Ready</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Special Features -->
+        <div class="workflow-section">
+            <h2 class="section-title">
+                <span class="icon">⭐</span>
+                Special Features / विशेष सुविधाएं
+            </h2>
+            
+            <div class="feature-list">
+                <div class="feature-item">
+                    <h3>🔄 Loop Mode</h3>
+                    <p>Processes 1A, 1B, 1C automatically loop until manually advanced</p>
+                    <div class="hindi-text">प्रक्रिया 1A, 1B, 1C स्वचालित रूप से दोहराई जाती हैं</div>
+                </div>
+                
+                <div class="feature-item">
+                    <h3>🎮 Clicker Control</h3>
+                    <p>Forward, backward, and loop toggle functionality</p>
+                    <div class="hindi-text">आगे, पीछे, और लूप टॉगल कार्यक्षमता</div>
+                </div>
+                
+                <div class="feature-item">
+                    <h3>📍 Location Aware</h3>
+                    <p>Processes know if they're in Assembly Room or Outside</p>
+                    <div class="hindi-text">प्रक्रियाएं जानती हैं कि वे असेंबली रूम में हैं या बाहर</div>
+                </div>
+                
+                <div class="feature-item">
+                    <h3>🔄 Real-time Sync</h3>
+                    <p>All 3 displays can be synchronized instantly</p>
+                    <div class="hindi-text">सभी 3 डिस्प्ले तुरंत सिंक्रोनाइज़ हो सकते हैं</div>
+                </div>
+                
+                <div class="feature-item">
+                    <h3>📊 Quantity Based</h3>
+                    <p>Different BOMs for single unit vs batch of 50</p>
+                    <div class="hindi-text">एकल इकाई बनाम 50 की बैच के लिए अलग BOM</div>
+                </div>
+                
+                <div class="feature-item">
+                    <h3>🎯 Smart Display</h3>
+                    <p>Each display shows relevant content automatically</p>
+                    <div class="hindi-text">प्रत्येक डिस्प्ले स्वचालित रूप से प्रासंगिक सामग्री दिखाता है</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- What's Next -->
+        <div class="workflow-section">
+            <h2 class="section-title">
+                <span class="icon">🎯</span>
+                What's Next / अब क्या करना है
+            </h2>
+            
+            <div class="setup-steps">
+                <div class="step">
+                    <h3>Upload Real Media Files</h3>
+                    <p>Replace placeholder files with actual videos, PDFs, and documents</p>
+                    <div class="hindi-text">वास्तविक मीडिया फाइलें अपलोड करें</div>
+                </div>
+                
+                <div class="step">
+                    <h3>Test Clicker Functionality</h3>
+                    <p>Verify forward, backward, and loop operations work correctly</p>
+                    <div class="hindi-text">क्लिकर कार्यक्षमता का परीक्षण करें</div>
+                </div>
+                
+                <div class="step">
+                    <h3>Configure User Permissions</h3>
+                    <p>Set up operators and supervisors with appropriate access levels</p>
+                    <div class="hindi-text">उपयोगकर्ता अनुमतियां कॉन्फ़िगर करें</div>
+                </div>
+                
+                <div class="step">
+                    <h3>Train Team</h3>
+                    <p>Train operators and supervisors on system usage</p>
+                    <div class="hindi-text">टीम को प्रशिक्षित करें</div>
+                </div>
+                
+                <div class="step">
+                    <h3>Start Production</h3>
+                    <p>Begin using the system for actual assembly operations</p>
+                    <div class="hindi-text">उत्पादन शुरू करें</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Success Message -->
+        <div class="success-message">
+            <h2>🎉 System Successfully Created!</h2>
+            <p>BRG Assembly 40K workflow is now ready for production use</p>
+            <div class="hindi-text">BRG असेंबली 40K वर्कफ़्लो अब उत्पादन उपयोग के लिए तैयार है</div>
+            
+            <div style="margin-top: 20px; display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+                <div class="status-badge status-created">✓ 1 Product</div>
+                <div class="status-badge status-created">✓ 3 Stages</div>
+                <div class="status-badge status-created">✓ 12 Processes</div>
+                <div class="status-badge status-created">✓ 5 BOMs</div>
+                <div class="status-badge status-created">✓ 30+ Media</div>
+                <div class="status-badge status-created">✓ 3 Displays</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add some interactivity
+        document.addEventListener('DOMContentLoaded', function() {
+            // Make process boxes clickable
+            document.querySelectorAll('.process-box').forEach(box => {
+                box.addEventListener('click', function() {
+                    this.style.transform = 'scale(1.1)';
+                    setTimeout(() => {
+                        this.style.transform = 'scale(1)';
+                    }, 200);
+                });
+            });
+
+            // Add animation delay to feature items
+            document.querySelectorAll('.feature-item').forEach((item, index) => {
+                item.style.animationDelay = `${index * 0.1}s`;
+                item.style.animation = 'fadeInUp 0.6s ease-out forwards';
+            });
+
+            // Add hover effects to display screens
+            document.querySelectorAll('.display-screen').forEach(screen => {
+                screen.addEventListener('mouseenter', function() {
+                    this.style.boxShadow = '0 15px 35px rgba(0,0,0,0.3)';
+                });
+                
+                screen.addEventListener('mouseleave', function() {
+                    this.style.boxShadow = '0 8px 20px rgba(0,0,0,0.2)';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

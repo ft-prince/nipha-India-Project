@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Station Media Slider</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            background-color: black;
+        }
+
+        .slider-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+            position: relative;
+        }
+
+        .media-element {
+            height: 100%;
+            width: 100%;
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            object-fit: cover;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        .media-element.pdf {
+            width: 80%;
+            left: 10%;
+            object-fit: contain;
+        }
+
+        .media-element.active {
+            display: block;
+            opacity: 1;
+        }
+
+        .media-element.fade-out {
+            opacity: 0;
+        }
+
+        .overlay-text {
+            position: fixed;
+            top: 88%;
+            right: 2%;
+            margin-right: 20px;
+            text-align: center;
+            transform: translateY(-50%) rotate(90deg);
+            transform-origin: right center;
+            background-color: darkblue;
+            color: white;
+            white-space: nowrap;
+            z-index: 10;
+            font-size: 42px;
+            width: 550px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .connection-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            color: white;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .connection-status.visible {
+            opacity: 1;
+        }
+
+        .connection-status.connected {
+            background-color: #28a745;
+        }
+
+        .connection-status.disconnected {
+            background-color: #dc3545;
+        }
+
+        .connection-status.reconnecting {
+            background-color: #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <div class="slider-container" id="slider-container"></div>
+    <div id="overlay-text" class="overlay-text">{{ station.name }}</div>
+    <div id="connection-status" class="connection-status">Loading...</div>
+
+    <script>
+        class MediaSlider {
+            constructor(stationId) {
+                this.stationId = stationId;
+                this.currentIndex = 0;
+                this.mediaElements = [];
+                this.slideshowTimer = null;
+                this.pollingInterval = null;
+                this.pollingDelay = 10000; // Poll every 10 seconds
+                this.lastMediaHash = null;
+                this.containerElement = document.getElementById('slider-container');
+                this.overlayElement = document.getElementById('overlay-text');
+                this.statusElement = document.getElementById('connection-status');
+                
+                this.initializeMedia();
+                this.startPolling();
+            }
+
+            async initializeMedia() {
+                try {
+                    const response = await fetch(`/station/${this.stationId}/media/`);
+                    const data = await response.json();
+                    this.updateMedia({ media: data.media, station_name: '{{ station.name }}' });
+                    this.updateConnectionStatus('connected', 'Loaded');
+                } catch (error) {
+                    console.error('Error loading initial media:', error);
+                    this.updateConnectionStatus('disconnected', 'Load Failed');
+                }
+            }
+
+            startPolling() {
+                this.pollingInterval = setInterval(async () => {
+                    try {
+                        const response = await fetch(`/station/${this.stationId}/media/`);
+                        const data = await response.json();
+                        this.updateMedia({ media: data.media, station_name: '{{ station.name }}' });
+                        this.updateConnectionStatus('connected', 'Updated');
+                    } catch (error) {
+                        console.error('Error polling media:', error);
+                        this.updateConnectionStatus('disconnected', 'Update Failed');
+                    }
+                }, this.pollingDelay);
+            }
+
+            updateConnectionStatus(status, message) {
+                this.statusElement.className = `connection-status ${status} visible`;
+                this.statusElement.textContent = message;
+                
+                if (status === 'connected') {
+                    setTimeout(() => {
+                        this.statusElement.classList.remove('visible');
+                    }, 2000);
+                }
+            }
+
+            updateMedia(data) {
+                if (!data.media || data.media.length === 0) {
+                    console.warn('No media data received');
+                    return;
+                }
+
+                // Create a hash of current media to detect changes
+                const mediaHash = JSON.stringify(data.media.map(m => m.url));
+                
+                if (this.lastMediaHash === mediaHash) {
+                    return; // No changes
+                }
+
+                this.lastMediaHash = mediaHash;
+                this.clearCurrentMedia();
+                this.createNewMediaElements(data.media);
+                this.playCurrentMedia();
+            }
+
+            clearCurrentMedia() {
+                if (this.slideshowTimer) {
+                    clearTimeout(this.slideshowTimer);
+                }
+                this.stopCurrentMedia();
+                this.containerElement.innerHTML = '';
+                this.mediaElements = [];
+                this.currentIndex = 0;
+            }
+
+            createNewMediaElements(mediaData) {
+                mediaData.forEach((media, index) => {
+                    const mediaElement = this.createMediaElement(media, index);
+                    if (mediaElement) {
+                        this.containerElement.appendChild(mediaElement);
+                        this.mediaElements.push(mediaElement);
+                    }
+                });
+            }
+
+            createMediaElement(media, index) {
+                let element;
+                const type = media.type.toLowerCase();
+
+                if (['mp4', 'mov'].includes(type)) {
+                    element = document.createElement('video');
+                    element.src = media.url;
+                    element.className = 'media-element';
+                    element.controls = false;
+                    element.loop = false;
+                    element.muted = true;
+                    element.playsInline = true;
+                    element.addEventListener('ended', () => this.switchMedia());
+                    element.addEventListener('error', (e) => this.handleMediaError(e));
+                } else if (type === 'pdf') {
+                    element = document.createElement('embed');
+                    element.src = media.url + '#toolbar=0';
+                    element.className = 'media-element pdf';
+                    element.type = 'application/pdf';
+                } else {
+                    console.warn(`Unsupported media type: ${type}`);
+                    return null;
+                }
+
+                element.dataset.duration = media.duration * 1000;
+                element.className += index === 0 ? ' active' : '';
+                return element;
+            }
+
+            handleMediaError(error) {
+                console.error('Media error:', error);
+                this.switchMedia();
+            }
+
+            playCurrentMedia() {
+                const currentMedia = this.mediaElements[this.currentIndex];
+                if (!currentMedia) return;
+
+                let duration = parseInt(currentMedia.dataset.duration) || 10000;
+
+                if (currentMedia.tagName === 'VIDEO') {
+                    currentMedia.play().catch(error => {
+                        console.error('Error playing video:', error);
+                        this.switchMedia();
+                    });
+                } else {
+                    this.slideshowTimer = setTimeout(() => this.switchMedia(), duration);
+                }
+            }
+
+            stopCurrentMedia() {
+                const currentMedia = this.mediaElements[this.currentIndex];
+                if (!currentMedia) return;
+
+                if (currentMedia.tagName === 'VIDEO') {
+                    currentMedia.pause();
+                    currentMedia.currentTime = 0;
+                }
+                clearTimeout(this.slideshowTimer);
+            }
+
+            switchMedia() {
+                if (this.mediaElements.length === 0) return;
+
+                const currentMedia = this.mediaElements[this.currentIndex];
+                if (currentMedia) {
+                    currentMedia.classList.add('fade-out');
+                    currentMedia.classList.remove('active');
+                }
+                
+                this.stopCurrentMedia();
+                this.currentIndex = (this.currentIndex + 1) % this.mediaElements.length;
+                
+                const nextMedia = this.mediaElements[this.currentIndex];
+                if (nextMedia) {
+                    nextMedia.classList.remove('fade-out');
+                    nextMedia.classList.add('active');
+                    this.playCurrentMedia();
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const stationId = '{{ station.id }}';
+            new MediaSlider(stationId);
+        });
+    </script>
+</body>
+</html>

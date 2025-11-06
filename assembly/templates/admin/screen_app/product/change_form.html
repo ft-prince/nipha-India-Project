@@ -1,0 +1,13 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_urls static %}
+
+{% block object-tools-items %}
+    {{ block.super }}
+    {% if show_zip_upload and original %}
+        <li>
+            <a href="{% url 'admin:product_upload_zip' original.pk %}" class="addlink">
+                📁 Upload Media Zip
+            </a>
+        </li>
+    {% endif %}
+{% endblock %}

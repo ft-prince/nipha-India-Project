@@ -19,11 +19,12 @@ from django.contrib import admin
 from django.urls import include, path
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib.auth import views as auth_views
 
 # Customize Django Admin Headers
-admin.site.site_header = "NIPHA India Admin Dashboard"
-admin.site.site_title = "NIPHA India Admin"
-admin.site.index_title = "BRG Assembly 40K Management"
+admin.site.site_header = "Nipha Exports Private Limited Dashboard"
+admin.site.site_title = "Nipha Exports Private Limited Admin"
+admin.site.index_title = "Nipha Exports Private Limited"
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -31,6 +32,10 @@ urlpatterns = [
    path('', views.workflow_guide, name='Reference'),
    path('supervisor-dashboard.html', views.supervisor_dashboard, name='Supervisor'),
    path('workflow-guide.html', views.workflow_guide, name='Supervisor'),
+       path('accounts/login/', auth_views.LoginView.as_view(), name='login'),
+           path('nipha-admin/', views.product_information_view, name='product_information'),
+
+
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -1,0 +1,2326 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NIPHA INDIA PRIVATE LIMITED EXPORT</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-red: #dc3545;
+            --dark-red: #b02a37;
+            --light-red: #f8d7da;
+            --primary-white: #ffffff;
+            --light-gray: #f8f9fa;
+            --border-gray: #e0e0e0;
+        }
+
+        body {
+            background-color: var(--light-gray);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .info-card {
+            border: 1px solid var(--border-gray);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(220, 53, 69, 0.1);
+            background: var(--primary-white);
+        }
+
+        .info-card-header {
+            background: linear-gradient(135deg, var(--primary-red) 0%, var(--dark-red) 100%);
+            color: var(--primary-white);
+            padding: 15px 20px;
+            border-radius: 12px 12px 0 0;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .info-card-body {
+            padding: 25px;
+        }
+
+        .station-card {
+            background: linear-gradient(135deg, var(--light-red) 0%, #fff5f5 100%);
+            border: 1px solid var(--primary-red);
+            color: var(--dark-red);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .media-item {
+            background: var(--primary-white);
+            border-left: 4px solid var(--primary-red);
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 0 8px 8px 0;
+            position: relative;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .bom-template {
+            background: var(--primary-white);
+            border: 2px solid var(--light-red);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .bom-template:hover {
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .process-item {
+            background: var(--primary-white);
+            border-left: 3px solid var(--primary-red);
+            padding: 12px 15px;
+            margin: 8px 0;
+            border-radius: 0 8px 8px 0;
+            position: relative;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .badge-display {
+            font-size: 0.8em;
+            margin: 2px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--primary-red);
+        }
+
+        .no-data {
+            text-align: center;
+            color: #999;
+            font-style: italic;
+            padding: 30px;
+            background: var(--light-red);
+            border-radius: 8px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, var(--primary-red) 0%, var(--dark-red) 100%);
+            color: var(--primary-white);
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: bold;
+            display: block;
+        }
+
+        .bom-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            margin: 8px 0;
+            background: var(--light-gray);
+            border-radius: 8px;
+            border-left: 4px solid var(--primary-red);
+            position: relative;
+        }
+
+        .stage-section {
+            border: 2px solid var(--light-red);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            background: var(--primary-white);
+        }
+
+        .stage-header {
+            background: linear-gradient(135deg, var(--primary-red) 0%, var(--dark-red) 100%);
+            color: var(--primary-white);
+            padding: 15px 20px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stage-processes {
+            padding: 20px;
+        }
+
+        .action-buttons {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .bom-template:hover .action-buttons,
+        .media-item:hover .action-buttons,
+        .process-item:hover .action-buttons,
+        .bom-item:hover .action-buttons {
+            opacity: 1;
+        }
+
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            border-radius: 6px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-red);
+            border-color: var(--primary-red);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--dark-red);
+            border-color: var(--dark-red);
+        }
+
+        .btn-success {
+            background-color: #28a745;
+            border-color: #28a745;
+        }
+
+        .btn-light {
+            background-color: var(--primary-white);
+            border-color: var(--border-gray);
+            color: var(--primary-red);
+        }
+
+        .btn-light:hover {
+            background-color: var(--light-red);
+            border-color: var(--primary-red);
+            color: var(--dark-red);
+        }
+
+        .modal-lg {
+            max-width: 900px;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary-red) 0%, var(--dark-red) 100%);
+            color: var(--primary-white);
+            border-bottom: none;
+        }
+
+        .modal-title {
+            color: var(--primary-white);
+        }
+
+        .btn-close {
+            filter: brightness(0) invert(1);
+        }
+
+        .form-floating {
+            margin-bottom: 1rem;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-red);
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .form-check-input:checked {
+            background-color: var(--primary-red);
+            border-color: var(--primary-red);
+        }
+
+        h1 {
+            color: var(--dark-red);
+            font-weight: 700;
+        }
+
+        .alert-info {
+            background-color: var(--light-red);
+            border-color: var(--primary-red);
+            color: var(--dark-red);
+        }
+
+        .bg-primary {
+            background-color: var(--primary-red) !important;
+        }
+
+        .bg-success {
+            background-color: #28a745 !important;
+        }
+
+        .bg-warning {
+            background-color: #ffc107 !important;
+        }
+    </style>
+
+
+    <style>
+/* Enhanced BOM Item Styles */
+.bom-item-enhanced {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 15px;
+    margin: 10px 0;
+    background: var(--primary-white);
+    border-radius: 12px;
+    border-left: 4px solid var(--primary-red);
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.1);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.bom-item-enhanced:hover {
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);
+    transform: translateY(-2px);
+}
+
+.bom-item-content {
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+    flex: 1;
+}
+
+.bom-item-image {
+    flex-shrink: 0;
+    position: relative;
+}
+
+.bom-item-image img {
+    width: 70px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid var(--primary-red);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.bom-item-image img:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+.bom-item-placeholder {
+    width: 70px;
+    height: 70px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 2px dashed #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+}
+
+.bom-item-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.bom-item-title {
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+
+.bom-item-code {
+    color: var(--primary-red);
+    font-weight: 700;
+}
+
+.bom-item-description {
+    color: #495057;
+    margin-left: 8px;
+}
+
+.bom-item-meta {
+    margin-bottom: 4px;
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+.bom-item-notes {
+    margin-top: 6px;
+    color: #6c757d;
+    font-style: italic;
+    font-size: 0.875rem;
+}
+
+.bom-item-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.bom-item-actions .btn {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+}
+
+/* Image Modal Enhancements */
+.image-modal .modal-body {
+    background: #f8f9fa;
+}
+
+.image-modal img {
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+/* Loading animation for images */
+.bom-item-image.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid var(--primary-red);
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .bom-item-enhanced {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .bom-item-content {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .bom-item-actions {
+        align-self: flex-end;
+    }
+}
+</style>
+</head>
+<body>
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="mb-4"><i class="fas fa-cogs"></i> Product Information Dashboard</h1>
+                
+                <!-- Product Selection -->
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <span><i class="fas fa-search"></i> Select Product</span>
+                    </div>
+                    <div class="info-card-body">
+                        <form method="GET" id="productForm">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <select name="product_id" id="productSelect" class="form-select" onchange="loadProductData()">
+                                        <option value="">-- Select a Product --</option>
+                                        {% for product in products %}
+                                            <option value="{{ product.id }}" 
+                                                {% if selected_product and selected_product.id == product.id %}selected{% endif %}>
+                                                {{ product.code }} - {{ product.name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-search"></i> Load Information
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Product Information -->
+                {% if selected_product %}
+                    <div id="productInfo">
+                        <!-- Product Overview -->
+                        <div class="info-card">
+                            <div class="info-card-header">
+                                <span><i class="fas fa-box"></i> Product Overview: {{ selected_product.code }} - {{ selected_product.name }}</span>
+                            </div>
+                            <div class="info-card-body">
+                                {% if product_data %}
+                                    <div class="stats-grid">
+                                        <div class="stat-box">
+                                            <span class="stat-number">{{ product_data.station_summary.total_active|default:0 }}</span>
+                                            <small>Active Stations</small>
+                                        </div>
+                                        <div class="stat-box">
+                                            <span class="stat-number">{{ product_data.media_files.count|default:0 }}</span>
+                                            <small>Media Files</small>
+                                        </div>
+                                        <div class="stat-box">
+                                            <span class="stat-number">{{ product_data.bom_templates.count|default:0 }}</span>
+                                            <small>BOM Templates</small>
+                                        </div>
+                                        <div class="stat-box">
+                                            <span class="stat-number">{{ product_data.assembly_stages.count|default:0 }}</span>
+                                            <small>Assembly Stages</small>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        {% if product_data %}
+                            <div class="row">
+                                <!-- Left Column -->
+                                <div class="col-lg-6">
+                                    <!-- BOM Templates -->
+                                    <div class="info-card">
+                                        <div class="info-card-header">
+                                            <span><i class="fas fa-list-ul"></i> BOM Templates ({{ product_data.bom_templates.count }})</span>
+                                            <div>
+                                                <button class="btn btn-success btn-sm me-2" onclick="openBulkUploadModal()">
+                                                    <i class="fas fa-file-excel"></i> Bulk Upload
+                                                </button>
+                                                <button class="btn btn-light btn-sm" onclick="openBOMTemplateModal()">
+                                                    <i class="fas fa-plus"></i> Add Template
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="info-card-body">
+                                            {% if product_data.bom_templates %}
+                                                {% for template in product_data.bom_templates %}
+                                                    <div class="bom-template">
+                                                        <div class="action-buttons">
+                                                            <button class="btn btn-warning btn-sm" onclick="editBOMTemplate({{ template.id }})">
+                                                                <i class="fas fa-edit"></i>
+                                                            </button>
+                                                            <button class="btn btn-success btn-sm" onclick="manageBOMItems({{ template.id }})">
+                                                                <i class="fas fa-list"></i>
+                                                            </button>
+                                                            <button class="btn btn-danger btn-sm" onclick="deleteBOMTemplate({{ template.id }})">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </div>
+                                                        
+                                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                                            <h6><i class="fas fa-clipboard-list"></i> {{ template.template_name }}</h6>
+                                                            <div>
+                                                                {% if template.display_screen_1 %}
+                                                                    <span class="badge badge-display bg-primary">Display 1</span>
+                                                                {% endif %}
+                                                                {% if template.display_screen_2 %}
+                                                                    <span class="badge badge-display bg-success">Display 2</span>
+                                                                {% endif %}
+                                                                {% if template.display_screen_3 %}
+                                                                    <span class="badge badge-display bg-warning">Display 3</span>
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col-6">
+                                                                <small><strong>Type:</strong> {{ template.get_bom_type_display }}</small>
+                                                            </div>
+                                                            <div class="col-6">
+                                                                <small><strong>Items:</strong> {{ template.bom_items.count }}</small>
+                                                            </div>
+                                                        </div>
+                                                        {% if template.stage %}
+                                                            <div class="mt-1">
+                                                                <small><strong>Stage:</strong> {{ template.stage.display_name }}</small>
+                                                            </div>
+                                                        {% endif %}
+                                                        {% if template.description %}
+                                                            <div class="mt-2">
+                                                                <small><em>{{ template.description }}</em></small>
+                                                            </div>
+                                                        {% endif %}
+                                                    </div>
+                                                {% endfor %}
+                                            {% else %}
+                                                <div class="no-data">
+                                                    <i class="fas fa-info-circle"></i> No BOM templates found for this product
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    <!-- Product Media -->
+                                    <div class="info-card">
+                                        <div class="info-card-header">
+                                            <span><i class="fas fa-file-alt"></i> Product Media ({{ product_data.media_files.count }})</span>
+                                            <div>
+                                                <button class="btn btn-success btn-sm me-2" onclick="openZipUploadModal()">
+                                                    <i class="fas fa-file-archive"></i> ZIP Upload
+                                                </button>
+                                                <button class="btn btn-light btn-sm" onclick="openProductMediaModal()">
+                                                    <i class="fas fa-plus"></i> Add Media
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="info-card-body">
+                                            {% if product_data.media_by_type %}
+                                                {% for media_type, media_list in product_data.media_by_type.items %}
+                                                    <h6 class="mt-3"><i class="fas fa-folder"></i> {{ media_type }} ({{ media_list|length }})</h6>
+                                                    {% for media in media_list %}
+                                                        <div class="media-item">
+                                                            <div class="action-buttons">
+                                                                <button class="btn btn-warning btn-sm" onclick="editProductMedia({{ media.id }})">
+                                                                    <i class="fas fa-edit"></i>
+                                                                </button>
+                                                                <button class="btn btn-danger btn-sm" onclick="deleteProductMedia({{ media.id }})">
+                                                                    <i class="fas fa-trash"></i>
+                                                                </button>
+                                                            </div>
+                                                            
+                                                            <div class="d-flex justify-content-between align-items-center">
+                                                                <div>
+                                                                    <strong>{{ media.file.name|default:"Database BOM" }}</strong>
+                                                                    {% if media.process %}
+                                                                        <br><small><i class="fas fa-cog"></i> Process: {{ media.process.display_name }}</small>
+                                                                    {% endif %}
+                                                                    {% if media.bom %}
+                                                                        <br><small><i class="fas fa-list"></i> BOM: {{ media.bom.get_bom_type_display }}</small>
+                                                                    {% endif %}
+                                                                    {% if media.duration %}
+                                                                        <br><small><i class="fas fa-clock"></i> Duration: {{ media.duration }}s</small>
+                                                                    {% endif %}
+                                                                </div>
+                                                                <div class="text-end">
+                                                                    {% if media.display_screen_1 %}
+                                                                        <span class="badge badge-display bg-primary">Display 1</span>
+                                                                    {% endif %}
+                                                                    {% if media.display_screen_2 %}
+                                                                        <span class="badge badge-display bg-success">Display 2</span>
+                                                                    {% endif %}
+                                                                    {% if media.display_screen_3 %}
+                                                                        <span class="badge badge-display bg-warning">Display 3</span>
+                                                                    {% endif %}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    {% endfor %}
+                                                {% endfor %}
+                                            {% else %}
+                                                <div class="no-data">
+                                                    <i class="fas fa-info-circle"></i> No media files found for this product
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Right Column -->
+                                <div class="col-lg-6">
+                                    <!-- Connected Stations -->
+                                    <div class="info-card">
+                                        <div class="info-card-header">
+                                            <span><i class="fas fa-desktop"></i> Active Stations ({{ product_data.active_stations.count }})</span>
+                                        </div>
+                                        <div class="info-card-body">
+                                            {% if product_data.active_stations %}
+                                                {% for station in product_data.active_stations %}
+                                                    <div class="station-card">
+                                                        <h6><i class="fas fa-tv"></i> {{ station.name }} - Display {{ station.display_number }}</h6>
+                                                        <div class="row">
+                                                            <div class="col-6">
+                                                                <small><strong>Current Stage:</strong></small><br>
+                                                                <span class="badge bg-light text-dark">{{ station.current_stage.display_name|default:"Not Set" }}</span>
+                                                            </div>
+                                                            <div class="col-6">
+                                                                <small><strong>Current Process:</strong></small><br>
+                                                                <span class="badge bg-light text-dark">{{ station.current_process.display_name|default:"Not Set" }}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row mt-2">
+                                                            <div class="col-6">
+                                                                <small><strong>Quantity:</strong> {{ station.product_quantity }}</small>
+                                                            </div>
+                                                            <div class="col-6">
+                                                                <small><strong>Manager:</strong> {{ station.manager.username|default:"Not Assigned" }}</small>
+                                                            </div>
+                                                        </div>
+                                                        {% if station.loop_mode %}
+                                                            <div class="mt-2">
+                                                                <span class="badge bg-warning"><i class="fas fa-sync"></i> Loop Mode Active</span>
+                                                            </div>
+                                                        {% endif %}
+                                                    </div>
+                                                {% endfor %}
+                                            {% else %}
+                                                <div class="no-data">
+                                                    <i class="fas fa-info-circle"></i> No active stations for this product
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Assembly Stages and Processes -->
+                            <div class="info-card">
+                                <div class="info-card-header">
+                                    <span><i class="fas fa-tasks"></i> Assembly Stages & Processes ({{ product_data.assembly_stages.count }})</span>
+                                    <button class="btn btn-light btn-sm" onclick="openAssemblyProcessModal()">
+                                        <i class="fas fa-plus"></i> Add Process
+                                    </button>
+                                </div>
+                                <div class="info-card-body">
+                                    {% if product_data.assembly_stages %}
+                                        <div class="row">
+                                            {% for stage in product_data.assembly_stages %}
+                                                <div class="col-md-6 col-lg-4 mb-3">
+                                                    <div class="stage-section">
+                                                        <div class="stage-header">
+                                                            <span><i class="fas fa-layer-group"></i> {{ stage.display_name }}</span>
+                                                        </div>
+                                                        <div class="stage-processes">
+                                                            {% if stage.processes.all %}
+                                                                {% for process in stage.processes.all %}
+                                                                    <div class="process-item">
+                                                                        <div class="action-buttons">
+                                                                            <button class="btn btn-warning btn-sm" onclick="editAssemblyProcess({{ process.id }})">
+                                                                                <i class="fas fa-edit"></i>
+                                                                            </button>
+                                                                            <button class="btn btn-danger btn-sm" onclick="deleteAssemblyProcess({{ process.id }})">
+                                                                                <i class="fas fa-trash"></i>
+                                                                            </button>
+                                                                        </div>
+                                                                        
+                                                                        <div class="d-flex justify-content-between align-items-center">
+                                                                            <div>
+                                                                                <small><strong>{{ process.order }}.</strong> {{ process.display_name|default:process.name }}</small>
+                                                                                {% if process.location %}
+                                                                                    <br><small class="text-muted"><i class="fas fa-map-marker-alt"></i> {{ process.get_location_display }}</small>
+                                                                                {% endif %}
+                                                                            </div>
+                                                                            <div>
+                                                                                {% if process.is_looped %}
+                                                                                    <span class="badge bg-warning"><i class="fas fa-sync"></i></span>
+                                                                                {% endif %}
+                                                                                {% if process.loop_group %}
+                                                                                    <span class="badge bg-info">{{ process.loop_group }}</span>
+                                                                                {% endif %}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                {% endfor %}
+                                                            {% else %}
+                                                                <small class="text-muted">No processes defined</small>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        <div class="no-data">
+                                            <i class="fas fa-info-circle"></i> No assembly stages found
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <!-- No Product Selected -->
+                    <div class="info-card">
+                        <div class="info-card-body text-center">
+                            <i class="fas fa-arrow-up fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Please select a product to view information</h5>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Upload Modal for BOM Items -->
+    <div class="modal fade" id="bulkUploadModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Bulk Upload BOM Items from Excel</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="bulkUploadForm" enctype="multipart/form-data">
+                    <div class="modal-body">
+                        {% csrf_token %}
+                        <input type="hidden" id="bulkUploadTemplateId" name="template_id">
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> 
+                            <strong>Excel Format:</strong> Your Excel file should have columns: 
+                            <code>S. NO</code>, <code>Code</code>, <code>ITEM DESCRIPTION</code>, <code>PART NO.</code>, <code>QTY</code>, <code>ITEM PHOTO</code>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <select class="form-select" id="bulkTemplateSelect" name="template_id" required>
+                                        <option value="">Select BOM Template</option>
+                                        {% for template in product_data.bom_templates %}
+                                            <option value="{{ template.id }}">{{ template.template_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <label for="bulkTemplateSelect">BOM Template</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="excelFile" class="form-label">Excel File</label>
+                                    <input type="file" class="form-control" id="excelFile" name="excel_file" accept=".xlsx,.xls" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="unitOfMeasure" name="unit_of_measure" value="NO." placeholder="Unit">
+                                    <label for="unitOfMeasure">Default Unit of Measure</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="supplier" name="supplier" placeholder="Supplier">
+                                    <label for="supplier">Default Supplier (Optional)</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-check mt-3">
+                            <input class="form-check-input" type="checkbox" id="overwriteExisting" name="overwrite_existing">
+                            <label class="form-check-label" for="overwriteExisting">
+                                Overwrite existing items with same item code
+                            </label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-upload"></i> Upload & Process
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ZIP Upload Modal for Product Media -->
+    <div class="modal fade" id="zipUploadModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Bulk Upload Media from ZIP</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="zipUploadForm" enctype="multipart/form-data">
+                    <div class="modal-body">
+                        {% csrf_token %}
+                        <input type="hidden" name="product_id" value="{{ selected_product.id }}">
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> 
+                            <strong>ZIP Contents:</strong> PDFs will be marked as Process Documents, Videos (.mp4, .mov, .avi, etc.) as Videos.
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="zipFile" class="form-label">ZIP File</label>
+                                    <input type="file" class="form-control" id="zipFile" name="zip_file" accept=".zip" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="number" class="form-control" id="zipDefaultDuration" name="default_duration" value="30" min="1">
+                                    <label for="zipDefaultDuration">Default Duration (seconds)</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <select class="form-select" id="zipProcessId" name="process_id">
+                                        <option value="">Select Process (Optional)</option>
+                                        {% for process in assembly_processes %}
+                                            <option value="{{ process.id }}">{{ process.stage.display_name }} - {{ process.display_name|default:process.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <label for="zipProcessId">Assign to Process</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <select class="form-select" id="zipBomId" name="bom_id">
+                                        <option value="">Select BOM (Optional)</option>
+                                        {% if product_data.legacy_boms %}
+                                            {% for bom in product_data.legacy_boms %}
+                                                <option value="{{ bom.id }}">{{ bom.get_bom_type_display }}</option>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </select>
+                                    <label for="zipBomId">Assign to BOM</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Display Screens:</strong></label>
+                            <div class="checkbox-group">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="zipDisplayScreen1" name="display_screen_1">
+                                    <label class="form-check-label" for="zipDisplayScreen1">Display Screen 1</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="zipDisplayScreen2" name="display_screen_2">
+                                    <label class="form-check-label" for="zipDisplayScreen2">Display Screen 2</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="zipDisplayScreen3" name="display_screen_3">
+                                    <label class="form-check-label" for="zipDisplayScreen3">Display Screen 3</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-upload"></i> Upload & Extract
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOM Template Modal -->
+    <div class="modal fade" id="bomTemplateModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="bomTemplateModalTitle">Add BOM Template</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="bomTemplateForm">
+                    <div class="modal-body">
+                        {% csrf_token %}
+                        <input type="hidden" id="bomTemplateId" name="template_id">
+                        <input type="hidden" name="product_id" value="{{ selected_product.id }}">
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="templateName" name="template_name" placeholder="Template Name" required>
+                                    <label for="templateName">Template Name</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <select class="form-select" id="bomType" name="bom_type" required>
+                                        <option value="">Select BOM Type</option>
+                                        {% for value, label in bom_type_choices %}
+                                            <option value="{{ value }}">{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <label for="bomType">BOM Type</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <select class="form-select" id="stageId" name="stage_id">
+                                        <option value="">Select Stage (Optional)</option>
+                                        {% for stage in assembly_stages %}
+                                            <option value="{{ stage.id }}">{{ stage.display_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <label for="stageId">Assembly Stage</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="number" class="form-control" id="duration" name="duration" placeholder="Duration" value="20">
+                                    <label for="duration">Duration (seconds)</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-floating">
+                            <textarea class="form-control" id="description" name="description" placeholder="Description" style="height: 80px"></textarea>
+                            <label for="description">Description</label>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label"><strong>Display Screens:</strong></label>
+                            <div class="checkbox-group">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="displayScreen1" name="display_screen_1">
+                                    <label class="form-check-label" for="displayScreen1">Display Screen 1</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="displayScreen2" name="display_screen_2">
+                                    <label class="form-check-label" for="displayScreen2">Display Screen 2</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="displayScreen3" name="display_screen_3">
+                                    <label class="form-check-label" for="displayScreen3">Display Screen 3</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="isDurationActive" name="is_duration_active">
+                            <label class="form-check-label" for="isDurationActive">
+                                Duration Active (Auto-advance after duration)
+                            </label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Template</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOM Items Management Modal -->
+    <div class="modal fade" id="bomItemsModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="bomItemsModalTitle">Manage BOM Items</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6>Add New Item</h6>
+                            <form id="bomItemForm">
+                                {% csrf_token %}
+                                <input type="hidden" id="bomItemTemplateId" name="template_id">
+                                <input type="hidden" id="bomItemId" name="item_id_edit">
+                                
+                                <div class="form-floating mb-3">
+                                    <select class="form-select" id="bomItemSelect" name="item_id" required>
+                                        <option value="">Select Item</option>
+                                        {% for item in bom_items %}
+                                            <option value="{{ item.id }}">{{ item.item_description }} ({{ item.part_number }})</option>
+                                        {% endfor %}
+                                    </select>
+                                    <label for="bomItemSelect">BOM Item</label>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="form-floating mb-3">
+                                            <input type="number" class="form-control" id="serialNumber" name="serial_number" placeholder="S.No" required>
+                                            <label for="serialNumber">Serial Number</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="form-floating mb-3">
+                                            <input type="number" class="form-control" id="baseQuantity" name="base_quantity" placeholder="Quantity" step="0.0001" value="1" required>
+                                            <label for="baseQuantity">Base Quantity</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-floating mb-3">
+                                    <textarea class="form-control" id="itemNotes" name="notes" placeholder="Notes" style="height: 60px"></textarea>
+                                    <label for="itemNotes">Notes</label>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary w-100" id="bomItemSubmitBtn">Add Item</button>
+                            </form>
+                        </div>
+                        <div class="col-md-8">
+                            <h6>Current Items</h6>
+                            <div id="bomItemsList" style="max-height: 400px; overflow-y: auto;">
+                                <!-- Items will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- Enhanced Product Media Modal -->
+    <div class="modal fade" id="productMediaModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="productMediaModalTitle">Add Product Media</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="productMediaForm" enctype="multipart/form-data">
+                    <div class="modal-body">
+                        {% csrf_token %}
+                        <input type="hidden" id="productMediaId" name="media_id">
+                        <input type="hidden" name="product_id" value="{{ selected_product.id }}">
+                        
+                        <div class="row">
+                            <!-- Form Fields Column -->
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <select class="form-select" id="mediaType" name="media_type" required>
+                                                <option value="">Select Media Type</option>
+                                                {% for value, label in media_type_choices %}
+                                                    <option value="{{ value }}">{{ label }}</option>
+                                                {% endfor %}
+                                            </select>
+                                            <label for="mediaType">Media Type</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input type="number" class="form-control" id="mediaDuration" name="duration" placeholder="Duration" value="15">
+                                            <label for="mediaDuration">Duration (seconds)</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-floating">
+                                            <select class="form-select" id="processId" name="process_id">
+                                                <option value="">Select Process (Optional)</option>
+                                                {% for process in assembly_processes %}
+                                                    <option value="{{ process.id }}">{{ process.stage.display_name }} - {{ process.display_name|default:process.name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                            <label for="processId">Assembly Process</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="mediaFile" class="form-label">Media File</label>
+                                    <input type="file" class="form-control" id="mediaFile" name="file" accept=".pdf,.mp4,.mov,.xlsx,.docx,.avi,.mkv,.wmv">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label"><strong>Display Screens:</strong></label>
+                                    <div class="checkbox-group">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="mediaDisplayScreen1" name="display_screen_1">
+                                            <label class="form-check-label" for="mediaDisplayScreen1">Display Screen 1</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="mediaDisplayScreen2" name="display_screen_2">
+                                            <label class="form-check-label" for="mediaDisplayScreen2">Display Screen 2</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="mediaDisplayScreen3" name="display_screen_3">
+                                            <label class="form-check-label" for="mediaDisplayScreen3">Display Screen 3</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Preview Column -->
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0"><i class="fas fa-eye"></i> File Preview</h6>
+                                    </div>
+                                    <div class="card-body d-flex align-items-center justify-content-center" id="mediaPreviewContainer" style="min-height: 300px;">
+                                        <div class="text-center text-muted" id="noPreviewMessage">
+                                            <i class="fas fa-file fa-3x mb-3"></i>
+                                            <p>No file selected</p>
+                                            <small>Upload a file to see preview</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Media</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assembly Process Modal -->
+    <div class="modal fade" id="assemblyProcessModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="assemblyProcessModalTitle">Add Assembly Process</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="assemblyProcessForm">
+                    <div class="modal-body">
+                        {% csrf_token %}
+                        <input type="hidden" id="assemblyProcessId" name="process_id">
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <select class="form-select" id="processStageId" name="stage_id" required>
+                                        <option value="">Select Stage</option>
+                                        {% for stage in assembly_stages %}
+                                            <option value="{{ stage.id }}">{{ stage.display_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <label for="processStageId">Assembly Stage</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="number" class="form-control" id="processOrder" name="order" placeholder="Order" value="1" required>
+                                    <label for="processOrder">Order</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="processName" name="name" placeholder="Process Name" required>
+                                    <label for="processName">Process Name</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="processDisplayName" name="display_name" placeholder="Display Name">
+                                    <label for="processDisplayName">Display Name</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <select class="form-select" id="processLocation" name="location">
+                                        <option value="">Select Location</option>
+                                        <option value="ASSEMBLY_ROOM">Assembly Room</option>
+                                        <option value="OUTSIDE_ASSEMBLY_ROOM">Outside Assembly Room</option>
+                                    </select>
+                                    <label for="processLocation">Location</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="loopGroup" name="loop_group" placeholder="Loop Group">
+                                    <label for="loopGroup">Loop Group</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="isLooped" name="is_looped">
+                            <label class="form-check-label" for="isLooped">
+                                Is Looped Process
+                            </label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Process</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function loadProductData() {
+            const productId = document.getElementById('productSelect').value;
+            if (productId) {
+                document.getElementById('productForm').submit();
+            }
+        }
+
+        // Bulk Upload Functions
+        function openBulkUploadModal() {
+            const modal = new bootstrap.Modal(document.getElementById('bulkUploadModal'));
+            const form = document.getElementById('bulkUploadForm');
+            form.reset();
+            modal.show();
+        }
+
+        function openZipUploadModal() {
+            const modal = new bootstrap.Modal(document.getElementById('zipUploadModal'));
+            const form = document.getElementById('zipUploadForm');
+            form.reset();
+            modal.show();
+        }
+
+        // BOM Template Functions
+        function openBOMTemplateModal(templateId = null) {
+            const modal = new bootstrap.Modal(document.getElementById('bomTemplateModal'));
+            const form = document.getElementById('bomTemplateForm');
+            const title = document.getElementById('bomTemplateModalTitle');
+            
+            if (templateId) {
+                title.textContent = 'Edit BOM Template';
+                loadBOMTemplateData(templateId);
+            } else {
+                title.textContent = 'Add BOM Template';
+                form.reset();
+                document.getElementById('bomTemplateId').value = '';
+            }
+            
+            modal.show();
+        }
+
+        function editBOMTemplate(templateId) {
+            openBOMTemplateModal(templateId);
+        }
+
+        function deleteBOMTemplate(templateId) {
+            if (confirm('Are you sure you want to delete this BOM template? This will also delete all associated items.')) {
+                fetch(`/station/bom-template/${templateId}/delete/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                });
+            }
+        }
+
+        function manageBOMItems(templateId) {
+            const modal = new bootstrap.Modal(document.getElementById('bomItemsModal'));
+            document.getElementById('bomItemTemplateId').value = templateId;
+            loadBOMItems(templateId);
+            modal.show();
+        }
+
+function loadBOMItems(templateId) {
+    fetch(`/station/bom-template/${templateId}/items/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log(data);
+                const itemsList = document.getElementById('bomItemsList');
+                itemsList.innerHTML = data.items.map(item => `
+                    <div class="bom-item" style="display: flex; justify-content: space-between; align-items: flex-start; padding: 12px 15px; margin: 8px 0; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #dc3545; position: relative;">
+                        <div style="display: flex; gap: 15px; align-items: flex-start; flex: 1;">
+                            ${item.has_photo ? `
+                                <div style="flex-shrink: 0;">
+                                    <img src="${item.item_photo_url}" 
+                                         alt="${item.item_description}" 
+                                         style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 2px solid #dc3545; cursor: pointer;"
+                                         onclick="showImageModal('${item.item_photo_url}', '${item.item_description}')"
+                                         title="Click to view full size">
+                                </div>
+                            ` : `
+                                <div style="flex-shrink: 0; width: 60px; height: 60px; background: #e9ecef; border-radius: 6px; border: 2px dashed #6c757d; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-image text-muted" style="font-size: 20px;"></i>
+                                </div>
+                            `}
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="margin-bottom: 4px;">
+                                    <strong style="color: #dc3545;">${item.serial_number}. ${item.item_code}</strong>
+                                    <span style="margin-left: 8px; color: #495057;">${item.item_description}</span>
+                                </div>
+                                <div style="margin-bottom: 4px;">
+                                    <small class="text-muted">
+                                        <i class="fas fa-tag"></i> ${item.part_number} | 
+                                        <i class="fas fa-cube"></i> ${item.base_quantity} ${item.unit_of_measure}
+                                    </small>
+                                </div>
+                                ${item.notes ? `
+                                    <div style="margin-top: 4px;">
+                                        <small style="color: #6c757d; font-style: italic;">
+                                            <i class="fas fa-sticky-note"></i> ${item.notes}
+                                        </small>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 5px; flex-shrink: 0;">
+                            <button class="btn btn-warning btn-sm" onclick="editBOMItem(${item.id})" title="Edit Item">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteBOMItem(${item.id})" title="Delete Item">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading BOM items:', error);
+            document.getElementById('bomItemsList').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i> Error loading BOM items: ${error.message}
+                </div>
+            `;
+        });
+}
+
+// Function to show image in modal
+function showImageModal(imageUrl, itemDescription) {
+    // Remove existing modal if any
+    const existingModal = document.getElementById('imageViewModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Create modal HTML
+    const modalHTML = `
+        <div class="modal fade" id="imageViewModal" tabindex="-1">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">${itemDescription}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-center" style="padding: 20px;">
+                        <img src="${imageUrl}" 
+                             alt="${itemDescription}" 
+                             style="max-width: 100%; max-height: 70vh; object-fit: contain; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+                    </div>
+                    <div class="modal-footer">
+                        <a href="${imageUrl}" download class="btn btn-primary">
+                            <i class="fas fa-download"></i> Download Image
+                        </a>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add modal to document
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('imageViewModal'));
+    modal.show();
+    
+    // Remove modal from DOM when hidden
+    document.getElementById('imageViewModal').addEventListener('hidden.bs.modal', function() {
+        this.remove();
+    });
+}
+
+        // Product Media Functions
+        function openProductMediaModal(mediaId = null) {
+            const modal = new bootstrap.Modal(document.getElementById('productMediaModal'));
+            const form = document.getElementById('productMediaForm');
+            const title = document.getElementById('productMediaModalTitle');
+            
+            if (mediaId) {
+                title.textContent = 'Edit Product Media';
+                loadProductMediaData(mediaId);
+            } else {
+                title.textContent = 'Add Product Media';
+                form.reset();
+                document.getElementById('productMediaId').value = '';
+                clearMediaPreview();
+            }
+            
+            modal.show();
+        }
+
+        function editProductMedia(mediaId) {
+            openProductMediaModal(mediaId);
+        }
+
+        function deleteProductMedia(mediaId) {
+            if (confirm('Are you sure you want to delete this media file?')) {
+                fetch(`/station/product-media/${mediaId}/delete/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                });
+            }
+        }
+
+        // Assembly Process Functions
+        function openAssemblyProcessModal(processId = null) {
+            const modal = new bootstrap.Modal(document.getElementById('assemblyProcessModal'));
+            const form = document.getElementById('assemblyProcessForm');
+            const title = document.getElementById('assemblyProcessModalTitle');
+            
+            if (processId) {
+                title.textContent = 'Edit Assembly Process';
+                loadAssemblyProcessData(processId);
+            } else {
+                title.textContent = 'Add Assembly Process';
+                form.reset();
+                document.getElementById('assemblyProcessId').value = '';
+            }
+            
+            modal.show();
+        }
+
+        function editAssemblyProcess(processId) {
+            openAssemblyProcessModal(processId);
+        }
+
+        function deleteAssemblyProcess(processId) {
+            if (confirm('Are you sure you want to delete this assembly process?')) {
+                fetch(`/station/assembly-process/${processId}/delete/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                });
+            }
+        }
+
+        // Form Submissions for Bulk Upload
+        document.getElementById('bulkUploadForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const templateId = document.getElementById('bulkTemplateSelect').value;
+            
+            if (!templateId) {
+                alert('Please select a BOM template');
+                return;
+            }
+            
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            submitBtn.disabled = true;
+            
+            fetch(`/station/bom-template/${templateId}/upload-excel/`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    if (data.errors) {
+                        console.warn('Upload warnings:', data.errors);
+                    }
+                    bootstrap.Modal.getInstance(document.getElementById('bulkUploadModal')).hide();
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Error processing file: ' + error);
+            })
+            .finally(() => {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            });
+        });
+
+        document.getElementById('zipUploadForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            
+            formData.set('display_screen_1', document.getElementById('zipDisplayScreen1').checked ? 'true' : 'false');
+            formData.set('display_screen_2', document.getElementById('zipDisplayScreen2').checked ? 'true' : 'false');
+            formData.set('display_screen_3', document.getElementById('zipDisplayScreen3').checked ? 'true' : 'false');
+            
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Extracting...';
+            submitBtn.disabled = true;
+            
+            fetch('/station/product-media/upload-zip/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    if (data.errors) {
+                        console.warn('Upload warnings:', data.errors);
+                    }
+                    bootstrap.Modal.getInstance(document.getElementById('zipUploadModal')).hide();
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Error processing ZIP file: ' + error);
+            })
+            .finally(() => {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            });
+        });
+
+        // Form Submissions for CRUD Operations
+        document.getElementById('bomTemplateForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const templateId = document.getElementById('bomTemplateId').value;
+            const url = templateId ? 
+                `/station/bom-template/${templateId}/update/` : 
+                '/station/bom-template/create/';
+            
+            fetch(url, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    bootstrap.Modal.getInstance(document.getElementById('bomTemplateModal')).hide();
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            });
+        });
+
+        document.getElementById('bomItemForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const itemId = document.getElementById('bomItemId').value;
+            const url = itemId ? 
+                `/station/bom-item/${itemId}/update/` : 
+                '/station/bom-item/create/';
+            
+            fetch(url, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    this.reset();
+                    document.getElementById('bomItemId').value = '';
+                    document.getElementById('bomItemSubmitBtn').textContent = 'Add Item';
+                    loadBOMItems(document.getElementById('bomItemTemplateId').value);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            });
+        });
+
+        document.getElementById('productMediaForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const mediaId = document.getElementById('productMediaId').value;
+            const url = mediaId ? 
+                `/station/product-media/${mediaId}/update/` : 
+                '/station/product-media/create/';
+            
+            fetch(url, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    bootstrap.Modal.getInstance(document.getElementById('productMediaModal')).hide();
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            });
+        });
+
+        document.getElementById('assemblyProcessForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const processId = document.getElementById('assemblyProcessId').value;
+            const url = processId ? 
+                `/station/assembly-process/${processId}/update/` : 
+                '/station/assembly-process/create/';
+            
+            fetch(url, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    bootstrap.Modal.getInstance(document.getElementById('assemblyProcessModal')).hide();
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            });
+        });
+
+        // Helper functions for editing
+        function loadBOMTemplateData(templateId) {
+            fetch(`/station/bom-template/${templateId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const template = data.template;
+                        document.getElementById('bomTemplateId').value = template.id;
+                        document.getElementById('templateName').value = template.template_name;
+                        document.getElementById('bomType').value = template.bom_type;
+                        document.getElementById('stageId').value = template.stage_id || '';
+                        document.getElementById('duration').value = template.duration;
+                        document.getElementById('description').value = template.description || '';
+                        document.getElementById('displayScreen1').checked = template.display_screen_1;
+                        document.getElementById('displayScreen2').checked = template.display_screen_2;
+                        document.getElementById('displayScreen3').checked = template.display_screen_3;
+                        document.getElementById('isDurationActive').checked = template.is_duration_active;
+                    }
+                });
+        }
+
+function loadProductMediaData(mediaId) {
+    fetch(`/station/product-media/${mediaId}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const media = data.media;
+                document.getElementById('productMediaId').value = media.id;
+                document.getElementById('mediaType').value = media.media_type;
+                document.getElementById('mediaDuration').value = media.duration;
+                document.getElementById('processId').value = media.process_id || '';
+                document.getElementById('mediaDisplayScreen1').checked = media.display_screen_1;
+                document.getElementById('mediaDisplayScreen2').checked = media.display_screen_2;
+                document.getElementById('mediaDisplayScreen3').checked = media.display_screen_3;
+                
+                // Show file preview if file exists
+                if (media.has_file) {
+                    showMediaPreview(media.file_url, media.file_type, media.file_name, media.file_size);
+                } else {
+                    clearMediaPreview();
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error loading media data:', error);
+        });
+}
+
+
+function showMediaPreview(fileUrl, fileType, fileName, fileSize) {
+    const previewContainer = document.getElementById('mediaPreviewContainer');
+    const sizeText = fileSize ? formatFileSize(fileSize) : '';
+    
+    let previewHTML = '';
+    
+    switch (fileType) {
+        case 'pdf':
+            previewHTML = `
+                <div class="text-center w-100">
+                    <div class="mb-3">
+                        <i class="fas fa-file-pdf fa-4x text-danger"></i>
+                    </div>
+                    <h6 class="mb-2">${fileName}</h6>
+                    ${sizeText ? `<small class="text-muted d-block mb-3">${sizeText}</small>` : ''}
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-outline-danger" onclick="openPDFViewer('${fileUrl}', '${fileName}')">
+                            <i class="fas fa-eye"></i> View PDF
+                        </button>
+                        <a href="${fileUrl}" download class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-download"></i> Download
+                        </a>
+                    </div>
+                </div>
+            `;
+            break;
+            
+        case 'video':
+            previewHTML = `
+                <div class="w-100">
+                    <video controls style="width: 100%; max-height: 250px; border-radius: 8px;" preload="metadata">
+                        <source src="${fileUrl}" type="video/mp4">
+                        <source src="${fileUrl}" type="video/quicktime">
+                        <source src="${fileUrl}" type="video/x-msvideo">
+                        Your browser does not support the video tag.
+                    </video>
+                    <div class="text-center mt-2">
+                        <h6 class="mb-1">${fileName}</h6>
+                        ${sizeText ? `<small class="text-muted">${sizeText}</small>` : ''}
+                    </div>
+                </div>
+            `;
+            break;
+            
+        case 'image':
+            previewHTML = `
+                <div class="text-center w-100">
+                    <img src="${fileUrl}" alt="${fileName}" 
+                         style="max-width: 100%; max-height: 250px; object-fit: contain; border-radius: 8px; cursor: pointer;"
+                         onclick="showImageModal('${fileUrl}', '${fileName}')">
+                    <div class="mt-2">
+                        <h6 class="mb-1">${fileName}</h6>
+                        ${sizeText ? `<small class="text-muted">${sizeText}</small>` : ''}
+                    </div>
+                </div>
+            `;
+            break;
+            
+        case 'excel':
+            previewHTML = `
+                <div class="text-center w-100">
+                    <div class="mb-3">
+                        <i class="fas fa-file-excel fa-4x text-success"></i>
+                    </div>
+                    <h6 class="mb-2">${fileName}</h6>
+                    ${sizeText ? `<small class="text-muted d-block mb-3">${sizeText}</small>` : ''}
+                    <a href="${fileUrl}" download class="btn btn-outline-success">
+                        <i class="fas fa-download"></i> Download Excel
+                    </a>
+                </div>
+            `;
+            break;
+            
+        case 'document':
+            previewHTML = `
+                <div class="text-center w-100">
+                    <div class="mb-3">
+                        <i class="fas fa-file-word fa-4x text-primary"></i>
+                    </div>
+                    <h6 class="mb-2">${fileName}</h6>
+                    ${sizeText ? `<small class="text-muted d-block mb-3">${sizeText}</small>` : ''}
+                    <a href="${fileUrl}" download class="btn btn-outline-primary">
+                        <i class="fas fa-download"></i> Download Document
+                    </a>
+                </div>
+            `;
+            break;
+            
+        default:
+            previewHTML = `
+                <div class="text-center w-100">
+                    <div class="mb-3">
+                        <i class="fas fa-file fa-4x text-secondary"></i>
+                    </div>
+                    <h6 class="mb-2">${fileName}</h6>
+                    ${sizeText ? `<small class="text-muted d-block mb-3">${sizeText}</small>` : ''}
+                    <a href="${fileUrl}" download class="btn btn-outline-secondary">
+                        <i class="fas fa-download"></i> Download File
+                    </a>
+                </div>
+            `;
+    }
+    
+    previewContainer.innerHTML = previewHTML;
+}
+
+function clearMediaPreview() {
+    const previewContainer = document.getElementById('mediaPreviewContainer');
+    previewContainer.innerHTML = `
+        <div class="text-center text-muted" id="noPreviewMessage">
+            <i class="fas fa-file fa-3x mb-3"></i>
+            <p>No file selected</p>
+            <small>Upload a file to see preview</small>
+        </div>
+    `;
+}
+
+function openPDFViewer(pdfUrl, fileName) {
+    // Remove existing modal if any
+    const existingModal = document.getElementById('pdfViewerModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Create PDF viewer modal
+    const modalHTML = `
+        <div class="modal fade" id="pdfViewerModal" tabindex="-1">
+            <div class="modal-dialog modal-xl modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-file-pdf text-danger"></i> ${fileName}
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-0">
+                        <div style="height: 70vh; width: 100%;">
+                            <iframe src="${pdfUrl}" 
+                                    style="width: 100%; height: 100%; border: none;"
+                                    title="${fileName}">
+                                <p>Your browser does not support PDFs. 
+                                   <a href="${pdfUrl}" download>Download the PDF</a>
+                                </p>
+                            </iframe>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <a href="${pdfUrl}" download class="btn btn-primary">
+                            <i class="fas fa-download"></i> Download PDF
+                        </a>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add modal to document
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('pdfViewerModal'));
+    modal.show();
+    
+    // Remove modal from DOM when hidden
+    document.getElementById('pdfViewerModal').addEventListener('hidden.bs.modal', function() {
+        this.remove();
+    });
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// File input change handler for preview
+document.addEventListener('DOMContentLoaded', function() {
+    const mediaFileInput = document.getElementById('mediaFile');
+    if (mediaFileInput) {
+        mediaFileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Create a temporary URL for preview
+                const tempUrl = URL.createObjectURL(file);
+                const fileType = getFileTypeFromName(file.name);
+                
+                showMediaPreview(tempUrl, fileType, file.name, file.size);
+                
+                // Clean up the temporary URL after some time
+                setTimeout(() => {
+                    URL.revokeObjectURL(tempUrl);
+                }, 60000); // 1 minute
+            } else {
+                clearMediaPreview();
+            }
+        });
+    }
+});
+
+function getFileTypeFromName(fileName) {
+    const name = fileName.toLowerCase();
+    if (name.endsWith('.pdf')) return 'pdf';
+    if (name.endsWith('.mp4') || name.endsWith('.mov') || name.endsWith('.avi') || 
+        name.endsWith('.mkv') || name.endsWith('.wmv') || name.endsWith('.flv') || 
+        name.endsWith('.webm')) return 'video';
+    if (name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png') || 
+        name.endsWith('.gif') || name.endsWith('.bmp') || name.endsWith('.webp')) return 'image';
+    if (name.endsWith('.xlsx') || name.endsWith('.xls')) return 'excel';
+    if (name.endsWith('.docx') || name.endsWith('.doc')) return 'document';
+    return 'other';
+}
+
+        function loadAssemblyProcessData(processId) {
+            fetch(`/station/assembly-process/${processId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const process = data.process;
+                        document.getElementById('assemblyProcessId').value = process.id;
+                        document.getElementById('processStageId').value = process.stage_id;
+                        document.getElementById('processOrder').value = process.order;
+                        document.getElementById('processName').value = process.name;
+                        document.getElementById('processDisplayName').value = process.display_name || '';
+                        document.getElementById('processLocation').value = process.location || '';
+                        document.getElementById('loopGroup').value = process.loop_group || '';
+                        document.getElementById('isLooped').checked = process.is_looped;
+                    }
+                });
+        }
+
+        function editBOMItem(itemId) {
+            fetch(`/station/bom-item/${itemId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const item = data.item;
+                        document.getElementById('bomItemId').value = item.id;
+                        document.getElementById('bomItemSelect').value = item.item_id;
+                        document.getElementById('serialNumber').value = item.serial_number;
+                        document.getElementById('baseQuantity').value = item.base_quantity;
+                        document.getElementById('itemNotes').value = item.notes || '';
+                        document.getElementById('bomItemSubmitBtn').textContent = 'Update Item';
+                    }
+                });
+        }
+
+        function deleteBOMItem(itemId) {
+            if (confirm('Are you sure you want to remove this item from the BOM?')) {
+                fetch(`/station/bom-item/${itemId}/delete/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        loadBOMItems(document.getElementById('bomItemTemplateId').value);
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                });
+            }
+        }
+
+        // Auto-suggest next serial number when adding BOM items
+        document.getElementById('bomItemTemplateId').addEventListener('change', function() {
+            const templateId = this.value;
+            if (templateId) {
+                fetch(`/station/bom-template/${templateId}/next-serial/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            document.getElementById('serialNumber').value = data.next_serial;
+                        }
+                    });
+            }
+        });
+
+        // Show success/error messages
+        function showMessage(message, type = 'success') {
+            const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alertDiv);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+
+        // Enhanced error handling
+        function handleFetchError(response) {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response;
+        }
+
+        // File validation functions
+        function validateExcelFile(file) {
+            const allowedTypes = ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel'];
+            if (!allowedTypes.includes(file.type)) {
+                alert('Please select a valid Excel file (.xlsx or .xls)');
+                return false;
+            }
+            if (file.size > 50 * 1024 * 1024) { // 50MB limit
+                alert('File size must be less than 50MB');
+                return false;
+            }
+            return true;
+        }
+
+        function validateZipFile(file) {
+            if (file.type !== 'application/zip' && !file.name.toLowerCase().endsWith('.zip')) {
+                alert('Please select a valid ZIP file');
+                return false;
+            }
+            if (file.size > 500 * 1024 * 1024) { // 500MB limit
+                alert('File size must be less than 500MB');
+                return false;
+            }
+            return true;
+        }
+
+        // Add file validation to forms
+        document.getElementById('excelFile').addEventListener('change', function() {
+            if (this.files.length > 0) {
+                validateExcelFile(this.files[0]);
+            }
+        });
+
+        document.getElementById('zipFile').addEventListener('change', function() {
+            if (this.files.length > 0) {
+                validateZipFile(this.files[0]);
+            }
+        });
+
+        // Drag and drop functionality for file uploads
+        function setupDragAndDrop(inputId, dropZoneId) {
+            const input = document.getElementById(inputId);
+            const dropZone = document.getElementById(dropZoneId);
+            
+            if (!input || !dropZone) return;
+            
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, unhighlight, false);
+            });
+            
+            dropZone.addEventListener('drop', handleDrop, false);
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            function highlight(e) {
+                dropZone.classList.add('drag-over');
+            }
+            
+            function unhighlight(e) {
+                dropZone.classList.remove('drag-over');
+            }
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                
+                if (files.length > 0) {
+                    input.files = files;
+                    input.dispatchEvent(new Event('change'));
+                }
+            }
+        }
+
+        // Progress bar for uploads
+        function showUploadProgress(show = true) {
+            let progressBar = document.getElementById('uploadProgress');
+            
+            if (show && !progressBar) {
+                progressBar = document.createElement('div');
+                progressBar.id = 'uploadProgress';
+                progressBar.className = 'progress position-fixed';
+                progressBar.style.cssText = 'top: 0; left: 0; width: 100%; height: 4px; z-index: 9999;';
+                progressBar.innerHTML = '<div class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width: 100%"></div>';
+                document.body.appendChild(progressBar);
+            } else if (!show && progressBar) {
+                progressBar.remove();
+            }
+        }
+
+        // Enhanced fetch with progress
+        function fetchWithProgress(url, options) {
+            showUploadProgress(true);
+            return fetch(url, options)
+                .then(handleFetchError)
+                .finally(() => {
+                    showUploadProgress(false);
+                });
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl+N for new BOM template
+            if (e.ctrlKey && e.key === 'n') {
+                e.preventDefault();
+                openBOMTemplateModal();
+            }
+            
+            // Ctrl+M for new media
+            if (e.ctrlKey && e.key === 'm') {
+                e.preventDefault();
+                openProductMediaModal();
+            }
+            
+            // Ctrl+U for bulk upload
+            if (e.ctrlKey && e.key === 'u') {
+                e.preventDefault();
+                openBulkUploadModal();
+            }
+        });
+
+        // Auto-save form data to localStorage
+        function autoSaveForm(formId) {
+            const form = document.getElementById(formId);
+            if (!form) return;
+            
+            const inputs = form.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                input.addEventListener('input', function() {
+                    const key = `${formId}_${input.name}`;
+                    if (input.type === 'checkbox') {
+                        localStorage.setItem(key, input.checked);
+                    } else {
+                        localStorage.setItem(key, input.value);
+                    }
+                });
+            });
+        }
+
+        function restoreFormData(formId) {
+            const form = document.getElementById(formId);
+            if (!form) return;
+            
+            const inputs = form.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                const key = `${formId}_${input.name}`;
+                const saved = localStorage.getItem(key);
+                if (saved !== null) {
+                    if (input.type === 'checkbox') {
+                        input.checked = saved === 'true';
+                    } else {
+                        input.value = saved;
+                    }
+                }
+            });
+        }
+
+        function clearFormData(formId) {
+            const form = document.getElementById(formId);
+            if (!form) return;
+            
+            const inputs = form.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                const key = `${formId}_${input.name}`;
+                localStorage.removeItem(key);
+            });
+        }
+
+        // Initialize auto-save for forms
+        ['bomTemplateForm', 'productMediaForm', 'assemblyProcessForm'].forEach(formId => {
+            autoSaveForm(formId);
+        });
+
+        // Page visibility API for auto-refresh
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden && window.location.search.includes('product_id=')) {
+                // Refresh data when page becomes visible again
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+            }
+        });
+
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Search functionality for BOM items
+        function filterBOMItems(searchTerm) {
+            const items = document.querySelectorAll('.bom-item');
+            items.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                if (text.includes(searchTerm.toLowerCase())) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
+        // Add search box to BOM items modal
+        const bomItemsList = document.getElementById('bomItemsList');
+        if (bomItemsList) {
+            const searchBox = document.createElement('input');
+            searchBox.type = 'text';
+            searchBox.className = 'form-control mb-3';
+            searchBox.placeholder = 'Search BOM items...';
+            searchBox.addEventListener('input', (e) => filterBOMItems(e.target.value));
+            bomItemsList.parentNode.insertBefore(searchBox, bomItemsList);
+        }
+
+        // Show success messages from Django
+        {% if messages %}
+            {% for message in messages %}
+                showMessage('{{ message|escapejs }}', '{% if message.tags %}{{ message.tags }}{% else %}success{% endif %}');
+            {% endfor %}
+        {% endif %}
+
+        console.log('Product Information Dashboard initialized successfully');
+    </script>
+</body>
+</html>

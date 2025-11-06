@@ -1,0 +1,778 @@
+<!-- templates/bom_slider_fragment_paginated.html - REDUCED FONT SIZE WITH TEXT WRAP -->
+<div class="bom-container-slider">
+    <style>
+        .bom-container-slider {
+            width: 100%;
+            height: 95vw; /* Use viewport width for rotated display */
+            background: #DF2427;
+            color: white;
+            overflow: hidden;
+            position: relative;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .bom-header-slider {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            padding: 8px 25px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            flex-shrink: 0;
+        }
+        
+        .bom-title-slider {
+            font-size: 1.4em; /* Reduced from 1.6em */
+            font-weight: bold;
+            margin: 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .bom-subtitle-slider {
+            font-size: 0.8em; /* Reduced from 0.9em */
+            margin: 2px 0 0 0;
+            opacity: 0.9;
+        }
+        
+        /* Pagination indicator */
+        .pagination-indicator {
+            background: rgba(255, 165, 0, 0.9);
+            color: white;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 0.7em; /* Reduced from 0.75em */
+            font-weight: bold;
+            margin-top: 3px;
+            display: inline-block;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .pagination-indicator.stage-bom {
+            background: rgba(46, 204, 113, 0.9);
+        }
+        
+        .pagination-indicator.split-mode {
+            background: rgba(155, 89, 182, 0.9);
+        }
+        
+        .bom-info-slider {
+            display: flex;
+            justify-content: space-around;
+            padding: 1px 25px;
+            background: black;
+            border-bottom: 2px solid rgba(255,255,255,0.2);
+            flex-shrink: 0;
+        }
+        
+        .bom-info-item {
+            text-align: center;
+        }
+        
+        .bom-info-label {
+            font-size: 0.7em; /* Reduced from 0.75em */
+            opacity: 0.8;
+            margin-bottom: 1px;
+            font-weight: bold;
+        }
+        
+        .bom-info-value {
+            font-size: 1.0em; /* Reduced from 1.1em */
+            font-weight: bold;
+        }
+        
+        /* Pagination controls */
+        .pagination-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 4px 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            flex-shrink: 0;
+            gap: 15px;
+        }
+        
+        .pagination-info {
+            color: white;
+            font-size: 0.75em; /* Reduced from 0.8em */
+            font-weight: bold;
+            background: rgba(255,255,255,0.1);
+            padding: 2px 8px;
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .page-navigation {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .nav-button {
+            background: rgba(52, 152, 219, 0.8);
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 0.65em; /* Reduced from 0.7em */
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .nav-button:hover {
+            background: rgba(52, 152, 219, 1);
+            transform: scale(1.05);
+        }
+        
+        .nav-button:disabled {
+            background: rgba(127, 140, 141, 0.5);
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .page-indicator {
+            color: white;
+            font-size: 0.7em; /* Reduced from 0.75em */
+            font-weight: bold;
+            margin: 0 8px;
+            padding: 2px 5px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+        }
+        
+        .bom-table-container-slider {
+            flex: 1;
+            overflow: hidden;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        
+        .bom-table-slider {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255,255,255,0.98);
+            color: #1a1a1a;
+            flex: 1;
+            display: table;
+            table-layout: fixed;
+            font-size: calc(2.2rem + 1.2vw); /* REDUCED: Base font size smaller */
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+            height: 100%;
+        }
+        
+        .bom-table-slider th {
+            background: #DF2427;
+            color: white;
+            padding: 6px 8px; /* Increased padding for better text wrap */
+            text-align: center;
+            font-weight: bold;
+            font-size: calc(1.8rem + 0.8vw); /* FURTHER REDUCED: Header font size much smaller */
+            border-bottom: 4px solid #444;
+            border-right: 2px solid rgba(255,255,255,0.3);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            white-space: normal; /* ENABLE TEXT WRAP: Allow wrapping in headers */
+            overflow: visible; /* Show wrapped content */
+            text-overflow: clip;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+            height: auto; /* Allow height to adjust for wrapped text */
+            min-height: 40px; /* Reduced minimum height for smaller headers */
+            line-height: 1.2; /* Better line spacing for wrapped text */
+            word-wrap: break-word; /* Break long words */
+        }
+        
+        .bom-table-slider td {
+            padding: 6px 8px; /* Increased padding for better text wrap */
+            border-bottom: 2px solid #ddd;
+            border-right: 2px solid #ddd;
+            vertical-align: middle;
+            text-align: center;
+            white-space: normal; /* ENABLE TEXT WRAP: Allow wrapping in all cells */
+            overflow: visible; /* Show wrapped content */
+            text-overflow: clip;
+            font-size: calc(2.0rem + 1.0vw); /* REDUCED: Cell font size smaller */
+            line-height: 1.3; /* Better line spacing for wrapped text */
+            word-wrap: break-word; /* Break long words */
+            hyphens: auto; /* Enable automatic hyphenation */
+        }
+        
+        .bom-table-slider tbody {
+            display: table-row-group;
+            height: calc(100% - 45px); /* Adjusted for smaller headers */
+        }
+        
+        .bom-table-slider tbody tr {
+            display: table-row;
+            height: calc((95vw - 175px) / 8); /* Adjusted for smaller header height */
+            min-height: 60px; /* Increased minimum height for text wrapping */
+        }
+        
+        .bom-table-slider tbody tr:hover {
+            transform: scale(1.002);
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        /* COLUMN SPECIFIC STYLES */
+        .bom-table-slider.cols-5 th:nth-child(1),
+        .bom-table-slider.cols-5 td:nth-child(1) {
+            width: 8%;
+        }
+        
+        .bom-table-slider.cols-5 th:nth-child(2),
+        .bom-table-slider.cols-5 td:nth-child(2) {
+            width: 39%;
+        }
+        
+        .bom-table-slider.cols-5 th:nth-child(3),
+        .bom-table-slider.cols-5 td:nth-child(3) {
+            width: 29%;
+        }
+        
+        .bom-table-slider.cols-5 th:nth-child(4),
+        .bom-table-slider.cols-5 td:nth-child(4) {
+            width: 12%;
+        }
+        
+        .bom-table-slider.cols-5 th:nth-child(5),
+        .bom-table-slider.cols-5 td:nth-child(5) {
+            width: 16%;
+        }
+        
+        .serial-number-slider {
+            font-weight: bold;
+            color: #1a1a1a;
+            background: #f5f5f5;
+            font-size: calc(2.4rem + 1.2vw) !important; /* REDUCED: Serial number font size */
+            min-width: 60px;
+        }
+        
+        .item-photo-slider {
+            width: calc(120px + 3vw); /* REDUCED: Smaller photos */
+            height: calc(120px + 3vw);
+            max-width: 180px; /* REDUCED: Smaller maximum size */
+            max-height: 180px;
+            object-fit: contain;
+            border-radius: 6px;
+            border: 2px solid #bdc3c7;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+            display: block;
+            margin: 1px 1px;
+        }
+        
+        .item-photo-placeholder-slider {
+            width: calc(120px + 3vw); /* REDUCED: Smaller placeholders */
+            height: calc(120px + 3vw);
+            max-width: 180px; /* REDUCED: Smaller maximum size */
+            max-height: 180px;
+            background: #e0e0e0;
+            border: 2px dashed #999;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #555;
+            font-size: calc(1.6rem + 0.6vw); /* REDUCED: Smaller placeholder text */
+            text-align: center;
+            margin: 1px 1px;
+            font-weight: bold;
+            line-height: 1.2;
+        }
+        
+        .photo-column {
+            text-align: center;
+            min-width: calc(140px + 3vw); /* REDUCED: Narrower column */
+            max-width: calc(200px + 3vw); /* REDUCED: Smaller maximum */
+        }
+        
+        .item-description-slider {
+            font-weight: bold;
+            color: #1a1a1a;
+            margin-bottom: 1px;
+            font-size: calc(2.2rem + 1.0vw); /* REDUCED: Description font size */
+            line-height: 1.3; /* Better line spacing for wrapped text */
+            white-space: normal; /* ENABLE TEXT WRAP */
+            overflow: visible; /* Show wrapped content */
+            text-overflow: clip;
+            text-align: left;
+            padding: 4px 6px; /* Increased padding */
+            word-wrap: break-word; /* Break long words */
+            hyphens: auto; /* Enable automatic hyphenation */
+        }
+        
+        .item-code-slider {
+            font-size: calc(1.1rem + 0.4vw); /* REDUCED: Item code font size */
+            color: #444;
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            text-align: left;
+            padding: 2px 6px; /* Increased padding */
+            background: rgba(240,240,240,0.8);
+            border-radius: 3px;
+            margin-top: 2px;
+            white-space: normal; /* ENABLE TEXT WRAP */
+            word-wrap: break-word; /* Break long words */
+            line-height: 1.2;
+        }
+        
+        .description-column {
+            text-align: left;
+            white-space: normal; /* ENABLE TEXT WRAP */
+            overflow: visible; /* Show wrapped content */
+            min-width: calc(160px + 3vw);
+            max-width: calc(320px + 3vw);
+            padding: 4px 8px; /* Increased padding */
+        }
+        
+        .part-number-slider {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #d32f2f;
+            font-size: calc(2.2rem + 1.0vw) !important; /* REDUCED: Part number font size */
+            white-space: normal !important; /* ENABLE TEXT WRAP */
+            overflow: visible !important; /* Show wrapped content */
+            text-overflow: clip !important;
+            word-break: break-all; /* Break anywhere if needed */
+            line-height: 1.3; /* Better readability for wrapped text */
+            text-align: center;
+            padding: 4px 6px; /* Increased padding */
+            hyphens: auto; /* Enable automatic hyphenation */
+        }
+        
+        .quantity-slider {
+            font-size: calc(2.2rem + 1.0vw) !important; /* REDUCED: Quantity font size */
+            font-weight: bold;
+            color: #1b5e20;
+            white-space: normal; /* ENABLE TEXT WRAP */
+            word-wrap: break-word; /* Break long words */
+            line-height: 1.3;
+        }
+        
+        .no-bom-data-slider {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            text-align: center;
+            color: rgba(255,255,255,0.8);
+            background: white;
+        }
+        
+        .no-bom-icon-slider {
+            font-size: 5em; /* Reduced from 6em */
+            margin-bottom: 25px; /* Reduced from 30px */
+            opacity: 0.6;
+        }
+        
+        .no-bom-data-slider h3 {
+            font-size: 2.0em; /* Reduced from 2.2em */
+            margin-bottom: 18px; /* Reduced from 20px */
+        }
+        
+        .no-bom-data-slider p {
+            font-size: 1.2em; /* Reduced from 1.3em */
+            margin: 8px 0; /* Reduced from 10px */
+        }
+        
+        .bom-watermark {
+            position: absolute;
+            bottom: 3px;
+            right: 8px;
+            font-size: calc(0.5rem + 0.08vw); /* Slightly reduced */
+            opacity: 0.9;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .no-items-message {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            text-align: center;
+            color: rgba(255,255,255,0.8);
+            background: rgba(52, 152, 219, 0.1);
+            border: 2px dashed rgba(52, 152, 219, 0.3);
+            border-radius: 20px;
+            margin: 20px;
+        }
+        
+        .no-items-icon {
+            font-size: 3.5em; /* Reduced from 4em */
+            margin-bottom: 18px; /* Reduced from 20px */
+            opacity: 0.6;
+        }
+        
+        .no-items-message h3 {
+            font-size: 1.6em; /* Reduced from 1.8em */
+            margin-bottom: 12px; /* Reduced from 15px */
+        }
+        
+        .no-items-message p {
+            font-size: 1.0em; /* Reduced from 1.1em */
+            margin: 4px 0; /* Reduced from 5px */
+        }
+        
+        /* Dynamic row sizing with better spacing for text wrapping */
+        .bom-table-container-slider[data-row-count="1"] .bom-table-slider tbody tr { 
+            height: calc((95vw - 175px) / 1);
+            min-height: 80px; /* Increased for text wrapping */
+        }
+        .bom-table-container-slider[data-row-count="2"] .bom-table-slider tbody tr { 
+            height: calc((95vw - 175px) / 2);
+            min-height: 70px;
+        }
+        .bom-table-container-slider[data-row-count="3"] .bom-table-slider tbody tr { 
+            height: calc((95vw - 175px) / 3);
+            min-height: 65px;
+        }
+        .bom-table-container-slider[data-row-count="4"] .bom-table-slider tbody tr { 
+            height: calc((95vw - 175px) / 4);
+            min-height: 60px;
+        }
+        .bom-table-container-slider[data-row-count="5"] .bom-table-slider tbody tr { 
+            height: calc((95vw - 175px) / 5);
+            min-height: 55px;
+        }
+        .bom-table-container-slider[data-row-count="6"] .bom-table-slider tbody tr { 
+            height: calc((95vw - 175px) / 6);
+            min-height: 50px;
+        }
+        .bom-table-container-slider[data-row-count="7"] .bom-table-slider tbody tr { 
+            height: calc((95vw - 175px) / 7);
+            min-height: 50px;
+        }
+        .bom-table-container-slider[data-row-count="8"] .bom-table-slider tbody tr { 
+            height: calc((95vw - 175px) / 8);
+            min-height: 50px;
+        }
+        
+        /* For more rows, ensure minimum readable height with text wrapping */
+        .bom-table-container-slider[data-row-count] .bom-table-slider tbody tr {
+            min-height: 50px;
+            height: max(50px, calc((95vw - 175px) / var(--row-count, 8)));
+        }
+        
+        /* Responsive breakpoints for rotated display with reduced fonts */
+        @media screen and (min-width: 1920px) {
+            .bom-table-slider {
+                font-size: calc(2.8rem + 0.6vw); /* REDUCED */
+            }
+            .bom-table-slider th {
+                font-size: calc(2.2rem + 0.3vw); /* FURTHER REDUCED: Smaller header font */
+                padding: 8px 10px; /* Increased for text wrap */
+            }
+            .bom-table-slider td {
+                font-size: calc(2.6rem + 0.4vw); /* REDUCED */
+                padding: 6px 8px; /* Increased for text wrap */
+            }
+            .item-photo-slider, .item-photo-placeholder-slider {
+                width: calc(140px + 3vw); /* REDUCED */
+                height: calc(140px + 3vw);
+                max-width: 200px; /* REDUCED */
+                max-height: 200px;
+            }
+        }
+        
+        @media screen and (min-width: 2560px) {
+            .bom-title-slider { font-size: 1.8em; } /* Reduced from 2.0em */
+            .bom-subtitle-slider { font-size: 1.0em; } /* Reduced from 1.2em */
+            .bom-info-value { font-size: 1.2em; } /* Reduced from 1.4em */
+            .bom-table-slider {
+                font-size: calc(3.2rem + 0.4vw); /* REDUCED */
+            }
+            .bom-table-slider th {
+                font-size: calc(2.6rem + 0.2vw); /* FURTHER REDUCED: Much smaller header font */
+                padding: 10px 12px; /* Increased for text wrap */
+            }
+            .bom-table-slider td {
+                font-size: calc(3.0rem + 0.3vw); /* REDUCED */
+                padding: 8px 10px; /* Increased for text wrap */
+            }
+            .item-photo-slider, .item-photo-placeholder-slider {
+                width: calc(160px + 3vw); /* REDUCED */
+                height: calc(160px + 3vw);
+                max-width: 240px; /* REDUCED */
+                max-height: 240px;
+            }
+        }
+    </style>
+    
+    {% if bom_data %}
+    <div class="">        
+        {% comment %} {% if pagination.mode == 'split' %}
+            <div class="pagination-indicator split-mode">
+                📋 Display {{ station.display_number }} of 3 - Split Mode - Page {{ pagination.current_page }}/{{ pagination.total_pages }}
+            </div>
+        {% elif pagination.mode == 'single' %}
+            <div class="pagination-indicator">
+                📄 Single Screen - Page {{ pagination.current_page }}/{{ pagination.total_pages }}
+            </div>
+        {% endif %} {% endcomment %}
+    </div>
+    
+    {% comment %} <div class="bom-info-slider">
+        <div class="bom-info-item">
+            <div class="bom-info-label">TYPE</div>
+            <div class="bom-info-value">{{ bom_type }}</div>
+        </div>
+        <div class="bom-info-item">
+            <div class="bom-info-label">QUANTITY</div>
+            <div class="bom-info-value">{{ quantity }}</div>
+        </div>
+        <div class="bom-info-item">
+            <div class="bom-info-label">ON SCREEN</div>
+            <div class="bom-info-value">{{ bom_data|length }}</div>
+        </div>
+        <div class="bom-info-item">
+            <div class="bom-info-label">TOTAL</div>
+            <div class="bom-info-value">{{ pagination.total_items }}</div>
+        </div>
+    </div> {% endcomment %}
+    
+    <!-- Pagination Controls -->
+    {% if pagination.total_pages > 1 %}
+    <div class="pagination-controls">
+        <div class="page-navigation">
+            <button class="nav-button" id="prevPageBtn" 
+                    {% if not pagination.has_previous %}disabled{% endif %}>
+                ◀ Previous
+            </button>
+            
+            <div class="page-indicator">
+                Page {{ pagination.current_page }} of {{ pagination.total_pages }}
+            </div>
+            
+            <button class="nav-button" id="nextPageBtn" 
+                    {% if not pagination.has_next %}disabled{% endif %}>
+                Next ▶
+            </button>
+        </div>
+        
+        <div class="pagination-info">
+            {{ pagination.mode|capfirst }} Mode • {{ pagination.items_per_screen }} per screen
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if bom_data|length > 0 %}
+    <div class="bom-table-container-slider" data-row-count="{{ bom_data|length }}">
+        <table class="bom-table-slider cols-5">
+            <thead>
+                <tr>
+                    <th class="">S.NO</th>
+                    <th class="description-column">DESCRIPTION</th>
+                    <th class="">PART NO.</th>
+                    <th class="">QTY</th>
+                    <th class="photo-column">PHOTO</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item_data in bom_data %}
+                <tr>
+                    <td class="serial-number-slider">{{ item_data.serial_number|stringformat:"02d" }}</td>
+                    <td class="description-column">
+                        <div class="item-description-slider">{{ item_data.item.item_description }}</div>
+                    </td>
+                    <td class="part-number-slider">{{ item_data.item.part_number }}</td>
+                    <td class="quantity-slider">{{ item_data.formatted_quantity }}</td>
+                    <td class="photo-column">
+                        {% if item_data.item.item_photo %}
+                        <img src="{{ item_data.item.item_photo.url }}" 
+                             alt="{{ item_data.item.item_description }}" 
+                             class="item-photo-slider">
+                        {% else %}
+                        <div class="item-photo-placeholder-slider">
+                            NO<br>PHOTO
+                        </div>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="no-items-message">
+        <div class="no-items-icon">📋</div>
+        <h3>No Items on This Page</h3>
+        <p>Page {{ pagination.current_page }} has no items for Display {{ station.display_number }}.</p>
+        <p>Use pagination controls to navigate to other pages.</p>
+    </div>
+    {% endif %}
+    
+    <div class="bom-watermark">
+        🏭 Display {{ station.display_number }} • Page {{ pagination.current_page }}/{{ pagination.total_pages }} • {{ bom_data|length }}/{{ pagination.total_items }} Items
+    </div>
+    
+    {% else %}
+    <div class="no-bom-data-slider">
+        <div class="no-bom-icon-slider">📋</div>
+        <h3>No BOM Data Available</h3>
+        <p>No bill of materials configured for current settings.</p>
+        <p>Check station configuration in admin panel.</p>
+    </div>
+    {% endif %}
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const table = document.querySelector('.bom-table-slider');
+            const container = document.querySelector('.bom-table-container-slider');
+            
+            if (table && container) {
+                // Count columns
+                const headerCells = table.querySelectorAll('thead th');
+                const columnCount = headerCells.length;
+                table.classList.add('cols-' + columnCount);
+                
+                // Count rows
+                const dataRows = table.querySelectorAll('tbody tr');
+                const rowCount = dataRows.length;
+                container.setAttribute('data-row-count', rowCount);
+                
+                // Set CSS custom property for row calculation
+                document.documentElement.style.setProperty('--row-count', rowCount);
+                
+                console.log('Paginated BOM Table initialized:', {
+                    columns: columnCount,
+                    rows: rowCount,
+                    display: {{ station.display_number }},
+                    current_page: {{ pagination.current_page }},
+                    total_pages: {{ pagination.total_pages }},
+                    mode: '{{ pagination.mode }}'
+                });
+            }
+            
+            // Pagination event handlers
+            const prevBtn = document.getElementById('prevPageBtn');
+            const nextBtn = document.getElementById('nextPageBtn');
+            
+            if (prevBtn) {
+                prevBtn.addEventListener('click', function() {
+                    if (!this.disabled) {
+                        navigatePage('previous_page');
+                    }
+                });
+            }
+            
+            if (nextBtn) {
+                nextBtn.addEventListener('click', function() {
+                    if (!this.disabled) {
+                        navigatePage('next_page');
+                    }
+                });
+            }
+            
+            // Keyboard navigation
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'ArrowLeft' && prevBtn && !prevBtn.disabled) {
+                    navigatePage('previous_page');
+                } else if (event.key === 'ArrowRight' && nextBtn && !nextBtn.disabled) {
+                    navigatePage('next_page');
+                }
+            });
+        });
+        
+function navigatePage(action) {
+    const stationId = {{ station.id }};
+    const mode = '{{ pagination.mode }}';
+    const itemsPerScreen = {{ pagination.items_per_screen }};
+    
+    console.log(`Navigating BOM page: ${action}`, {
+        stationId,
+        mode,
+        itemsPerScreen,
+        currentPage: {{ pagination.current_page }},
+        totalPages: {{ pagination.total_pages }}
+    });
+    
+    // Show loading state
+    const prevBtn = document.getElementById('prevPageBtn');
+    const nextBtn = document.getElementById('nextPageBtn');
+    if (prevBtn) prevBtn.disabled = true;
+    if (nextBtn) nextBtn.disabled = true;
+    
+    fetch(`/station/${stationId}/bom-pagination-control/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            action: action,
+            mode: mode,
+            items_per_screen: itemsPerScreen
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Pagination response:', data);
+        
+        if (data.success) {
+            console.log(`Successfully moved to page ${data.current_page}/${data.pagination.total_pages}`);
+            
+            // CRITICAL: Force refresh of the BOM content
+            if (window.mediaSlider && window.mediaSlider.refreshBOMContent) {
+                // Use the new refresh method
+                window.mediaSlider.refreshBOMContent();
+            } else if (window.mediaSlider && window.mediaSlider.refreshCurrentBOMContent) {
+                // Fallback to existing method
+                window.mediaSlider.refreshCurrentBOMContent();
+            } else {
+                // Last resort: full page reload
+                console.log('No refresh method available, reloading page...');
+                window.location.reload();
+            }
+            
+            // Also trigger a media update
+            if (window.mediaSlider && window.mediaSlider.pollForUpdates) {
+                setTimeout(() => {
+                    window.mediaSlider.pollForUpdates();
+                }, 500);
+            }
+            
+        } else {
+            console.error('Pagination error:', data.error);
+            alert(`Pagination error: ${data.error}`);
+        }
+    })
+    .catch(error => {
+        console.error('Network error:', error);
+        alert('Network error during pagination');
+    })
+    .finally(() => {
+        // Re-enable buttons after a delay
+        setTimeout(() => {
+            if (prevBtn) prevBtn.disabled = false;
+            if (nextBtn) nextBtn.disabled = false;
+        }, 1000);
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+    </script>
+</div>

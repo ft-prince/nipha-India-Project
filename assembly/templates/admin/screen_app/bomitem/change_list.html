@@ -1,0 +1,14 @@
+<!-- templates/admin/screen_app/bomitem/change_list.html -->
+{% extends "admin/change_list.html" %}
+{% load i18n admin_urls static %}
+
+{% block object-tools-items %}
+    {{ block.super }}
+    {% if show_excel_upload %}
+        <li>
+            <a href="{% url 'admin:bomitem_upload_excel' %}" class="addlink" style="background-color: #28a745; border-color: #28a745;">
+                📊 Upload from Excel
+            </a>
+        </li>
+    {% endif %}
+{% endblock %}

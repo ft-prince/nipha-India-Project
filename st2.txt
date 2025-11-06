@@ -1,0 +1,2563 @@
+<!-- templates/brg_station_slider_enhanced.html - OPTIMIZED FOR LARGE ROTATED DISPLAYS -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BRG Assembly 40K - Display {{ station.display_number }}</title>
+    <style>
+
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    background-color: #ffffff !important;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* ENHANCED: Better rotation for portrait monitors */
+body {
+    transform: rotate(90deg);
+    transform-origin: center center;
+    width: 100vh;
+    height: 100vw;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    margin-top: -50vw;
+    margin-left: -50vh;
+    background-color: #ffffff !important;
+}
+
+.main-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vw;
+    width: 100vh;
+    position: relative;
+}
+
+/* COMPACT: Reduced header height to maximize content area */
+.assembly-header {
+    background: linear-gradient(135deg, #2c3e50, #3498db);
+    color: white;
+    padding: 18px 30px; /* Increased from 12px 25px */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 80px; /* Increased from 60px */
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    flex-shrink: 0;
+}
+
+.product-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.product-code {
+    font-size: 36px; /* Increased from 28px */
+    font-weight: bold;
+    margin-bottom: 10px; /* Increased from 8px */
+    margin-bottom: 8px;
+        line-height: 1.2;
+
+}
+
+.process-info {
+    font-size: 22px; /* Increased from 18px */
+    opacity: 0.9;
+        line-height: 1.3;
+
+}
+
+.display-badge {
+    background: rgba(255,255,255,0.2);
+    padding: 15px 25px;
+    border-radius: 25px;
+    font-weight: bold;
+    font-size: 24px;
+}
+.display-badge div {
+    font-size: 16px !important; /* Increased from 14px */
+    margin-top: 5px !important; /* Increased from 3px */
+}
+
+.display-1 { border-left: 5px solid #FF6B6B; }
+.display-2 { border-left: 5px solid #4ECDC4; }
+.display-3 { border-left: 5px solid #45B7D1; }
+
+/* ENHANCED: Media slider with better flex management */
+.slider-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    background-color: rgb(255, 255, 255);
+    overflow: hidden;
+    min-height: 0; /* Important for flex children */
+}
+
+.media-element {
+    height: 100%;
+    width: 100%;
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    object-fit: contain;
+    transition: opacity 0.5s ease-in-out;
+}
+
+/* COMPLETELY REWRITTEN: PDF styling for large rotated displays */
+.media-element.pdf {
+    /* MAXIMIZED: Use every pixel available */
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    
+    position: absolute;
+    top: 62%;
+    left: 54%;
+
+    /* ENHANCED: Better PDF rendering */
+    object-fit: cover;
+    border: none;
+    background-color: white;
+    
+    /* CRITICAL: Force PDF to use full space */
+    box-sizing: border-box;
+    
+    /* ENHANCED: High quality rendering */
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    
+    /* REMOVE: Any margins or padding that might interfere */
+    margin: 0 0 0 0 !important;
+    padding: 0 !important;
+    /* Centered zoom */
+    transform: scale(1.088) translate(-50%, -50%);
+    transform-origin: center center;
+
+}
+
+/* ALTERNATIVE: PDF iframe for better control */
+.media-element.pdf-iframe {
+    width: 100% !important;
+    height: 100% !important;
+    position: absolute;
+    top: 0 !important;
+    left: 0 !important;
+    transform: none !important;
+    border: none;
+    background-color: white;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* ENHANCED: PDF controls with better visibility */
+.pdf-controls {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    z-index: 150;
+    display: flex;
+    gap: 15px;
+    opacity: 0.9;
+    transition: opacity 0.3s ease;
+}
+
+.pdf-controls:hover {
+    opacity: 1;
+}
+
+.pdf-control-btn {
+    background: rgba(0,0,0,0.8);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    font-size: 22px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.pdf-control-btn:hover {
+    background: rgba(0,0,0,1);
+    transform: scale(1.1);
+}
+
+/* ENHANCED: Fullscreen PDF mode */
+.media-element.pdf.fullscreen {
+    width: 100vw !important;
+    height: 100vh !important;
+    top: 0 !important;
+    left: 0 !important;
+    transform: none !important;
+    z-index: 1000;
+    background: white;
+    position: fixed !important;
+}
+
+.media-element.bom {
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    overflow: hidden;
+}
+
+.media-element.active {
+    display: block;
+    opacity: 1;
+}
+
+.media-element.fade-out {
+    opacity: 0;
+}
+
+/* ENHANCED: Better clicker controls for large screens */
+.clicker-controls {
+    position: absolute;
+    bottom: 30px;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.clicker-left {
+    left: 30px;
+}
+
+.clicker-right {
+    right: 30px;
+}
+
+.clicker-btn {
+    background: rgba(52, 152, 219, 0.9);
+    border: none;
+    border-radius: 50%;
+    width: 90px;
+    height: 90px;
+    color: white;
+    font-size: 28px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    backdrop-filter: blur(10px);
+}
+
+.clicker-btn:hover {
+    background: rgba(52, 152, 219, 1);
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+}
+
+.clicker-btn:active {
+    transform: scale(0.95);
+    background: rgba(41, 128, 185, 1);
+}
+
+.clicker-hint {
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-size: 14px;
+    text-align: center;
+    margin-top: 8px;
+    white-space: nowrap;
+}
+
+.clicker-controls.hidden {
+    display: none;
+}
+
+/* Enhanced click feedback */
+.click-alert {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(46, 204, 113, 0.95);
+    color: white;
+    padding: 25px 50px;
+    border-radius: 30px;
+    font-size: 22px;
+    font-weight: bold;
+    z-index: 1000;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    backdrop-filter: blur(10px);
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+    transition: all 0.3s ease;
+}
+
+.click-alert.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.click-alert.error {
+    background: rgba(231, 76, 60, 0.95);
+}
+
+/* COMPACT: Reduced status bar height to reclaim space */
+.status-bar {
+    background: rgba(246, 246, 246, 0.9);
+    color: white;
+    padding: 8px 25px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 35px;
+    gap: 40px;
+    flex-shrink: 0;
+    font-size: 14px;
+}
+
+.loop-indicator {
+    background: #f39c12;
+    color: white;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: 16px;
+    font-weight: bold;
+    animation: pulse 2s infinite;
+}
+
+.loop-indicator.hidden {
+    display: none;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+.connection-status {
+    padding: 8px 15px;
+    border-radius: 8px;
+    font-size: 14px;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.connection-status.visible { opacity: 1; }
+.connection-status.connected { background-color: #27ae60; color: white; }
+.connection-status.disconnected { background-color: #e74c3c; color: white; }
+.connection-status.reconnecting { background-color: #f39c12; color: white; }
+
+/* Navigation hints */
+.navigation-hints {
+    background: rgba(52, 152, 219, 0.2);
+    color: white;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: 14px;
+    text-align: center;
+    border: 1px solid rgba(52, 152, 219, 0.3);
+}
+
+.navigation-hints.hidden {
+    display: none;
+}
+
+/* ENHANCED: Media type indicators */
+.media-type-indicator {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 25px;
+    font-size: 16px;
+    font-weight: bold;
+    z-index: 100;
+    backdrop-filter: blur(5px);
+}
+
+.bom-indicator { background: rgba(52, 152, 219, 0.8); }
+.video-indicator { background: rgba(231, 76, 60, 0.8); }
+.doc-indicator { 
+    background: rgba(46, 204, 113, 0.8);
+    font-size: 18px;
+    padding: 15px 25px;
+}
+
+/* Error states */
+.error-message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(231, 76, 60, 0.9);
+    color: white;
+    padding: 25px;
+    border-radius: 15px;
+    text-align: center;
+    font-size: 20px;
+    z-index: 1000;
+}
+
+.error-message.hidden {
+    display: none;
+}
+
+/* BOM indicator in status bar */
+.bom-status {
+    background: rgba(52, 152, 219, 0.8);
+    color: white;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+/* CRITICAL: Responsive scaling for different large monitor sizes */
+@media screen and (min-width: 1920px) {
+    .product-code { font-size: 42px; }
+    .process-info { font-size: 26px; }
+    .display-badge { font-size: 28px; padding: 18px 30px; }
+    .assembly-header { padding: 20px 35px; min-height: 70px; }
+    .status-bar { padding: 10px 30px; font-size: 16px; min-height: 40px; }
+    
+    .media-element.pdf {
+        /* FORCE: Maximum utilization on large screens */
+        width: 100% !important;
+        height: 100% !important;
+    }
+}
+
+@media screen and (min-width: 2560px) {
+    .product-code { 
+        font-size: 50px; /* Increased from 36px */
+        margin-bottom: 15px;
+    }
+    .process-info { font-size: 30px; }
+    .display-badge { font-size: 32x; padding: 18px 30px; }
+    .assembly-header { padding: 25px 40px; min-height: 100px; }
+    .status-bar { padding: 12px 35px; font-size: 18px; min-height: 45px; }
+    
+    .pdf-control-btn { width: 70px; height: 70px; font-size: 24px; }
+    .clicker-btn { width: 100px; height: 100px; font-size: 32px; }
+    
+    .media-type-indicator { font-size: 18px; padding: 15px 25px; }
+    .doc-indicator { font-size: 20px; padding: 18px 30px; }
+}
+
+@media screen and (min-width: 3440px) {
+    .assembly-header { 
+        padding: 30px 45px; 
+        min-height: 130px; /* Increased from 90px */
+    }
+    .product-code { 
+        font-size: 58px; /* Increased from 40px */
+        margin-bottom: 18px;
+    }
+    .process-info { 
+        font-size: 34px; /* Increased from 24px */
+    }
+    .display-badge { 
+        font-size: 36px; /* Increased from 26px */
+        padding: 25px 40px; /* Increased from 20px 35px */
+    }
+
+    .status-bar { padding: 15px 40px; font-size: 20px; min-height: 50px; }
+    
+    .pdf-control-btn { width: 80px; height: 80px; font-size: 28px; }
+    .clicker-btn { width: 110px; height: 110px; font-size: 36px; }
+    
+    .media-type-indicator { font-size: 20px; padding: 18px 30px; }
+    .doc-indicator { font-size: 24px; padding: 20px 35px; }
+}
+
+/* ULTRA-WIDE: 4K and above optimizations */
+@media screen and (min-width: 4096px) {
+    .assembly-header { 
+        padding: 35px 50px; 
+        min-height: 150px; /* Increased from 100px */
+    }
+    .product-code { 
+        font-size: 66px; /* Increased from 44px */
+        margin-bottom: 20px;
+    }
+    .process-info { 
+        font-size: 38px; /* Increased from 26px */
+    }
+    .display-badge { 
+        font-size: 40px; /* Increased from 28px */
+        padding: 28px 45px; /* Increased from 25px 40px */
+    }
+    .status-bar { padding: 18px 45px; font-size: 22px; min-height: 55px; }
+    
+    .pdf-control-btn { width: 90px; height: 90px; font-size: 32px; }
+    .clicker-btn { width: 120px; height: 120px; font-size: 40px; }
+    
+    .media-type-indicator { font-size: 22px; padding: 20px 35px; }
+    .doc-indicator { font-size: 26px; padding: 25px 40px; }
+}
+
+/* PDF LOADING INDICATOR */
+.pdf-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #333;
+    font-size: 24px;
+    z-index: 50;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+}
+
+.pdf-loading::after {
+    content: "...";
+    animation: dots 2s infinite;
+}
+
+@keyframes dots {
+    0%, 20% { content: ""; }
+    40% { content: "."; }
+    60% { content: ".."; }
+    80%, 100% { content: "..."; }
+}
+
+/* ZOOM ENHANCEMENT: Better PDF zoom controls */
+.pdf-zoom-info {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 14px;
+    z-index: 120;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.pdf-zoom-info.visible {
+    opacity: 1;
+}
+
+/* DEBUG: Temporary border to see PDF boundaries (remove in production) */
+.media-element.pdf.debug {
+    border: 3px solid red !important;
+}
+
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- Assembly Header -->
+        <div class="assembly-header display-{{ station.display_number }}">
+            <div class="product-info">
+                <div class="product-code" id="product-code">
+                    {% if current_product %}{{ current_product.code }}{% else %}No Product Selected{% endif %}
+                </div>
+                <div class="process-info" id="process-info">
+                    {% if current_process %}
+                        {{ current_stage.display_name }} - {{ current_process.display_name }}
+                    {% else %}
+                        No Process Selected
+                    {% endif %}
+                </div>
+            </div>
+            <div class="display-badge">
+                Display {{ station.display_number }}
+                <div style="font-size: 14px; margin-top: 3px;">
+                    {% if station.display_number == 1 %}BOMs & Reference
+                    {% elif station.display_number == 2 %}Process Instructions  
+                    {% else %}Instructional Videos{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Media Slider -->
+        <div class="slider-container" id="slider-container">
+            <!-- Left Clicker Controls -->
+<div class="clicker-controls clicker-left {% if not clicker_enabled or station.display_number != 2 %}hidden{% endif %}" id="left-controls">
+    <button class="clicker-btn" id="backward-btn" title="Previous Process">
+        &#8592;
+    </button>
+    <div class="clicker-hint">← Previous</div>
+</div>
+
+            <!-- Right Clicker Controls -->
+<div class="clicker-controls clicker-right {% if not clicker_enabled or station.display_number != 2 %}hidden{% endif %}" id="right-controls">
+    <button class="clicker-btn" id="forward-btn" title="Next Process">
+        &#8594;
+    </button>
+    <div class="clicker-hint">Next →</div>
+</div>
+
+            <div class="error-message hidden" id="error-message">
+                <div>⚠️ Connection Error</div>
+                <div style="font-size: 16px; margin-top: 15px;">
+                    Please check network connection or contact supervisor
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            {% if has_bom_data %}
+            <div class="bom-status" id="bom-status">
+                📋 BOM: {{ bom_item_count }} items
+            </div>
+            {% endif %}
+            
+            <div class="loop-indicator {% if not loop_mode %}hidden{% endif %}" id="loop-indicator">
+                🔄 LOOP MODE - Processes 1A, 1B, 1C
+            </div>
+            <div id="connection-status" class="connection-status">Connecting...</div>
+        </div>
+
+        <!-- Click Feedback Alert -->
+        <div class="click-alert" id="click-alert">
+            Action Completed!
+        </div>
+    </div>
+
+    <script>
+// Enhanced BRG Media Slider with AUTOMATIC LOOP MODE - COMPLETE VERSION
+class BRGMediaSliderWithAutoLoop {
+    constructor(stationId, displayNumber) {
+        this.stationId = stationId;
+        this.displayNumber = displayNumber;
+        this.currentIndex = 0;
+        this.mediaElements = [];
+        this.slideshowTimer = null;
+        this.pollingInterval = null;
+        this.pollingDelay = 1000;
+        this.lastDataHash = null;
+        this.lastBomHash = null;
+        this.pdfFullscreen = false;
+        this.currentPdfZoom = 1.0;
+        
+        // Auto loop properties
+        this.autoLoopMode = false;
+        this.autoLoopTimer = null;
+        this.autoLoopProgressTimer = null;
+        this.loopProcessDurations = {
+            'PROCESS 1A OF 6': 30000, // 30 seconds - configurable
+            'PROCESS 1B OF 6': 30000, // 45 seconds - configurable
+            'PROCESS 1C OF 6': 30000  // 60 seconds - configurable
+        };
+
+            // NEW: Auto BOM pagination properties
+        this.autoBomPaginationTimer = null;
+        this.currentBomTotalPages = 1;
+        this.isBomAutoPaginationActive = false;
+
+        this.currentProcessName = null;
+        this.isInLoopGroup = false;
+                this.paginationMode = 'split'; // or 'single'
+        this.itemsPerScreen = 8;
+        this.currentBomPage = 1;
+
+        // DOM elements
+        this.containerElement = document.getElementById('slider-container');
+        this.statusElement = document.getElementById('connection-status');
+        this.errorElement = document.getElementById('error-message');
+        this.productCodeElement = document.getElementById('product-code');
+        this.processInfoElement = document.getElementById('process-info');
+        this.loopIndicatorElement = document.getElementById('loop-indicator');
+        this.leftControlsElement = document.getElementById('left-controls');
+        this.rightControlsElement = document.getElementById('right-controls');
+        this.clickAlertElement = document.getElementById('click-alert');
+        this.bomStatusElement = document.getElementById('bom-status');
+        
+        this.startPolling();
+        this.setupKeyboardListeners();
+        this.setupClickerListeners();
+        this.logScreenInfo();
+    }
+
+    logScreenInfo() {
+        console.log('Screen Information:', {
+            windowWidth: window.innerWidth,
+            windowHeight: window.innerHeight,
+            screenWidth: screen.width,
+            screenHeight: screen.height,
+            devicePixelRatio: window.devicePixelRatio,
+            orientation: screen.orientation ? screen.orientation.angle : 'unknown'
+        });
+    }
+
+    async startPolling() {
+        await this.pollForUpdates();
+        this.pollingInterval = setInterval(async () => {
+            await this.pollForUpdates();
+        }, this.pollingDelay);
+    }
+
+async pollForUpdates() {
+    try {
+        let mediaEndpoint;
+        
+        // Use pagination-aware endpoints
+        if (this.displayNumber === 1) {
+            mediaEndpoint = `/station/${this.stationId}/media-with-bom-pagination/?mode=${this.paginationMode}&items_per_screen=${this.itemsPerScreen}`;
+        } else {
+            mediaEndpoint = `/station/${this.stationId}/media-with-bom-pagination/?mode=${this.paginationMode}&items_per_screen=${this.itemsPerScreen}`;
+        }
+        
+        const mediaResponse = await fetch(mediaEndpoint);
+        if (!mediaResponse.ok) {
+            throw new Error(`HTTP ${mediaResponse.status}`);
+        }
+        const mediaData = await mediaResponse.json();
+        
+        // NEW: Also fetch current BOM pagination state for sync detection
+        let currentBomPage = 1;
+        let totalBomPages = 1;
+        let bomPaginationHash = '';
+        
+        try {
+            const bomPaginationResponse = await fetch(`/station/${this.stationId}/bom-paginated/`);
+            if (bomPaginationResponse.ok) {
+                const bomPaginationData = await bomPaginationResponse.json();
+                currentBomPage = bomPaginationData.pagination ? bomPaginationData.pagination.current_page : 1;
+                totalBomPages = bomPaginationData.pagination ? bomPaginationData.pagination.total_pages : 1;
+                bomPaginationHash = `${currentBomPage}_${totalBomPages}_${this.paginationMode}_${this.itemsPerScreen}`;
+            }
+        } catch (bomError) {
+            console.warn('Could not fetch BOM pagination state:', bomError);
+        }
+        
+        // Create hash for change detection (including pagination state)
+        const mediaHash = JSON.stringify({
+            media: mediaData.media ? mediaData.media.map(m => ({ 
+                id: m.id, 
+                url: m.url, 
+                type: m.type,
+                is_bom_data: m.is_bom_data,
+                bom_type: m.bom_type,
+                bom_hash: m.bom_hash
+            })) : [],
+            station: mediaData.station_info,
+            bom_pagination: bomPaginationHash // NEW: Include pagination in hash
+        });
+        
+        // Check what changed
+        const mediaChanged = mediaHash !== this.lastDataHash;
+        const bomPaginationChanged = bomPaginationHash !== this.lastBomPaginationHash;
+        
+        if (mediaChanged || bomPaginationChanged) {
+            console.log(`Display ${this.displayNumber} update detected:`, { 
+                mediaChanged, 
+                bomPaginationChanged,
+                currentBomPage,
+                totalBomPages,
+                displayNumber: this.displayNumber
+            });
+            
+            // Handle pagination changes differently from media changes
+            if (bomPaginationChanged && !mediaChanged) {
+                console.log(`Display ${this.displayNumber}: BOM pagination changed externally - syncing to page ${currentBomPage}/${totalBomPages}`);
+                
+                // If currently showing BOM, refresh its content immediately
+                if (this.isCurrentlyShowingBOM()) {
+                    await this.refreshBOMContent();
+                    
+                    // Show sync notification (only if this display didn't initiate the change)
+                    if (!this.isManualPaginationInProgress) {
+                        this.showClickAlert(`Synced: Page ${currentBomPage}/${totalBomPages}`, false);
+                    }
+                }
+                
+                // Update pagination hash
+                this.lastBomPaginationHash = bomPaginationHash;
+            } else {
+                // Handle normal media changes
+                this.checkAutoLoopMode(mediaData);
+                this.updateAssemblyInfo(mediaData, null);
+                this.updateMedia(mediaData, null, false);
+                this.playCurrentMedia();
+                
+                if (this.isCurrentlyShowingBOM()) {
+                    console.log('Detected BOM slide after media update, refreshing content...');
+                    this.refreshCurrentBOMContent();
+                }
+
+                this.hideError();
+                this.updateConnectionStatus('connected', 'Updated');
+                
+                this.lastDataHash = mediaHash;
+                this.lastBomPaginationHash = bomPaginationHash;
+            }
+        }
+        
+    } catch (error) {
+        console.error(`Display ${this.displayNumber} polling error:`, error);
+        this.showError('Connection error. Retrying...');
+        this.updateConnectionStatus('disconnected', 'Connection Lost');
+    }
+}
+
+// UPDATED: Add this to your sendClickerAction method in BRGMediaSliderWithAutoLoop
+
+async sendClickerAction(action, alertMessage) {
+    try {
+        // CRITICAL: Stop auto loop immediately when ANY manual action is taken
+        if (this.autoLoopMode) {
+            console.log('Manual action detected - stopping auto loop immediately');
+            this.stopAutoLoop();
+            
+            // Show override message
+            this.showClickAlert('Manual Override - Auto Loop Stopped', false);
+            
+            // Brief delay to show the override message
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+
+        const response = await fetch(`/station/${this.stationId}/clicker/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ action: action })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            console.log('Clicker action result:', result);
+            
+            // NEW: Handle pagination reset
+            if (result.pagination_reset) {
+                console.log('Pagination was reset due to process change 🙏 ');
+                // Force immediate media update to get fresh BOM data
+                setTimeout(async () => {
+                    console.log('Forcing media refresh after pagination reset... 💀');
+                    await this.pollForUpdates();
+                    await this.playCurrentMedia(); 
+                }, 200);
+            }
+            
+            // Update connection status
+            this.updateConnectionStatus('connected', 
+                `${action.charAt(0).toUpperCase() + action.slice(1)} - Success`);
+            
+            // Handle loop exit messaging
+            if (result.exit_loop) {
+                this.updateLoopIndicator(false, false);
+            } else {
+                // Optional: Show action completed message
+                // this.showClickAlert(alertMessage || 'Action Completed!');
+            }
+            
+            // DO NOT restart auto loop after manual action
+            console.log('Manual action completed - auto loop will NOT restart automatically');
+            
+            // Force immediate update after clicker action (in addition to pagination reset update)
+            if (!result.pagination_reset) {
+                console.log('🙏');
+                setTimeout(async () => {
+                    await this.pollForUpdates();
+                    await this.playCurrentMedia(); 
+                }, 100);
+            }
+            
+        } else {
+            this.showError(result.error || 'Clicker action failed');
+            this.showClickAlert('Action Failed!', true);
+            setTimeout(() => this.hideError(), 4000);
+        }
+    } catch (error) {
+        console.error('Clicker action error:', error);
+        this.showError('Clicker communication error');
+        this.showClickAlert('Connection Error!', true);
+        setTimeout(() => this.hideError(), 4000);
+    }
+}
+
+    // Check and manage auto loop mode
+    checkAutoLoopMode(data) {
+        if (!data.station_info || !data.station_info.current_process) {
+            this.stopAutoLoop();
+            return;
+        }
+        
+        const currentProcess = data.station_info.current_process;
+        const isInLoopGroup = currentProcess.loop_group === 'final_assembly_1abc';
+        const isLoopMode = data.station_info.loop_mode;
+        const processChanged = this.currentProcessName !== currentProcess.name;
+        
+        console.log('Auto loop check:', {
+            currentProcess: currentProcess.name,
+            isInLoopGroup,
+            isLoopMode,
+            processChanged,
+            autoLoopMode: this.autoLoopMode,
+            previousProcess: this.currentProcessName
+        });
+        
+        // Update current process tracking
+        const previousProcessName = this.currentProcessName;
+        this.currentProcessName = currentProcess.name;
+        this.isInLoopGroup = isInLoopGroup;
+        
+        // ENHANCED: Check if we've exited the loop group
+        if (this.autoLoopMode && (!isInLoopGroup || !isLoopMode)) {
+            console.log('Exiting auto loop - no longer in loop group or loop mode disabled');
+            this.stopAutoLoop();
+            
+            if (!isInLoopGroup && previousProcessName) {
+                this.showClickAlert(`Moved to ${currentProcess.display_name} - Loop Exited`, false);
+            }
+        }
+        // Check if we should start auto loop (only if we're entering 1A specifically)
+        else if (isInLoopGroup && isLoopMode && currentProcess.name === 'PROCESS 1A OF 6') {
+            if (!this.autoLoopMode || processChanged) {
+                console.log('Starting auto loop - entered Process 1A');
+                this.startAutoLoop(currentProcess.name);
+            }
+        }
+        // Restart auto loop if we're still in loop group and mode, but process changed
+        else if (isInLoopGroup && isLoopMode && this.autoLoopMode && processChanged) {
+            console.log('Restarting auto loop for new process:', currentProcess.name);
+            this.startAutoLoop(currentProcess.name);
+        }
+        // Stop auto loop if we're not in the right conditions
+        else if (!isInLoopGroup || !isLoopMode) {
+            if (this.autoLoopMode) {
+                console.log('Stopping auto loop - conditions not met');
+                this.stopAutoLoop();
+            }
+        }
+        
+        // Update loop indicator
+        this.updateLoopIndicator(isInLoopGroup, isLoopMode);
+    }
+
+
+        // Update loop indicator with auto loop status
+    updateLoopIndicator(isInLoopGroup, isLoopMode) {
+        if (isInLoopGroup && isLoopMode && this.autoLoopMode) {
+            this.loopIndicatorElement.innerHTML = '🔄 AUTO LOOP ACTIVE - 1A → 1B → 1C';
+            this.loopIndicatorElement.classList.remove('hidden');
+            this.loopIndicatorElement.style.background = '#27ae60'; // Green for auto mode
+            this.loopIndicatorElement.classList.add('auto-mode');
+        } else if (isInLoopGroup && isLoopMode) {
+            this.loopIndicatorElement.innerHTML = '🔄 LOOP MODE (Manual) - 1A, 1B, 1C';
+            this.loopIndicatorElement.classList.remove('hidden');
+            this.loopIndicatorElement.style.background = '#f39c12'; // Orange for manual mode
+            this.loopIndicatorElement.classList.remove('auto-mode');
+        } else {
+            this.loopIndicatorElement.classList.add('hidden');
+            this.loopIndicatorElement.classList.remove('auto-mode');
+        }
+    }
+
+        // Start automatic loop progression
+        startAutoLoop(processName) {
+            console.log(`Starting auto loop mode for process: ${processName}`);
+            
+            this.stopAutoLoop(); // Clear any existing timers
+            this.autoLoopMode = true;
+            
+            // Get duration for current process
+            const duration = this.loopProcessDurations[processName] || 30000; // Default 30 seconds
+            
+            console.log(`Auto loop timer set for ${duration}ms (${duration/1000}s) for ${processName}`);
+            
+            // Set timer for automatic progression
+            this.autoLoopProgressTimer = setTimeout(async () => {
+                await this.autoProgressLoop();
+            }, duration);
+            
+            // Show auto loop status
+            this.showClickAlert(`Auto Loop: ${processName} (${duration/1000}s)`, false);
+        }
+
+        // Stop automatic loop progression - COMPLETED
+        stopAutoLoop() {
+            if (this.autoLoopProgressTimer) {
+                clearTimeout(this.autoLoopProgressTimer);
+                this.autoLoopProgressTimer = null;
+                console.log('Auto loop timer cleared');
+            }
+            
+            if (this.autoLoopTimer) {
+                clearTimeout(this.autoLoopTimer);
+                this.autoLoopTimer = null;
+            }
+            
+            this.autoLoopMode = false;
+            console.log('Auto loop mode stopped');
+        }
+
+        // Automatically progress to next step in loop
+        async autoProgressLoop() {
+            try {
+                console.log('Auto-progressing loop from:', this.currentProcessName);
+                
+                const response = await fetch(`/station/${this.stationId}/auto-loop-progress/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({})
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    console.log('Auto loop progression successful:', result.current_process.name);
+                    
+                    // Show progression alert
+                    this.showClickAlert(`Auto: ${result.current_process.display_name}`, false);
+                    
+                    // Force immediate update to get new media
+                    setTimeout(async () => {
+                        await this.pollForUpdates();
+                    }, 200);
+                    
+                } else {
+                    console.error('Auto loop progression failed:', result.error);
+                    this.stopAutoLoop();
+                    this.showClickAlert('Auto Loop Error', true);
+                }
+            } catch (error) {
+                console.error('Auto loop progression error:', error);
+                this.stopAutoLoop();
+                this.showClickAlert('Auto Loop Connection Error', true);
+            }
+        }
+
+ setupKeyboardListeners() {
+    document.addEventListener('keydown', (event) => {
+        if (event.code === 'ArrowRight') {
+            console.log('Manual forward key pressed');
+            this.sendClickerAction('forward', 'Manual Forward ➤');
+            event.preventDefault();
+        } else if (event.code === 'ArrowLeft') {
+            console.log('Manual backward key pressed');
+            this.sendClickerAction('backward', 'Manual Backward ◀');
+            event.preventDefault();
+        } else if (event.code === 'ArrowDown') {
+            // NEW: Manual BOM pagination with down arrow
+            if (this.isCurrentlyShowingBOM() && !this.isCurrentBOMDurationActive()) {
+                console.log('Manual BOM page navigation (down arrow) - next page');
+                this.navigateBOMPage('next_page');
+                event.preventDefault();
+            } else if (this.isCurrentlyShowingBOM() && this.isCurrentBOMDurationActive()) {
+                console.log('Down arrow pressed but BOM auto-pagination is active - ignoring manual input');
+                this.showClickAlert('Auto Pagination Active - Manual Control Disabled', true);
+                event.preventDefault();
+            } else {
+                console.log('Down arrow pressed but not on BOM slide - no action');
+            }
+        } else if (event.code === 'ArrowUp') {
+            // BONUS: Add up arrow for previous BOM page
+            if (this.isCurrentlyShowingBOM() && !this.isCurrentBOMDurationActive()) {
+                console.log('Manual BOM page navigation (up arrow) - previous page');
+                this.navigateBOMPage('previous_page');
+                event.preventDefault();
+            } else if (this.isCurrentlyShowingBOM() && this.isCurrentBOMDurationActive()) {
+                console.log('Up arrow pressed but BOM auto-pagination is active - ignoring manual input');
+                this.showClickAlert('Auto Pagination Active - Manual Control Disabled', true);
+                event.preventDefault();
+            } else {
+                console.log('Up arrow pressed but not on BOM slide - no action');
+            }
+        } else if (event.code === 'Space') {
+            console.log('Space pressed - toggling loop mode');
+            this.sendClickerAction('toggle_loop', 'Loop Mode Toggled');
+            event.preventDefault();
+        } else if (event.code === 'Escape') {
+            if (this.autoLoopMode) {
+                console.log('ESC pressed - stopping auto loop');
+                this.stopAutoLoop();
+                this.showClickAlert('Auto Loop Stopped (Manual)', false);
+            } else if (this.pdfFullscreen) {
+                this.togglePDFFullscreen();
+            }
+            event.preventDefault();
+        }
+        // Keep existing pagination controls (Page Down/Up with Ctrl)
+        else if (event.code === 'PageDown' || (event.code === 'ArrowDown' && event.ctrlKey)) {
+            console.log('Page Down pressed - next BOM page');
+            this.navigateBOMPage('next_page');
+            event.preventDefault();
+        } else if (event.code === 'PageUp' || (event.code === 'ArrowUp' && event.ctrlKey)) {
+            console.log('Page Up pressed - previous BOM page');
+            this.navigateBOMPage('previous_page');
+            event.preventDefault();
+        } else if (event.code === 'KeyM' && event.ctrlKey) {
+            console.log('Ctrl+M pressed - toggle pagination mode');
+            this.togglePaginationMode();
+            event.preventDefault();
+        }
+    });
+}
+
+
+// NEW: Helper method to check if current BOM has duration active
+isCurrentBOMDurationActive() {
+    if (!this.isCurrentlyShowingBOM()) return false;
+    
+    const currentElement = this.mediaElements[this.currentIndex];
+    if (!currentElement) return false;
+    
+    // Get the current value from dataset (which should be updated by playCurrentMedia)
+    const isDurationActive = currentElement.dataset.isDurationActive === 'true';
+    
+    console.log('Checking current BOM duration status:', {
+        is_duration_active: isDurationActive,
+        dataset_value: currentElement.dataset.isDurationActive,
+        is_auto_pagination_active: this.isBomAutoPaginationActive
+    });
+    
+    return isDurationActive;
+}
+
+async navigateBOMPage(action) {
+    try {
+        // Stop auto pagination when user takes manual control
+        this.stopAutoBomPagination();
+        
+        const response = await fetch(`/station/${this.stationId}/bom-pagination-control/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': this.getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                action: action,
+                mode: this.paginationMode,
+                items_per_screen: this.itemsPerScreen
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            console.log('Manual BOM pagination result:', result);
+            
+            // ENHANCED: Show different messages for different navigation types
+            let message = `Page ${result.current_page}/${result.pagination.total_pages}`;
+            if (action === 'next_page') {
+                message = `Next: ${message}`;
+            } else if (action === 'previous_page') {
+                message = `Prev: ${message}`;
+            } else {
+                message = `Manual: ${message}`;
+            }
+            
+            this.showClickAlert(message, false);
+            
+            // Refresh BOM content immediately
+            await this.refreshBOMContent();
+            
+            // Don't restart auto pagination after manual action
+            console.log('Manual BOM pagination - auto pagination will not restart');
+            
+        } else {
+            console.error('BOM pagination error:', result.error);
+            this.showClickAlert('Pagination Error', true);
+        }
+    } catch (error) {
+        console.error('BOM pagination error:', error);
+        this.showClickAlert('Pagination Connection Error', true);
+    }
+}
+
+
+    // NEW: Toggle pagination mode
+    togglePaginationMode() {
+        this.paginationMode = this.paginationMode === 'split' ? 'single' : 'split';
+        this.showClickAlert(`Pagination Mode: ${this.paginationMode.toUpperCase()}`, false);
+        
+        // Force update with new mode
+        setTimeout(async () => {
+            await this.pollForUpdates();
+        }, 200);
+    }
+
+        setupClickerListeners() {
+            document.getElementById('forward-btn').addEventListener('click', () => {
+                this.sendClickerAction('forward', 'Manual Forward ➤');
+            });
+
+            document.getElementById('backward-btn').addEventListener('click', () => {
+                this.sendClickerAction('backward', 'Manual Backward ◀');
+            });
+
+            // Add auto loop toggle button if it exists
+            const autoLoopBtn = document.getElementById('auto-loop-btn');
+            if (autoLoopBtn) {
+                autoLoopBtn.addEventListener('click', () => {
+                    this.toggleAutoLoopMode();
+                });
+            }
+        }
+
+        // Toggle auto loop mode manually
+        async toggleAutoLoopMode() {
+            if (!this.isInLoopGroup) {
+                this.showClickAlert('Auto Loop only available in processes 1A, 1B, 1C', true);
+                return;
+            }
+
+            if (this.autoLoopMode) {
+                this.stopAutoLoop();
+                this.showClickAlert('Auto Loop Disabled', false);
+            } else {
+                // Start auto loop for current process
+                if (this.currentProcessName) {
+                    this.startAutoLoop(this.currentProcessName);
+                }
+            }
+        }
+
+        togglePDFFullscreen() {
+            const currentElement = this.mediaElements[this.currentIndex];
+            if (!currentElement || !currentElement.classList.contains('pdf')) {
+                this.showClickAlert('Not a PDF document', true);
+                return;
+            }
+
+            this.pdfFullscreen = !this.pdfFullscreen;
+            
+            if (this.pdfFullscreen) {
+                currentElement.classList.add('fullscreen');
+                this.showClickAlert('PDF Fullscreen Mode (ESC to exit)');
+            } else {
+                currentElement.classList.remove('fullscreen');
+                this.showClickAlert('PDF Normal Mode');
+            }
+        }
+
+        showClickAlert(message, isError = false) {
+            this.clickAlertElement.textContent = message;
+            this.clickAlertElement.className = isError ? 'click-alert error show' : 'click-alert show';
+            
+            setTimeout(() => {
+                this.clickAlertElement.classList.remove('show');
+            }, 3000);
+        }
+
+        updateConnectionStatus(status, message) {
+            this.statusElement.className = `connection-status ${status} visible`;
+            this.statusElement.textContent = message;
+            
+            if (status === 'connected') {
+                setTimeout(() => {
+                    this.statusElement.classList.remove('visible');
+                }, 2000);
+            }
+        }
+
+        updateAssemblyInfo(data, bomData) {
+            if (data.station_info) {
+                const station = data.station_info;
+                
+                if (station.current_product) {
+                    this.productCodeElement.textContent = station.current_product.code;
+                }
+                
+                if (station.current_stage && station.current_process) {
+                    this.processInfoElement.textContent = 
+                        `${station.current_stage.name} - ${station.current_process.display_name}`;
+                }
+                
+                if (station.clicker_enabled && this.displayNumber === 2) {
+                    this.leftControlsElement.classList.remove('hidden');
+                    this.rightControlsElement.classList.remove('hidden');
+                } else {
+                    this.leftControlsElement.classList.add('hidden');
+                    this.rightControlsElement.classList.add('hidden');
+                }
+                
+                // Update BOM status for Display 1
+                if (bomData && bomData.bom_data && this.bomStatusElement) {
+                    const bomType = bomData.bom_template ? bomData.bom_template.bom_type : 'Unknown';
+                    this.bomStatusElement.textContent = `📋 BOM: ${bomData.bom_data.length} items (${bomType})`;
+                    this.bomStatusElement.classList.remove('hidden');
+                } else if (this.bomStatusElement) {
+                    this.bomStatusElement.classList.add('hidden');
+                }
+            }
+        }
+
+ updateMedia(data, bomData, forceUpdate = false) {
+    let allMedia = [];
+    
+    console.log('updateMedia called (paginated):', {
+        displayNumber: this.displayNumber,
+        hasMediaData: !!data.media,
+        mediaCount: data.media ? data.media.length : 0,
+        paginationMode: this.paginationMode,
+        debugInfo: data.debug_info
+    });
+    
+    // CRITICAL: Only process BOM media if it actually has items
+    const bomMediaItems = data.media ? data.media.filter(m => 
+        m.type === 'bom' && 
+        m.is_bom_data && 
+        m.bom_items > 0  // ADDED: Only include BOM if it has items
+    ) : [];
+    
+    console.log('Paginated BOM media items found:', bomMediaItems.length);
+    
+    if (bomMediaItems.length > 0) {
+        bomMediaItems.forEach(bomMedia => {
+
+                        console.log('=== BACKEND DATA DEBUG ===');
+            console.log('Raw bomMedia:', bomMedia);
+            console.log('bomMedia.is_duration_active:', bomMedia.is_duration_active);
+            console.log('Type of is_duration_active:', typeof bomMedia.is_duration_active);
+            console.log('bomMedia.duration:', bomMedia.duration);
+            console.log('==========================');
+
+            console.log('Adding paginated BOM from media response:', {
+                id: bomMedia.id,
+                type: bomMedia.type,
+                is_bom_data: bomMedia.is_bom_data,
+                bom_type: bomMedia.bom_type,
+                is_split: bomMedia.is_split,
+                display_number: this.displayNumber,
+                bom_items: bomMedia.bom_items,
+                pagination: bomMedia.pagination,
+                is_duration_active: bomMedia.is_duration_active
+                
+            });
+            
+            allMedia.push({
+                id: bomMedia.id,
+                url: bomMedia.url,
+                type: 'bom',
+                duration: bomMedia.duration || 30,
+                is_duration_active: bomMedia.is_duration_active,
+                media_type: bomMedia.media_type || 'Paginated BOM',
+                is_bom_data: true,
+                bom_items: bomMedia.bom_items || 0,
+                bom_type: bomMedia.bom_type,
+                display_info: bomMedia.display_info,
+                is_split: bomMedia.is_split,
+                bom_data: bomMedia.bom_data,
+                pagination: bomMedia.pagination,
+                bom_hash: bomMedia.bom_hash
+            });
+        });
+    }
+    
+    // Add regular media (videos, documents - ALWAYS include these)
+    if (data.media && data.media.length > 0) {
+        const nonBomMedia = data.media.filter(m => 
+            !(m.type === 'bom' && m.is_bom_data) && 
+            m.media_type !== 'Bill of Material'
+        );
+        
+        console.log('Adding non-BOM media:', {
+            totalMedia: data.media.length,
+            nonBomMedia: nonBomMedia.length,
+            mediaTypes: nonBomMedia.map(m => m.media_type)
+        });
+                // Also add is_duration_active to regular media
+        const processedNonBomMedia = nonBomMedia.map(media => ({
+            ...media,
+            is_duration_active: media.is_duration_active || false  // ✅ ADD THIS LINE
+        }));
+        
+        allMedia = allMedia.concat(nonBomMedia);
+    }
+    
+    console.log('Final paginated media array:', {
+        totalItems: allMedia.length,
+        bomItems: allMedia.filter(m => m.is_bom_data).length,
+        regularMedia: allMedia.filter(m => !m.is_bom_data).length,
+        mediaTypes: allMedia.map(m => m.media_type)
+    });
+    
+    // CRITICAL: If no media at all, show error
+    if (allMedia.length === 0) {
+        console.warn('No media available for display', this.displayNumber);
+        this.showError(`No media available for Display ${this.displayNumber}`);
+        return;
+    }
+
+    const currentUrls = this.mediaElements.map(el => el.dataset.url);
+    const newUrls = allMedia.map(m => m.url);
+    
+    const shouldUpdate = forceUpdate || JSON.stringify(currentUrls) !== JSON.stringify(newUrls);
+
+    if (shouldUpdate) {
+        console.log('Updating paginated media elements for display', this.displayNumber, '...');
+        const wasPlayingBom = this.isCurrentlyShowingBOM();
+        
+        this.clearCurrentMedia();
+        this.createNewMediaElements(allMedia);
+        
+        if (wasPlayingBom && this.hasBOMElement()) {
+            this.currentIndex = 0;
+        }
+        
+        this.playCurrentMedia();
+    } else {
+        console.log('No paginated media update needed for display', this.displayNumber);
+    }
+}
+
+
+        isCurrentlyShowingBOM() {
+            if (this.mediaElements.length === 0 || this.currentIndex >= this.mediaElements.length) return false;
+            const currentElement = this.mediaElements[this.currentIndex];
+            return currentElement && (currentElement.dataset.mediaType === 'Database BOM' || currentElement.classList.contains('bom'));
+        }
+
+        hasBOMElement() {
+            return this.mediaElements.some(el => el.dataset.mediaType === 'Database BOM' || el.classList.contains('bom'));
+        }
+
+        clearCurrentMedia() {
+            if (this.slideshowTimer) {
+                clearTimeout(this.slideshowTimer);
+            }
+            this.stopCurrentMedia();
+            
+            const mediaChildren = Array.from(this.containerElement.children).filter(
+                child => !child.classList.contains('clicker-controls') && 
+                        !child.classList.contains('error-message')
+            );
+            mediaChildren.forEach(child => child.remove());
+            this.mediaElements = [];
+            this.currentIndex = 0;
+            this.pdfFullscreen = false;
+        }
+
+        createNewMediaElements(mediaData) {
+            mediaData.forEach((media, index) => {
+                const mediaElement = this.createMediaElement(media, index);
+                if (mediaElement) {
+                    this.containerElement.appendChild(mediaElement);
+                    this.mediaElements.push(mediaElement);
+                }
+            });
+        }
+
+        createMediaElement(media, index) {
+            let element;
+            let indicator;
+
+            if (media.is_bom_data || media.type === 'bom') {
+                console.log('ssssssssss',media)
+                // Create BOM element (both database and split BOM)
+                element = document.createElement('div');
+                element.className = 'media-element bom';
+                element.dataset.url = media.url;
+                element.dataset.isDurationActive = media.is_duration_active  || false; // ADD THIS LINE
+
+                element.dataset.duration = media.duration * 1000;
+                element.dataset.bomHash = media.bom_hash || '';
+                
+
+
+
+                // Determine BOM type for display
+                let bomTypeDisplay = 'BOM';
+                if (media.is_split) {
+                    bomTypeDisplay = 'Split BOM';
+                    element.dataset.mediaType = 'Split BOM';
+                } else if (media.id === 'database_bom') {
+                    bomTypeDisplay = 'Real-time BOM';
+                    element.dataset.mediaType = 'Database BOM';
+                } else {
+                    bomTypeDisplay = media.bom_type || 'BOM';
+                    element.dataset.mediaType = media.media_type || 'BOM';
+                }
+                
+                console.log(`Creating BOM element for display ${this.displayNumber}:`, {
+                    bomType: bomTypeDisplay,
+                    mediaType: element.dataset.mediaType,
+                    url: media.url,
+                    is_split: media.is_split,
+                    bom_items: media.bom_items
+                });
+                
+                // Load BOM content
+                if (media.is_split && media.bom_data) {
+                    // For split BOM, use the provided BOM data directly
+                    console.log('byeeeeeeeeeeeeeeeeeeeee')
+                    this.loadSplitBOMContent(element, media);
+                } else {
+                    console.log('heyyyyy')
+                    // For database BOM, fetch from render endpoint
+                    this.loadBOMContent(element, media);
+                }
+                
+                indicator = document.createElement('div');
+                indicator.className = 'media-type-indicator bom-indicator';
+                indicator.textContent = `📋 ${bomTypeDisplay}`;
+                
+            } else {
+                const type = media.type.toLowerCase();
+                
+                if (['mp4', 'mov'].includes(type)) {
+                    element = document.createElement('video');
+                    element.className = 'media-element';
+                    element.controls = false;
+                    element.loop = false;
+                    element.muted = true;
+                    element.playsInline = true;
+                    
+                    element.preload = 'metadata'; // ADD THIS
+                    element.crossOrigin = 'anonymous'; // ADD THIS
+                    
+                    // SET SRC AFTER ADDING TO DOM
+                    element.addEventListener('loadedmetadata', () => {
+                        console.log('Video metadata loaded:', media.url);
+                    });
+                    element.addEventListener('canplaythrough', () => {
+                        console.log('Video can play through:', media.url);
+                    });
+                    
+                    element.addEventListener('ended', () => this.switchMedia());
+                    element.addEventListener('error', (e) => this.handleMediaError(e));
+                    element.src = media.url;
+                    
+                    indicator = document.createElement('div');
+                    indicator.className = 'media-type-indicator video-indicator';
+                    indicator.textContent = '🎥 Video';
+                    
+                } else if (type === 'pdf') {
+                    element = this.createOptimizedPDFElement(media);
+                    
+            
+                } else {
+                    console.warn(`Unsupported media type: ${type}`);
+                    return null;
+                }
+            }
+
+            element.dataset.duration = media.duration * 1000;
+            element.dataset.url = media.url;
+            element.dataset.mediaType = element.dataset.mediaType || media.media_type;
+            element.className += index === 0 ? ' active' : '';
+            
+            if (indicator) {
+                element.appendChild(indicator);
+            }
+            
+            return element;
+        }
+preloadNextVideo() {
+    if (this.mediaElements.length <= 1) return;
+    
+    const nextIndex = (this.currentIndex + 1) % this.mediaElements.length;
+    const nextElement = this.mediaElements[nextIndex];
+    
+    if (nextElement && nextElement.tagName === 'VIDEO' && nextElement.readyState < 3) {
+        console.log('Preloading next video:', nextElement.src);
+        nextElement.load(); // Force loading
+    }
+}
+async loadSplitBOMContent(element, media, forceResetToPage1 = false) {
+    try {
+        console.log(`Loading paginated BOM content for display ${this.displayNumber}:`, {
+            bomType: media.bom_type,
+            bomItemsCount: media.bom_items,
+            url: media.url,
+            pagination: media.pagination,
+            isBomAutoPaginationActive: this.isBomAutoPaginationActive,
+            forceResetToPage1: forceResetToPage1
+        });
+        
+        // ADDED: Check if BOM has items before loading
+        if (!media.bom_items || media.bom_items === 0) {
+            console.log(`No BOM items for display ${this.displayNumber}, not loading BOM content`);
+            element.innerHTML = `
+                <div class="no-bom-data-slider">
+                    <div class="no-bom-icon-slider">📋</div>
+                    <h3>No BOM Items for Display ${this.displayNumber}</h3>
+                    <p>This display has no BOM items assigned.</p>
+                    <p>Check other displays for BOM content.</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Get current pagination state from the pagination API
+        try {
+            console.log("Getting current pagination state from backend...");
+
+            const paginationResponse = await fetch(`/station/${this.stationId}/bom-paginated/`);
+            let currentPage = 1;
+            let totalPages = 1;
+            
+            if (paginationResponse.ok) {
+                const paginationData = await paginationResponse.json();
+                currentPage = paginationData.pagination ? paginationData.pagination.current_page : 1;
+                totalPages = paginationData.pagination ? paginationData.pagination.total_pages : 1;
+                console.log(`Display ${this.displayNumber}: Current BOM page is ${currentPage}/${totalPages}`);
+            } else {
+                console.log(`Display ${this.displayNumber}: Could not get pagination state, using page 1`);
+            }
+            
+            // FIXED: Only reset to page 1 in specific circumstances
+            if (forceResetToPage1 && currentPage > 1) {
+                console.log(`Display ${this.displayNumber}: Force reset requested - resetting to page 1`);
+                
+                try {
+                    const resetResponse = await fetch(`/station/${this.stationId}/bom-pagination-control/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': this.getCookie('csrftoken')
+                        },
+                        body: JSON.stringify({
+                            action: 'set_page',
+                            page: 1,
+                            mode: this.paginationMode,
+                            items_per_screen: this.itemsPerScreen
+                        })
+                    });
+                    
+                    if (resetResponse.ok) {
+                        const resetResult = await resetResponse.json();
+                        if (resetResult.success) {
+                            currentPage = 1;
+                            console.log(`Display ${this.displayNumber}: Successfully reset to page 1`);
+                        }
+                    }
+                } catch (resetError) {
+                    console.warn(`Display ${this.displayNumber}: Could not reset pagination to page 1:`, resetError);
+                }
+            } else {
+                console.log(`Display ${this.displayNumber}: Keeping current page ${currentPage} (no reset needed)`);
+            }
+            
+            // Use the render endpoint with current pagination state
+            const timestamp = new Date().getTime();
+            const paginationParams = new URLSearchParams({
+                mode: this.paginationMode,
+                items_per_screen: this.itemsPerScreen,
+                page: currentPage,
+                t: timestamp
+            });
+            
+            console.log(`Loading BOM content with params:`, {
+                mode: this.paginationMode,
+                items_per_screen: this.itemsPerScreen,
+                page: currentPage,
+                url: `${media.url}?${paginationParams}`,
+                isBomAutoPaginationActive: this.isBomAutoPaginationActive
+            });
+            
+            const response = await fetch(`${media.url}?${paginationParams}`);
+            
+            if (response.ok) {
+                const bomHTML = await response.text();
+                element.innerHTML = bomHTML;
+                console.log(`Paginated BOM content loaded for display ${this.displayNumber} - Page ${currentPage}/${totalPages}`);
+                
+                // Update indicator with current pagination info
+                const indicator = element.querySelector('.media-type-indicator');
+                if (indicator) {
+                    const statusText = this.isBomAutoPaginationActive ? 'Auto Paging' : 'Manual';
+                    indicator.textContent = `📋 ${media.bom_type || 'BOM'} (Page ${currentPage}/${totalPages} - ${statusText})`;
+                }
+            } else {
+                console.error(`Failed to load paginated BOM: ${response.status}`);
+                element.innerHTML = `
+                    <div class="bom-error" style="color: white; text-align: center; padding: 50px; font-size: 20px;">
+                        <div>Failed to load Paginated BOM data</div>
+                        <div style="font-size: 16px; margin-top: 10px;">Status: ${response.status}</div>
+                        <div style="font-size: 14px; margin-top: 10px;">URL: ${media.url}?${paginationParams}</div>
+                    </div>
+                `;
+            }
+            
+        } catch (paginationError) {
+            console.error(`Error getting pagination state for display ${this.displayNumber}:`, paginationError);
+            
+            // Fallback: Load page 1
+            const timestamp = new Date().getTime();
+            const paginationParams = new URLSearchParams({
+                mode: this.paginationMode,
+                items_per_screen: this.itemsPerScreen,
+                page: 1,
+                t: timestamp
+            });
+            
+            const response = await fetch(`${media.url}?${paginationParams}`);
+            
+            if (response.ok) {
+                const bomHTML = await response.text();
+                element.innerHTML = bomHTML;
+                console.log(`Paginated BOM content loaded for display ${this.displayNumber} (fallback to page 1)`);
+            } else {
+                element.innerHTML = `
+                    <div class="bom-error" style="color: white; text-align: center; padding: 50px; font-size: 20px;">
+                        <div>Error loading Paginated BOM data</div>
+                        <div style="font-size: 16px; margin-top: 10px;">${paginationError.message}</div>
+                    </div>
+                `;
+            }
+        }
+        
+    } catch (error) {
+        console.error(`Error loading paginated BOM content for display ${this.displayNumber}:`, error);
+        element.innerHTML = `
+            <div class="bom-error" style="color: white; text-align: center; padding: 50px; font-size: 20px;">
+                <div>Error loading Paginated BOM data</div>
+                <div style="font-size: 16px; margin-top: 10px;">${error.message}</div>
+            </div>
+        `;
+    }
+}
+
+
+
+// ADDED: Method to refresh BOM content when pagination changes
+async refreshBOMContent() {
+    const bomElements = this.mediaElements.filter(el => 
+        el.classList.contains('bom') || el.dataset.mediaType === 'Paginated BOM'
+    );
+    
+    for (const bomElement of bomElements) {
+        const mediaUrl = bomElement.dataset.url;
+        if (mediaUrl) {
+            console.log(`Refreshing BOM content for display ${this.displayNumber}`);
+            
+            // Create a temporary media object for loadSplitBOMContent
+            const tempMedia = {
+                url: mediaUrl,
+                bom_type: bomElement.dataset.mediaType || 'BOM',
+                bom_items: 1, // Just to pass the check
+                pagination: { current_page: 1, total_pages: 1 }
+            };
+            
+            await this.loadSplitBOMContent(bomElement, tempMedia);
+        }
+    }
+}
+
+
+    // NEW: Helper method for CSRF token
+    getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+
+        createOptimizedPDFElement(media) {
+            // Create container for PDF
+            const container = document.createElement('div');
+            container.className = 'media-element pdf';
+            
+            // Create iframe for better PDF control
+            const iframe = document.createElement('iframe');
+            
+            // PDF URL with maximum zoom and fit parameters
+            const pdfUrl = media.url + '#toolbar=0&navpanes=0&scrollbar=0&view=FitH&zoom=page-width&page-mode=none';
+            iframe.src = pdfUrl;
+            iframe.className = 'pdf-iframe';
+            iframe.frameBorder = '0';
+            iframe.allowFullscreen = true;
+            
+            // Force iframe to use full container space
+            iframe.style.cssText = `
+                width: 100% !important;
+                height: 100% !important;
+                border: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                position: absolute !important;
+                top: 0 !important;
+                left: 0 !important;
+                background: white !important;
+            `;
+            
+            // Loading indicator
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'pdf-loading';
+            loadingDiv.textContent = 'Loading PDF Document';
+            
+            // PDF controls
+            const controlsDiv = this.createPDFControls();
+            
+            // Zoom info indicator
+            const zoomInfo = document.createElement('div');
+            zoomInfo.className = 'pdf-zoom-info';
+            zoomInfo.style.display = 'none';
+            
+            // Better load handling
+            iframe.addEventListener('load', () => {
+                console.log('PDF loaded successfully:', media.url);
+                if (loadingDiv && loadingDiv.parentNode) {
+                    loadingDiv.remove();
+                }
+                
+                // Show zoom info briefly
+                zoomInfo.classList.add('visible');
+                setTimeout(() => {
+                    zoomInfo.classList.remove('visible');
+                }, 4000);
+                
+                // Try to maximize PDF zoom programmatically
+                this.optimizePDFZoom(iframe);
+            });
+            
+            iframe.addEventListener('error', (e) => {
+                console.error('PDF load error:', e);
+                this.handlePDFError(container, media);
+            });
+            
+            // Assemble the PDF container
+            container.appendChild(iframe);
+            container.appendChild(loadingDiv);
+            container.appendChild(controlsDiv);
+            container.appendChild(zoomInfo);
+            
+            return container;
+        }
+
+        optimizePDFZoom(iframe) {
+            try {
+                // Attempt to access iframe content and maximize zoom
+                setTimeout(() => {
+                    const containerWidth = this.containerElement.offsetWidth;
+                    const containerHeight = this.containerElement.offsetHeight;
+                    
+                    console.log('PDF container dimensions:', {
+                        width: containerWidth,
+                        height: containerHeight,
+                        screenRatio: containerWidth / containerHeight
+                    });
+                    
+                    // Send message to iframe to maximize zoom if possible
+                    if (iframe.contentWindow) {
+                        iframe.contentWindow.postMessage({
+                            action: 'maximizeZoom',
+                            containerWidth: containerWidth,
+                            containerHeight: containerHeight
+                        }, '*');
+                    }
+                }, 1000);
+            } catch (error) {
+                console.log('Cannot access PDF iframe content (cross-origin):', error);
+            }
+        }
+
+        createPDFControls() {
+            const controlsDiv = document.createElement('div');
+            controlsDiv.className = 'pdf-controls';
+            controlsDiv.style.display = 'none'; // Hide PDF controls
+            
+            return controlsDiv;
+        }
+
+        refreshCurrentPDF() {
+            const currentElement = this.mediaElements[this.currentIndex];
+            if (currentElement && currentElement.classList.contains('pdf')) {
+                const iframe = currentElement.querySelector('iframe');
+                if (iframe) {
+                    const originalSrc = iframe.src;
+                    iframe.src = '';
+                    setTimeout(() => {
+                        iframe.src = originalSrc + '&refresh=' + Date.now();
+                        this.showClickAlert('PDF Refreshed');
+                    }, 100);
+                }
+            }
+        }
+
+        handlePDFError(pdfElement, media) {
+            console.error('PDF failed to load:', media.url);
+            
+            // Remove loading indicator
+            const loadingDiv = pdfElement.querySelector('.pdf-loading');
+            if (loadingDiv) {
+                loadingDiv.remove();
+            }
+            
+            // Create enhanced error message
+            const errorDiv = document.createElement('div');
+            errorDiv.style.cssText = `
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                color: white;
+                background: rgba(231, 76, 60, 0.95);
+                padding: 30px;
+                border-radius: 15px;
+                text-align: center;
+                font-size: 20px;
+                z-index: 100;
+                box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+                max-width: 80%;
+            `;
+            errorDiv.innerHTML = `
+                <div style="font-size: 24px; margin-bottom: 15px;">📄 PDF Load Error</div>
+                <div style="font-size: 16px; margin-bottom: 15px;">
+                    Unable to display: ${media.url.split('/').pop()}
+                </div>
+                <div style="font-size: 14px; opacity: 0.9;">
+                    Check PDF file format and network connection
+                </div>
+            `;
+            
+            pdfElement.appendChild(errorDiv);
+            
+            // Auto-advance after error
+            setTimeout(() => {
+                this.switchMedia();
+            }, 8000);
+        }
+
+        async loadBOMContent(element, media) {
+            try {
+                console.log("Bom Withhhhhhhhhhhhhhhh Normal")
+                // Add timestamp to prevent caching for real-time updates
+                const timestamp = new Date().getTime();
+                const response = await fetch(`/station/${this.stationId}/bom-render-paginated/?t=${timestamp}`);
+                
+                if (response.ok) {
+                    const bomHTML = await response.text();
+                    
+                    element.innerHTML = bomHTML;
+                    console.log('BOM content refreshed');
+                } else {
+                    element.innerHTML = '<div class="bom-error" style="color: white; text-align: center; padding: 50px; font-size: 20px;">Failed to load BOM data</div>';
+                }
+            } catch (error) {
+                console.error('Error loading BOM content:', error);
+                element.innerHTML = '<div class="bom-error" style="color: white; text-align: center; padding: 50px; font-size: 20px;">Error loading BOM data</div>';
+            }
+        }
+
+async refreshCurrentBOMContent() {
+    // Method to refresh BOM content without rebuilding entire media
+    const currentElement = this.mediaElements[this.currentIndex];
+    if (currentElement && (currentElement.dataset.mediaType === 'Database BOM' || currentElement.classList.contains('bom'))) {
+        console.log('Refreshing current BOM content...');
+        
+        try {
+            // ENHANCED: Fetch fresh media data to get updated duration settings
+            const response = await fetch(`/station/${this.stationId}/media-with-bom-pagination/?mode=${this.paginationMode}&items_per_screen=${this.itemsPerScreen}`);
+            
+            if (response.ok) {
+                const freshData = await response.json();
+                
+                // Find the current BOM media in the fresh data
+                const bomMediaItems = freshData.media ? freshData.media.filter(m => 
+                    m.type === 'bom' && 
+                    m.is_bom_data && 
+                    m.bom_items > 0
+                ) : [];
+                
+                if (bomMediaItems.length > 0) {
+                    const freshBomData = bomMediaItems.find(item => item.url === currentElement.dataset.url) || bomMediaItems[0];
+                    
+                    // Update DOM element with fresh duration data
+                    currentElement.dataset.duration = (freshBomData.duration || 30) * 1000;
+                    currentElement.dataset.isDurationActive = freshBomData.is_duration_active || false;
+                    
+                    console.log('BOM content refreshed with updated duration data:', {
+                        duration: currentElement.dataset.duration,
+                        is_duration_active: currentElement.dataset.isDurationActive
+                    });
+                    
+                    // Load fresh BOM content
+                    await this.loadSplitBOMContent(currentElement, freshBomData);
+                } else {
+                    // Fallback to old method if no fresh BOM data
+                    await this.loadBOMContent(currentElement, {});
+                }
+            } else {
+                // Fallback to old method if API call fails
+                await this.loadBOMContent(currentElement, {});
+            }
+        } catch (error) {
+            console.error('Error refreshing BOM with fresh data:', error);
+            // Fallback to old method
+            await this.loadBOMContent(currentElement, {});
+        }
+    }
+}
+
+async playCurrentMedia() {
+    console.log("Current Media 💋💋💋💋💋💋💋💋💋💋💋💋💋")
+    if (this.mediaElements.length === 0) return;
+    
+    const currentMedia = this.mediaElements[this.currentIndex];
+    if (!currentMedia) return;
+
+    let duration = parseInt(currentMedia.dataset.duration) || 6000;
+    let isDurationActive = currentMedia.dataset.isDurationActive === 'true';
+
+    // CRITICAL FIX: For BOM elements, fetch fresh duration data from server
+    if (currentMedia.classList.contains('bom')) {
+        try {
+            console.log('BOM detected - fetching fresh duration data from server...');
+            
+            const response = await fetch(`/station/${this.stationId}/media-with-bom-pagination/?mode=${this.paginationMode}&items_per_screen=${this.itemsPerScreen}`);
+            
+            if (response.ok) {
+                const freshData = await response.json();
+                
+                // Find the current BOM media in the fresh data
+                const bomMediaItems = freshData.media ? freshData.media.filter(m => 
+                    m.type === 'bom' && 
+                    m.is_bom_data && 
+                    m.bom_items > 0
+                ) : [];
+                
+                if (bomMediaItems.length > 0) {
+                    // Use the first BOM item's fresh data (or match by URL if multiple)
+                    const freshBomData = bomMediaItems.find(item => item.url === currentMedia.dataset.url) || bomMediaItems[0];
+                    
+                    // Update with fresh server data
+                    duration = (freshBomData.duration || 30) * 1000; // Convert to milliseconds
+                    isDurationActive = freshBomData.is_duration_active || false;
+                    
+                    // CRITICAL: Update the DOM element's dataset with fresh data
+                    currentMedia.dataset.duration = duration;
+                    currentMedia.dataset.isDurationActive = isDurationActive;
+                    
+                    console.log('Fresh BOM duration data retrieved:', {
+                        duration: duration,
+                        is_duration_active: isDurationActive,
+                        fresh_data: freshBomData,
+                        url: currentMedia.dataset.url
+                    });
+                } else {
+                    console.warn('No BOM items found in fresh data, using cached values');
+                }
+            } else {
+                console.warn('Failed to fetch fresh duration data, using cached values');
+            }
+        } catch (error) {
+            console.error('Error fetching fresh duration data:', error, 'using cached values');
+        }
+    }
+
+    console.log('Final Media Duration Info:', {
+        duration: duration,
+        is_duration_active: isDurationActive,
+        media_type: currentMedia.dataset.mediaType,
+        is_bom: currentMedia.classList.contains('bom'),
+        element_dataset_duration: currentMedia.dataset.isDurationActive // For debugging
+    });
+
+    if (currentMedia.tagName === 'VIDEO') {
+       const playVideo = () => {
+        currentMedia.play().catch(error => {
+            console.error('Error playing video:', error);
+            this.switchMedia();
+        });
+    };
+
+    if (currentMedia.readyState >= 3) { // HAVE_FUTURE_DATA
+        playVideo();
+    } else {
+        currentMedia.addEventListener('canplaythrough', playVideo, { once: true });
+        // Fallback timeout
+        setTimeout(playVideo, 2000);
+    }
+    
+    this.slideshowTimer = setTimeout(() => this.switchMedia(), duration);
+
+        
+    } else if (currentMedia.classList.contains('pdf')) {
+        // Enhanced: Longer duration for PDFs on large screens
+        duration = currentMedia.dataset.duration; // 60 seconds for PDFs
+        console.log(`Displaying PDF: ${currentMedia.dataset.url}`);
+        
+        this.slideshowTimer = setTimeout(() => this.switchMedia(), duration);
+        
+    } else if (currentMedia.classList.contains('bom')) {
+        console.log('Displaying BOM with FRESH duration info:', {
+            duration: duration,
+            is_duration_active: isDurationActive,
+            bom_type: currentMedia.dataset.mediaType
+        });
+        
+        this.stopAutoBomPagination();
+
+        if (isDurationActive) {
+            console.log('BOM duration IS active - starting auto pagination');
+            // Start automatic BOM pagination
+            this.startAutoBomPagination(duration);
+        } else {
+            console.log('BOM duration is NOT active - will stay until manual advance');
+            // Stop any existing auto pagination
+            this.isBomAutoPaginationActive = false;
+            this.stopAutoBomPagination();
+        }
+
+    } else {
+        console.log('Displaying other media type with duration:', currentMedia.dataset.duration);
+        this.slideshowTimer = setTimeout(() => this.switchMedia(), duration);
+    }
+}
+
+        // NEW: Start automatic BOM pagination
+async startAutoBomPagination(duration) {
+    // Stop any existing pagination timer
+    this.stopAutoBomPagination();
+    
+    try {
+        // Get current BOM pagination info
+        const paginationResponse = await fetch(`/station/${this.stationId}/bom-paginated/`);
+        
+        if (paginationResponse.ok) {
+            const paginationData = await paginationResponse.json();
+            const currentPage = paginationData.pagination ? paginationData.pagination.current_page : 1;
+            const totalPages = paginationData.pagination ? paginationData.pagination.total_pages : 1;
+            
+            this.currentBomTotalPages = totalPages;
+            
+            console.log(`Starting auto BOM pagination: Page ${currentPage}/${totalPages}, Duration: ${duration}ms`);
+            
+            if (totalPages > 1) {
+                this.isBomAutoPaginationActive = true;
+                this.scheduleNextBomPage(duration);
+                
+                // Show indicator that auto pagination is active
+                this.showClickAlert(`Auto BOM: Page ${currentPage}/${totalPages} (${duration/1000}s)`, false);
+            } else {
+                console.log('BOM has only 1 page, no auto pagination needed');
+                // If only 1 page, set timer to advance to next media
+                this.slideshowTimer = setTimeout(() => this.switchMedia(), duration);
+            }
+        } else {
+            console.error('Failed to get BOM pagination info');
+            // Fallback: advance to next media
+            this.slideshowTimer = setTimeout(() => this.switchMedia(), duration);
+        }
+    } catch (error) {
+        console.error('Error starting auto BOM pagination:', error);
+        // Fallback: advance to next media
+        this.slideshowTimer = setTimeout(() => this.switchMedia(), duration);
+    }
+}
+
+// NEW: Schedule next BOM page
+scheduleNextBomPage(duration) {
+    this.autoBomPaginationTimer = setTimeout(async () => {
+        await this.advanceAutoBomPage(duration);
+    }, duration);
+}
+
+// NEW: Advance to next BOM page automatically
+async advanceAutoBomPage(duration) {
+    if (!this.isBomAutoPaginationActive) return;
+    
+    try {
+        // Get current pagination state
+        const paginationResponse = await fetch(`/station/${this.stationId}/bom-paginated/`);
+        
+        if (paginationResponse.ok) {
+            const paginationData = await paginationResponse.json();
+            const currentPage = paginationData.pagination ? paginationData.pagination.current_page : 1;
+            const totalPages = paginationData.pagination ? paginationData.pagination.total_pages : 1;
+            
+            console.log(`Auto BOM pagination: Currently on page ${currentPage}/${totalPages}`);
+            
+            let nextAction;
+            let nextPage;
+            
+            if (currentPage < totalPages) {
+                // Go to next page
+                nextAction = 'next_page';
+                nextPage = currentPage + 1;
+            } else {
+                // Loop back to page 1
+                nextAction = 'set_page';
+                nextPage = 1;
+            }
+            
+            console.log(`Auto BOM pagination: Moving from page ${currentPage} to page ${nextPage}`);
+            
+            // Call pagination API
+            const response = await fetch(`/station/${this.stationId}/bom-pagination-control/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    action: nextAction,
+                    page: nextPage,
+                    mode: this.paginationMode,
+                    items_per_screen: this.itemsPerScreen
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                console.log(`Auto BOM pagination successful: Page ${result.current_page}/${result.pagination.total_pages}`);
+                
+                // Show brief page indicator
+                this.showClickAlert(`Auto: Page ${result.current_page}/${result.pagination.total_pages}`, false);
+                
+                // Refresh BOM content immediately
+                await this.refreshBOMContent();
+                
+                // Check if we should continue auto pagination or switch to next media
+                if (result.current_page === 1 && currentPage === totalPages) {
+                    // We've completed a full cycle, switch to next media
+                    console.log('Auto BOM pagination completed full cycle, switching to next media');
+                    this.stopAutoBomPagination();
+                    this.slideshowTimer = setTimeout(() => this.switchMedia(), duration);
+                } else {
+                    // Continue auto pagination
+                    this.scheduleNextBomPage(duration);
+                }
+                
+            } else {
+                console.error('Auto BOM pagination failed:', result.error);
+                this.stopAutoBomPagination();
+                // Fallback: switch to next media
+                this.slideshowTimer = setTimeout(() => this.switchMedia(), duration);
+            }
+        } else {
+            console.error('Failed to get current BOM pagination state');
+            this.stopAutoBomPagination();
+            this.slideshowTimer = setTimeout(() => this.switchMedia(), duration);
+        }
+        
+    } catch (error) {
+        console.error('Error in auto BOM pagination:', error);
+        this.stopAutoBomPagination();
+        // Fallback: switch to next media
+        this.slideshowTimer = setTimeout(() => this.switchMedia(), duration);
+    }
+}
+
+// NEW: Stop automatic BOM pagination
+stopAutoBomPagination() {
+    if (this.autoBomPaginationTimer) {
+        clearTimeout(this.autoBomPaginationTimer);
+        this.autoBomPaginationTimer = null;
+        console.log('Auto BOM pagination timer cleared');
+    }
+    this.isBomAutoPaginationActive = false;
+}
+
+
+        isCurrentPDF() {
+            const currentElement = this.mediaElements[this.currentIndex];
+            return currentElement && currentElement.classList.contains('pdf');
+        }
+
+        stopCurrentMedia() {
+            if (this.mediaElements.length === 0) return;
+            
+            const currentMedia = this.mediaElements[this.currentIndex];
+            if (!currentMedia) return;
+
+            if (currentMedia.tagName === 'VIDEO') {
+                currentMedia.pause();
+                currentMedia.currentTime = 0;
+            }
+            
+            // Reset PDF fullscreen when stopping
+            if (currentMedia.classList.contains('pdf')) {
+                currentMedia.classList.remove('fullscreen');
+                this.pdfFullscreen = false;
+            }
+               // NEW: Stop auto BOM pagination when switching away from BOM
+                    if (currentMedia.classList.contains('bom')) {
+                        this.stopAutoBomPagination();
+                    }
+            clearTimeout(this.slideshowTimer);
+        }
+
+        switchMedia() {
+            if (this.mediaElements.length === 0) return;
+            if (this.mediaElements.length === 1) {
+                // If only one element and it's BOM, refresh its content periodically
+                if (this.isCurrentlyShowingBOM()) {
+                    this.refreshCurrentBOMContent();
+                }
+                this.stopCurrentMedia();
+                this.playCurrentMedia();
+                return;
+            }
+
+            const currentMedia = this.mediaElements[this.currentIndex];
+            if (currentMedia) {
+                currentMedia.classList.add('fade-out');
+                currentMedia.classList.remove('active');
+            }
+            
+            this.stopCurrentMedia();
+            this.currentIndex = (this.currentIndex + 1) % this.mediaElements.length;
+            
+            const nextMedia = this.mediaElements[this.currentIndex];
+            if (nextMedia) {
+                nextMedia.classList.remove('fade-out');
+                nextMedia.classList.add('active');
+                
+                // If switching to BOM, refresh its content
+                if (nextMedia.dataset.mediaType === 'Database BOM' || nextMedia.classList.contains('bom')) {
+                    this.loadBOMContent(nextMedia, {});
+                }
+                
+                this.playCurrentMedia();
+                this.preloadNextVideo(); // ADD THIS LINE
+
+            }
+        }
+handleMediaError(error) {
+    console.error('Media error:', error);
+    const currentElement = this.mediaElements[this.currentIndex];
+    
+    if (currentElement && currentElement.tagName === 'VIDEO') {
+        // Try to reload the video once
+        if (!currentElement.hasAttribute('data-retried')) {
+            console.log('Retrying video load...');
+            currentElement.setAttribute('data-retried', 'true');
+            currentElement.load();
+            setTimeout(() => {
+                currentElement.play().catch(() => this.switchMedia());
+            }, 1000);
+            return;
+        }
+    }
+    
+    this.showError('Media playback error');
+    setTimeout(() => this.switchMedia(), 3000); // Faster recovery
+}
+
+        showError(message) {
+            this.errorElement.textContent = message;
+            this.errorElement.classList.remove('hidden');
+        }
+
+        hideError() {
+            this.errorElement.classList.add('hidden');
+        }
+
+    async sendClickerAction(action, alertMessage) {
+        try {
+            // CRITICAL: Stop auto loop immediately when ANY manual action is taken
+            if (this.autoLoopMode) {
+                console.log('Manual action detected - stopping auto loop immediately');
+                this.stopAutoLoop();
+                
+                // Show override message
+                this.showClickAlert('Manual Override - Auto Loop Stopped', false);
+                
+                // Brief delay to show the override message
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+
+            const response = await fetch(`/station/${this.stationId}/clicker/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ action: action })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                console.log('Clicker action result:', result);
+                
+                // Update connection status
+                this.updateConnectionStatus('connected', 
+                    `${action.charAt(0).toUpperCase() + action.slice(1)} - Success`);
+                
+                // Handle loop exit messaging
+                if (result.exit_loop) {
+            //       this.showClickAlert(`Exited Loop Mode → ${result.current_process.display_name}`, false);
+                //    console.log('Loop mode exited:', result.exit_message);
+                    
+                    // Update loop indicator immediately
+                    this.updateLoopIndicator(false, false);
+                } else {
+                //  this.showClickAlert(alertMessage || 'Action Completed!');
+                }
+                
+                // DO NOT restart auto loop after manual action
+                // The user has taken manual control, so respect that decision
+                console.log('Manual action completed - auto loop will NOT restart automatically');
+                
+                // Force immediate update after clicker action
+                setTimeout(async () => {
+                    await this.pollForUpdates();
+                }, 100);
+                
+            } else {
+                this.showError(result.error || 'Clicker action failed');
+                this.showClickAlert('Action Failed!', true);
+                setTimeout(() => this.hideError(), 4000);
+            }
+        } catch (error) {
+            console.error('Clicker action error:', error);
+            this.showError('Clicker communication error');
+            this.showClickAlert('Connection Error!', true);
+            setTimeout(() => this.hideError(), 4000);
+        }
+    }
+
+
+        // Method to configure auto loop durations
+        setAutoLoopDurations(durations) {
+            this.loopProcessDurations = { ...this.loopProcessDurations, ...durations };
+            console.log('Auto loop durations updated:', this.loopProcessDurations);
+        }
+
+        // Method to get current auto loop status
+        getAutoLoopStatus() {
+            return {
+                autoLoopMode: this.autoLoopMode,
+                isInLoopGroup: this.isInLoopGroup,
+                currentProcessName: this.currentProcessName,
+                loopProcessDurations: this.loopProcessDurations,
+                timeRemaining: this.autoLoopProgressTimer ? 'active' : 'inactive'
+            };
+        }
+
+        // Method to force auto loop progression (for testing)
+        async forceAutoLoopProgress() {
+            if (this.autoLoopMode) {
+                await this.autoProgressLoop();
+            } else {
+                console.warn('Auto loop is not active');
+            }
+        }
+
+        destroy() {
+            // Clean up all timers and intervals
+            if (this.pollingInterval) {
+                clearInterval(this.pollingInterval);
+                this.pollingInterval = null;
+            }
+            if (this.slideshowTimer) {
+                clearTimeout(this.slideshowTimer);
+                this.slideshowTimer = null;
+            }
+            
+
+                // Stop auto BOM pagination
+              this.stopAutoBomPagination();
+
+            // Stop auto loop
+            this.stopAutoLoop();
+            
+            // Clean up media elements
+            this.stopCurrentMedia();
+            
+            console.log(`BRG Media Slider Display ${this.displayNumber} destroyed`);
+        }
+}
+
+
+
+
+
+    // Initialize the enhanced slider when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+        const stationId = {{ station.id }};
+        const displayNumber = {{ station.display_number }};
+        
+        // Create the slider instance
+        window.mediaSlider = new BRGMediaSliderWithAutoLoop(stationId, displayNumber);
+        
+        // Optional: Configure custom auto loop durations if needed
+        // window.mediaSlider.setAutoLoopDurations({
+        //     'PROCESS 1A OF 6': 45000, // 45 seconds
+        //     'PROCESS 1B OF 6': 60000, // 60 seconds
+        //     'PROCESS 1C OF 6': 30000  // 30 seconds
+        // });
+        
+        // Add global keyboard shortcuts for debugging
+        document.addEventListener('keydown', (event) => {
+            if (event.ctrlKey && event.shiftKey) {
+                switch(event.code) {
+                    case 'KeyA':
+                        // Ctrl+Shift+A: Toggle auto loop
+                        if (window.mediaSlider) {
+                            window.mediaSlider.toggleAutoLoopMode();
+                        }
+                        event.preventDefault();
+                        break;
+                    case 'KeyS':
+                        // Ctrl+Shift+S: Show auto loop status
+                        if (window.mediaSlider) {
+                            const status = window.mediaSlider.getAutoLoopStatus();
+                            console.log('Auto Loop Status:', status);
+                            window.mediaSlider.showClickAlert(`Auto Loop: ${status.autoLoopMode ? 'ON' : 'OFF'}`, false);
+                        }
+                        event.preventDefault();
+                        break;
+                    case 'KeyF':
+                        // Ctrl+Shift+F: Force auto loop progress (for testing)
+                        if (window.mediaSlider) {
+                            window.mediaSlider.forceAutoLoopProgress();
+                        }
+                        event.preventDefault();
+                        break;
+                }
+            }
+        });
+    });
+
+    // Clean up on page unload
+    window.addEventListener('beforeunload', () => {
+        if (window.mediaSlider) {
+            window.mediaSlider.destroy();
+        }
+    });
+
+    // Expose slider instance globally for debugging
+    window.getSliderStatus = () => {
+        if (window.mediaSlider) {
+            return {
+                displayNumber: window.mediaSlider.displayNumber,
+                currentIndex: window.mediaSlider.currentIndex,
+                mediaCount: window.mediaSlider.mediaElements.length,
+                autoLoopStatus: window.mediaSlider.getAutoLoopStatus(),
+                currentProcessName: window.mediaSlider.currentProcessName,
+                isInLoopGroup: window.mediaSlider.isInLoopGroup
+            };
+        }
+        return null;
+    };
+</script>
+</body>
+</html>

@@ -1,0 +1,227 @@
+<!-- templates/admin/bomitem_excel_upload.html -->
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_modify %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    &rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+    &rsaquo; <a href="{% url 'admin:screen_app_bomitem_changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+    &rsaquo; {{ title }}
+</div>
+{% endblock %}
+
+{% block content %}
+
+<div class="form-row">
+    <div class="form-column">
+        <div class="module aligned">
+            <h2>Upload Excel File</h2>
+            
+            <div class="help">
+                <p><strong>Excel Format Requirements:</strong></p>
+                <ul>
+                    <li><strong>Columns:</strong> S. NO, ITEM DESCRIPTION, PART NO., QTY, ITEM PHOTO</li>
+                    <li><strong>File Format:</strong> .xlsx or .xls</li>
+                    <li><strong>Images:</strong> Embed images directly in the ITEM PHOTO column cells</li>
+                    <li><strong>Header Row:</strong> Must contain "ITEM DESCRIPTION" column header</li>
+                </ul>
+                
+                <p><strong>Notes:</strong></p>
+                <ul>
+                    <li>Item Code will be auto-generated from Item Description</li>
+                    <li>Images will be extracted and saved automatically</li>
+                    <li>Duplicate item codes will be skipped unless "Overwrite existing" is checked</li>
+                    <li>Default unit of measure will be applied to all items</li>
+                </ul>
+            </div>
+            
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div class="form-row">
+                    <div>
+                        <label for="{{ form.excel_file.id_for_label }}" class="required">{{ form.excel_file.label }}:</label>
+                        {{ form.excel_file }}
+                        {% if form.excel_file.help_text %}
+                            <p class="help">{{ form.excel_file.help_text }}</p>
+                        {% endif %}
+                        {% if form.excel_file.errors %}
+                            <ul class="errorlist">
+                                {% for error in form.excel_file.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div>
+                        <label for="{{ form.unit_of_measure.id_for_label }}" class="required">{{ form.unit_of_measure.label }}:</label>
+                        {{ form.unit_of_measure }}
+                        {% if form.unit_of_measure.help_text %}
+                            <p class="help">{{ form.unit_of_measure.help_text }}</p>
+                        {% endif %}
+                        {% if form.unit_of_measure.errors %}
+                            <ul class="errorlist">
+                                {% for error in form.unit_of_measure.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div>
+                        <label for="{{ form.supplier.id_for_label }}">{{ form.supplier.label }}:</label>
+                        {{ form.supplier }}
+                        {% if form.supplier.help_text %}
+                            <p class="help">{{ form.supplier.help_text }}</p>
+                        {% endif %}
+                        {% if form.supplier.errors %}
+                            <ul class="errorlist">
+                                {% for error in form.supplier.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div>
+                        {{ form.overwrite_existing }} 
+                        <label for="{{ form.overwrite_existing.id_for_label }}">{{ form.overwrite_existing.label }}</label>
+                        {% if form.overwrite_existing.help_text %}
+                            <p class="help">{{ form.overwrite_existing.help_text }}</p>
+                        {% endif %}
+                        {% if form.overwrite_existing.errors %}
+                            <ul class="errorlist">
+                                {% for error in form.overwrite_existing.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="submit-row">
+                    <input type="submit" value="Upload and Process" class="default" />
+                    <a href="{% url 'admin:screen_app_bomitem_changelist' %}" class="button cancel-link">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="form-column">
+        <div class="module">
+            <h2>Excel Template Example</h2>
+            
+            <div class="help">
+                <p><strong>Sample Excel Structure:</strong></p>
+                <table border="1" style="border-collapse: collapse; margin: 10px 0;">
+                    <thead style="background-color: #f0f0f0;">
+                        <tr>
+                            <th style="padding: 8px; border: 1px solid #ccc;">S. NO</th>
+                            <th style="padding: 8px; border: 1px solid #ccc;">ITEM DESCRIPTION</th>
+                            <th style="padding: 8px; border: 1px solid #ccc;">PART NO.</th>
+                            <th style="padding: 8px; border: 1px solid #ccc;">QTY</th>
+                            <th style="padding: 8px; border: 1px solid #ccc;">ITEM PHOTO</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="padding: 8px; border: 1px solid #ccc;">1</td>
+                            <td style="padding: 8px; border: 1px solid #ccc;">Bolt M10x20</td>
+                            <td style="padding: 8px; border: 1px solid #ccc;">B.O.</td>
+                            <td style="padding: 8px; border: 1px solid #ccc;">4</td>
+                            <td style="padding: 8px; border: 1px solid #ccc;">[Image]</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px; border: 1px solid #ccc;">2</td>
+                            <td style="padding: 8px; border: 1px solid #ccc;">Washer M10</td>
+                            <td style="padding: 8px; border: 1px solid #ccc;">B.O.</td>
+                            <td style="padding: 8px; border: 1px solid #ccc;">8</td>
+                            <td style="padding: 8px; border: 1px solid #ccc;">[Image]</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px; border: 1px solid #ccc;">3</td>
+                            <td style="padding: 8px; border: 1px solid #ccc;">Nut M10</td>
+                            <td style="padding: 8px; border: 1px solid #ccc;">4172923</td>
+                            <td style="padding: 8px; border: 1px solid #ccc;">4</td>
+                            <td style="padding: 8px; border: 1px solid #ccc;">[Image]</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <p><strong>Important Tips:</strong></p>
+                <ul>
+                    <li>Insert images directly into Excel cells (not as comments)</li>
+                    <li>Keep image sizes reasonable (< 2MB each)</li>
+                    <li>Use clear, high-quality photos</li>
+                    <li>Ensure all required columns are present</li>
+                    <li>Item codes will be generated as: "BOLT_M10X20", "WASHER_M10", etc.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-column {
+    width: 48%;
+    display: inline-block;
+    vertical-align: top;
+    margin-right: 2%;
+}
+
+.module.aligned {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.help {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.help ul {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+.help li {
+    margin-bottom: 5px;
+}
+
+.submit-row {
+    padding: 20px 0 10px 0;
+    margin: 0;
+    border-top: 1px solid #ddd;
+}
+
+.button.cancel-link {
+    background: #f8f9fa;
+    color: #6c757d;
+    border: 1px solid #ddd;
+    padding: 10px 15px;
+    text-decoration: none;
+    border-radius: 4px;
+    margin-left: 10px;
+}
+
+.button.cancel-link:hover {
+    background: #e9ecef;
+}
+</style>
+{% endblock %}

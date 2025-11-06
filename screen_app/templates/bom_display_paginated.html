@@ -1,0 +1,689 @@
+<!-- templates/bom_slider_fragment_paginated.html - PAGINATED VERSION -->
+<div class="bom-container-slider">
+    <style>
+        .bom-container-slider {
+            width: 100%;
+            height: 100vw; /* Use viewport width for rotated display */
+            background: red;
+            color: white;
+            overflow: hidden;
+            position: relative;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .bom-header-slider {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            padding: 12px 25px; /* Reduced for pagination */
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            flex-shrink: 0;
+        }
+        
+        .bom-title-slider {
+            font-size: 2.2em; /* Slightly smaller for pagination */
+            font-weight: bold;
+            margin: 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .bom-subtitle-slider {
+            font-size: 1.1em;
+            margin: 4px 0 0 0;
+            opacity: 0.9;
+        }
+        
+        /* NEW: Pagination indicator */
+        .pagination-indicator {
+            background: rgba(255, 165, 0, 0.9);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin-top: 6px;
+            display: inline-block;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .pagination-indicator.stage-bom {
+            background: rgba(46, 204, 113, 0.9);
+        }
+        
+        .pagination-indicator.split-mode {
+            background: rgba(155, 89, 182, 0.9);
+        }
+        
+        .bom-info-slider {
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 25px; /* Reduced for pagination */
+            background: rgba(0,0,0,0.6);
+            border-bottom: 2px solid rgba(255,255,255,0.2);
+            flex-shrink: 0;
+        }
+        
+        .bom-info-item {
+            text-align: center;
+        }
+        
+        .bom-info-label {
+            font-size: 0.85em;
+            opacity: 0.8;
+            margin-bottom: 3px;
+            font-weight: bold;
+        }
+        
+        .bom-info-value {
+            font-size: 1.4em; /* Reduced for pagination */
+            font-weight: bold;
+        }
+        
+        /* NEW: Pagination controls */
+        .pagination-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 8px 15px;
+            background: rgba(0,0,0,0.4);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            flex-shrink: 0;
+            gap: 15px;
+        }
+        
+        .pagination-info {
+            color: white;
+            font-size: 0.9em;
+            font-weight: bold;
+            background: rgba(255,255,255,0.1);
+            padding: 4px 12px;
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .page-navigation {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .nav-button {
+            background: rgba(52, 152, 219, 0.8);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.8em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .nav-button:hover {
+            background: rgba(52, 152, 219, 1);
+            transform: scale(1.05);
+        }
+        
+        .nav-button:disabled {
+            background: rgba(127, 140, 141, 0.5);
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .page-indicator {
+            color: white;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin: 0 8px;
+            padding: 4px 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+        }
+        
+        .bom-table-container-slider {
+            flex: 1;
+            overflow: hidden;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .bom-table-slider {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255,255,255,0.98);
+            color: #1a1a1a;
+            flex: 1;
+            display: table;
+            table-layout: fixed;
+            font-size: calc(1.4rem + 0.8vw);
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+        }
+        
+        .bom-table-slider th {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2c2c2c 100%);
+            color: white;
+            padding: 10px 8px; /* Reduced for pagination */
+            text-align: center;
+            font-weight: bold;
+            font-size: calc(1.5rem + 0.6vw);
+            border-bottom: 4px solid #444;
+            border-right: 2px solid rgba(255,255,255,0.3);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+        }
+        
+        .bom-table-slider td {
+            padding: 6px 5px; /* Reduced for pagination */
+            border-bottom: 2px solid #ddd;
+            border-right: 2px solid #ddd;
+            vertical-align: middle;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: calc(1.2rem + 0.6vw);
+            line-height: 1.2;
+        }
+        
+        .bom-table-slider tbody {
+            display: table-row-group;
+        }
+        
+        .bom-table-slider tbody tr {
+            display: table-row;
+            height: calc((100vw - 220px) / var(--visible-rows, 8)); /* Adjusted for pagination controls */
+        }
+        
+        .bom-table-slider tbody tr:hover {
+            transform: scale(1.002);
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
+        /* COLUMN SPECIFIC STYLES */
+        .bom-table-slider.cols-5 th:nth-child(1),
+        .bom-table-slider.cols-5 td:nth-child(1) {
+            width: 8%;
+        }
+        
+        .bom-table-slider.cols-5 th:nth-child(2),
+        .bom-table-slider.cols-5 td:nth-child(2) {
+            width: 35%;
+        }
+        
+        .bom-table-slider.cols-5 th:nth-child(3),
+        .bom-table-slider.cols-5 td:nth-child(3) {
+            width: 17%;
+        }
+        
+        .bom-table-slider.cols-5 th:nth-child(4),
+        .bom-table-slider.cols-5 td:nth-child(4) {
+            width: 12%;
+        }
+        
+        .bom-table-slider.cols-5 th:nth-child(5),
+        .bom-table-slider.cols-5 td:nth-child(5) {
+            width: 28%;
+        }
+        
+        .serial-number-slider {
+            font-weight: bold;
+            color: #1a1a1a;
+            background: #f5f5f5;
+            font-size: calc(1.6rem + 0.8vw) !important; /* Slightly smaller for pagination */
+            min-width: 60px;
+        }
+        
+        .item-photo-slider {
+            width: calc(100px + 3vw); /* Smaller for pagination */
+            height: calc(100px + 3vw);
+            max-width: 180px;
+            max-height: 180px;
+            object-fit: contain;
+            border-radius: 6px;
+            border: 2px solid #bdc3c7;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+            display: block;
+            margin: 3px auto;
+        }
+        
+        .item-photo-placeholder-slider {
+            width: calc(100px + 3vw);
+            height: calc(100px + 3vw);
+            max-width: 180px;
+            max-height: 180px;
+            background: #e0e0e0;
+            border: 2px dashed #999;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #555;
+            font-size: calc(0.9rem + 0.3vw);
+            text-align: center;
+            margin: 3px auto;
+            font-weight: bold;
+        }
+        
+        .photo-column {
+            text-align: center;
+            min-width: calc(120px + 3vw);
+            max-width: calc(200px + 3vw);
+        }
+        
+        .item-description-slider {
+            font-weight: bold;
+            color: #1a1a1a;
+            margin-bottom: 3px;
+            font-size: calc(1.6rem + 0.7vw); /* Slightly smaller for pagination */
+            line-height: 1.2;
+            white-space: normal;
+            overflow: visible;
+            text-overflow: clip;
+            text-align: left;
+            padding: 2px 5px;
+        }
+        
+        .item-code-slider {
+            font-size: calc(1.2rem + 0.5vw);
+            color: #444;
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+            text-align: left;
+            padding: 1px 5px;
+            background: rgba(240,240,240,0.8);
+            border-radius: 3px;
+            margin-top: 2px;
+        }
+        
+        .description-column {
+            text-align: left;
+            white-space: normal;
+            overflow: visible;
+            min-width: calc(200px + 6vw);
+            max-width: calc(400px + 6vw);
+            padding: 5px 10px;
+        }
+        
+        .part-number-slider {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #d32f2f;
+            font-size: calc(1.6rem + 0.7vw) !important;
+        }
+        
+        .quantity-slider {
+            font-size: calc(1.6rem + 0.7vw) !important;
+            font-weight: bold;
+            color: #1b5e20;
+        }
+        
+        .no-bom-data-slider {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            text-align: center;
+            color: rgba(255,255,255,0.8);
+        }
+        
+        .no-bom-icon-slider {
+            font-size: 6em;
+            margin-bottom: 30px;
+            opacity: 0.6;
+        }
+        
+        .no-bom-data-slider h3 {
+            font-size: 2.2em;
+            margin-bottom: 20px;
+        }
+        
+        .no-bom-data-slider p {
+            font-size: 1.3em;
+            margin: 10px 0;
+        }
+        
+        .bom-watermark {
+            position: absolute;
+            bottom: 6px;
+            right: 12px;
+            font-size: calc(0.65rem + 0.12vw);
+            opacity: 0.9;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .no-items-message {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            text-align: center;
+            color: rgba(255,255,255,0.8);
+            background: rgba(52, 152, 219, 0.1);
+            border: 2px dashed rgba(52, 152, 219, 0.3);
+            border-radius: 20px;
+            margin: 20px;
+        }
+        
+        .no-items-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            opacity: 0.6;
+        }
+        
+        .no-items-message h3 {
+            font-size: 1.8em;
+            margin-bottom: 15px;
+        }
+        
+        .no-items-message p {
+            font-size: 1.1em;
+            margin: 5px 0;
+        }
+        
+        /* DYNAMIC ROW SIZING FOR PAGINATION */
+        .bom-table-container-slider[data-row-count="1"] .bom-table-slider tbody tr { height: calc(100vw - 220px); }
+        .bom-table-container-slider[data-row-count="2"] .bom-table-slider tbody tr { height: calc((100vw - 220px) / 2); }
+        .bom-table-container-slider[data-row-count="3"] .bom-table-slider tbody tr { height: calc((100vw - 220px) / 3); }
+        .bom-table-container-slider[data-row-count="4"] .bom-table-slider tbody tr { height: calc((100vw - 220px) / 4); }
+        .bom-table-container-slider[data-row-count="5"] .bom-table-slider tbody tr { height: calc((100vw - 220px) / 5); }
+        .bom-table-container-slider[data-row-count="6"] .bom-table-slider tbody tr { height: calc((100vw - 220px) / 6); }
+        .bom-table-container-slider[data-row-count="7"] .bom-table-slider tbody tr { height: calc((100vw - 220px) / 7); }
+        .bom-table-container-slider[data-row-count="8"] .bom-table-slider tbody tr { height: calc((100vw - 220px) / 8); }
+        
+        /* For more rows, set minimum readable height */
+        .bom-table-container-slider[data-row-count] .bom-table-slider tbody tr {
+            min-height: 70px;
+            height: max(70px, calc((100vw - 220px) / var(--row-count, 8)));
+        }
+        
+        /* RESPONSIVE BREAKPOINTS FOR ROTATED DISPLAY */
+        @media screen and (min-width: 1920px) {
+            .bom-table-slider {
+                font-size: calc(1.5rem + 0.5vw);
+            }
+            .bom-table-slider th {
+                font-size: calc(1.7rem + 0.3vw);
+                padding: 12px 9px;
+            }
+            .bom-table-slider td {
+                font-size: calc(1.3rem + 0.3vw);
+                padding: 8px 7px;
+            }
+            .item-photo-slider, .item-photo-placeholder-slider {
+                width: calc(120px + 2.5vw);
+                height: calc(120px + 2.5vw);
+                max-width: 210px;
+                max-height: 210px;
+            }
+        }
+        
+        @media screen and (min-width: 2560px) {
+            .bom-title-slider { font-size: 2.8em; }
+            .bom-subtitle-slider { font-size: 1.6em; }
+            .bom-info-value { font-size: 2.0em; }
+            .bom-table-slider {
+                font-size: calc(1.7rem + 0.3vw);
+            }
+            .bom-table-slider th {
+                font-size: calc(1.9rem + 0.2vw);
+                padding: 14px 11px;
+            }
+            .bom-table-slider td {
+                font-size: calc(1.5rem + 0.2vw);
+                padding: 10px 9px;
+            }
+            .item-photo-slider, .item-photo-placeholder-slider {
+                width: calc(140px + 2vw);
+                height: calc(140px + 2vw);
+                max-width: 240px;
+                max-height: 240px;
+            }
+        }
+    </style>
+    
+    {% if bom_data %}
+    <div class="bom-header-slider">
+        <h1 class="bom-title-slider">
+            Bill of Material
+        </h1>
+        
+        {% if pagination.mode == 'split' %}
+            <div class="pagination-indicator split-mode">
+                📋 Display {{ station.display_number }} of 3 - Split Mode - Page {{ pagination.current_page }}/{{ pagination.total_pages }}
+            </div>
+        {% elif pagination.mode == 'single' %}
+            <div class="pagination-indicator">
+                📄 Single Screen - Page {{ pagination.current_page }}/{{ pagination.total_pages }}
+            </div>
+        {% endif %}
+    </div>
+    
+    <div class="bom-info-slider">
+        <div class="bom-info-item">
+            <div class="bom-info-label">TYPE</div>
+            <div class="bom-info-value">{{ bom_type }}</div>
+        </div>
+        <div class="bom-info-item">
+            <div class="bom-info-label">QUANTITY</div>
+            <div class="bom-info-value">{{ quantity }}</div>
+        </div>
+        <div class="bom-info-item">
+            <div class="bom-info-label">ON SCREEN</div>
+            <div class="bom-info-value">{{ bom_data|length }}</div>
+        </div>
+        <div class="bom-info-item">
+            <div class="bom-info-label">TOTAL</div>
+            <div class="bom-info-value">{{ pagination.total_items }}</div>
+        </div>
+    </div>
+    
+    <!-- NEW: Pagination Controls -->
+    {% if pagination.total_pages > 1 %}
+    <div class="pagination-controls">
+        <div class="page-navigation">
+            <button class="nav-button" id="prevPageBtn" 
+                    {% if not pagination.has_previous %}disabled{% endif %}>
+                ◀ Previous
+            </button>
+            
+            <div class="page-indicator">
+                Page {{ pagination.current_page }} of {{ pagination.total_pages }}
+            </div>
+            
+            <button class="nav-button" id="nextPageBtn" 
+                    {% if not pagination.has_next %}disabled{% endif %}>
+                Next ▶
+            </button>
+        </div>
+        
+        <div class="pagination-info">
+            {{ pagination.mode|capfirst }} Mode • {{ pagination.items_per_screen }} per screen
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if bom_data|length > 0 %}
+    <div class="bom-table-container-slider" data-row-count="{{ bom_data|length }}">
+        <table class="bom-table-slider cols-5">
+            <thead>
+                <tr>
+                    <th class="serial-number-slider">S.NO</th>
+                    <th class="description-column">DESCRIPTION</th>
+                    <th class="part-number-slider">PART NO.</th>
+                    <th class="quantity-slider">QTY</th>
+                    <th class="photo-column">PHOTO</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item_data in bom_data %}
+                <tr>
+                    <td class="serial-number-slider">{{ item_data.serial_number|stringformat:"02d" }}</td>
+                    <td class="description-column">
+                        <div class="item-description-slider">{{ item_data.item.item_description }}</div>
+                        {% if item_data.item.item_code %}
+                        <div class="item-code-slider">{{ item_data.item.item_code }}</div>
+                        {% endif %}
+                    </td>
+                    <td class="part-number-slider">{{ item_data.item.part_number }}</td>
+                    <td class="quantity-slider">{{ item_data.formatted_quantity }}</td>
+                    <td class="photo-column">
+                        {% if item_data.item.item_photo %}
+                        <img src="{{ item_data.item.item_photo.url }}" 
+                             alt="{{ item_data.item.item_description }}" 
+                             class="item-photo-slider">
+                        {% else %}
+                        <div class="item-photo-placeholder-slider">
+                            NO<br>PHOTO
+                        </div>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="no-items-message">
+        <div class="no-items-icon">📋</div>
+        <h3>No Items on This Page</h3>
+        <p>Page {{ pagination.current_page }} has no items for Display {{ station.display_number }}.</p>
+        <p>Use pagination controls to navigate to other pages.</p>
+    </div>
+    {% endif %}
+    
+    <div class="bom-watermark">
+        🏭 Display {{ station.display_number }} • Page {{ pagination.current_page }}/{{ pagination.total_pages }} • {{ bom_data|length }}/{{ pagination.total_items }} Items
+    </div>
+    
+    {% else %}
+    <div class="no-bom-data-slider">
+        <div class="no-bom-icon-slider">📋</div>
+        <h3>No BOM Data Available</h3>
+        <p>No bill of materials configured for current settings.</p>
+        <p>Check station configuration in admin panel.</p>
+    </div>
+    {% endif %}
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const table = document.querySelector('.bom-table-slider');
+            const container = document.querySelector('.bom-table-container-slider');
+            
+            if (table && container) {
+                // Count columns
+                const headerCells = table.querySelectorAll('thead th');
+                const columnCount = headerCells.length;
+                table.classList.add('cols-' + columnCount);
+                
+                // Count rows
+                const dataRows = table.querySelectorAll('tbody tr');
+                const rowCount = dataRows.length;
+                container.setAttribute('data-row-count', rowCount);
+                
+                // Set CSS custom property for row calculation
+                document.documentElement.style.setProperty('--row-count', rowCount);
+                
+                console.log('Paginated BOM Table initialized:', {
+                    columns: columnCount,
+                    rows: rowCount,
+                    display: {{ station.display_number }},
+                    current_page: {{ pagination.current_page }},
+                    total_pages: {{ pagination.total_pages }},
+                    mode: '{{ pagination.mode }}'
+                });
+            }
+            
+            // Pagination event handlers
+            const prevBtn = document.getElementById('prevPageBtn');
+            const nextBtn = document.getElementById('nextPageBtn');
+            
+            if (prevBtn) {
+                prevBtn.addEventListener('click', function() {
+                    if (!this.disabled) {
+                        navigatePage('previous_page');
+                    }
+                });
+            }
+            
+            if (nextBtn) {
+                nextBtn.addEventListener('click', function() {
+                    if (!this.disabled) {
+                        navigatePage('next_page');
+                    }
+                });
+            }
+            
+            // Keyboard navigation
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'ArrowLeft' && prevBtn && !prevBtn.disabled) {
+                    navigatePage('previous_page');
+                } else if (event.key === 'ArrowRight' && nextBtn && !nextBtn.disabled) {
+                    navigatePage('next_page');
+                }
+            });
+        });
+        
+        function navigatePage(action) {
+            const stationId = {{ station.id }};
+            const mode = '{{ pagination.mode }}';
+            const itemsPerScreen = {{ pagination.items_per_screen }};
+            
+            fetch(`/station/${stationId}/bom-pagination-control/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    action: action,
+                    mode: mode,
+                    items_per_screen: itemsPerScreen
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Reload the page or update the content
+                    window.location.reload();
+                } else {
+                    console.error('Pagination error:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Network error:', error);
+            });
+        }
+        
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+</div>
