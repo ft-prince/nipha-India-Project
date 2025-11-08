@@ -615,7 +615,7 @@ body {
     <button class="clicker-btn" id="backward-btn" title="Previous Process">
         &#8592;
     </button>
-    <div class="clicker-hint">← Previous</div>
+    <div class="clicker-hint"></div>
 </div>
 
             <!-- Right Clicker Controls -->
@@ -623,7 +623,7 @@ body {
     <button class="clicker-btn" id="forward-btn" title="Next Process">
         &#8594;
     </button>
-    <div class="clicker-hint">Next →</div>
+    <div class="clicker-hint"></div>
 </div>
 
             <div class="error-message hidden" id="error-message">
@@ -1482,7 +1482,7 @@ async navigateToBOMPageDirectly(targetPage) {
         setTimeout(() => {
             this.isManualPaginationInProgress = false;
             this.ignoreExternalBOMUpdates = false;
-        }, 1000);
+        }, 1500);
     }
 }
     // CRITICAL FIX: Completely rewritten navigation method that prevents auto-refresh conflicts
@@ -1545,68 +1545,70 @@ async navigateBOMPage(action) {
 
         const result = await response.json();
 
-            if (result.success) {
-                console.log('✅ Manual BOM pagination SUCCESS:', result);
+if (result.success) {
+    console.log('✅ Manual BOM pagination SUCCESS:', result);
 
-                // Update internal state IMMEDIATELY to prevent revert
-                this.currentBomPage = result.current_page;
-                this.currentBomTotalPages = result.pagination.total_pages;
-                    // ⭐ ADD THIS: Trigger other displays to sync
-                    if (this.displayNumber === 1) {
-                        console.log('🔄 ⭐⭐⭐⭐ Triggering sync for displays 2 & 3...');
-                        this.syncOtherDisplaysToBOMPage(result.current_page, result.pagination.total_pages);
-                    }
+    // Update internal state IMMEDIATELY
+    this.currentBomPage = result.current_page;
+    this.currentBomTotalPages = result.pagination.total_pages;
+    
+    // ⭐ FIXED: Broadcast sync BEFORE updating content
+    if (this.displayNumber === 1) {
+        console.log('🔄 Broadcasting sync for displays 2 & 3...');
+        await this.syncOtherDisplaysToBOMPage(
+            result.current_page, 
+            result.pagination.total_pages
+        );
+        
+        // Wait for sync to complete before updating content
+        await new Promise(resolve => setTimeout(resolve, 500));
+    }
 
-                // CRITICAL: Update hash to prevent external interference
-                const newBomHash = `${result.current_page}_${result.pagination.total_pages}_${this.paginationMode}_${this.itemsPerScreen}`;
-                this.lastBomPaginationHash = newBomHash;
+    // CRITICAL: Update hash to prevent external interference
+    const newBomHash = `${result.current_page}_${result.pagination.total_pages}_${this.paginationMode}_${this.itemsPerScreen}`;
+    this.lastBomPaginationHash = newBomHash;
 
-                // Show success message
-                let message = `Page ${result.current_page}/${result.pagination.total_pages}`;
-                if (action === 'next_page') {
-                    message = `Next: ${message}`;
-                } else if (action === 'previous_page') {
-                    message = `Prev: ${message}`;
-                }
-                this.showClickAlert(message, false);
+    // Show success message
+    let message = `Page ${result.current_page}/${result.pagination.total_pages}`;
+    if (action === 'next_page') {
+        message = `Next: ${message}`;
+    } else if (action === 'previous_page') {
+        message = `Prev: ${message}`;
+    }
+    this.showClickAlert(message, false);
 
-                // Find and update active BOM element WITHOUT auto-refresh
-                const activeBOM = this.mediaElements.find(el => 
-                    el.classList.contains('active') && el.classList.contains('bom')
-                );
-                
-                if (activeBOM) {
-                    console.log('🔄 Updating active BOM element with new page data');
-                    
-                    // Create fresh media object with pagination data
-                    const freshBomData = {
-                        url: activeBOM.dataset.url,
-                        duration: parseInt(activeBOM.dataset.duration || 30000) / 1000,
-                        is_duration_active: activeBOM.dataset.isDurationActive === 'true',
-                        is_bom_data: true,
-                        bom_type: activeBOM.dataset.mediaType || 'BOM',
-                        is_split: true,
-                        bom_items: result.pagination.total_items,
-                        bom_data: result.bom_data,
-                        pagination: result.pagination
-                    };
-                    
-                    // Load new content with auto-refresh DISABLED
-                    await this.loadSplitBOMContent(activeBOM, freshBomData, false, true);
-                    
-                    console.log(`✅ BOM content updated: Page ${result.current_page}/${result.pagination.total_pages}`);
-                    
-                    // NEW: Restart auto pagination timer if it was active before manual action
-                    if (wasAutoPaginationActive) {
-                        const duration = parseInt(activeBOM.dataset.duration || 30000);
-                        console.log(`🔄 Restarting auto pagination timer after manual navigation (${duration}ms)`);
-                        
-                        // Ensure auto pagination is still marked as active
-                        this.isBomAutoPaginationActive = true;
-                        this.scheduleNextBomPage(duration);
-                    }
-                }
-            } else {
+    // Find and update active BOM element
+    const activeBOM = this.mediaElements.find(el => 
+        el.classList.contains('active') && el.classList.contains('bom')
+    );
+    
+    if (activeBOM) {
+        console.log('🔄 Updating active BOM element with new page data');
+        
+        const freshBomData = {
+            url: activeBOM.dataset.url,
+            duration: parseInt(activeBOM.dataset.duration || 30000) / 1000,
+            is_duration_active: activeBOM.dataset.isDurationActive === 'true',
+            is_bom_data: true,
+            bom_type: activeBOM.dataset.mediaType || 'BOM',
+            is_split: true,
+            bom_items: result.pagination.total_items,
+            bom_data: result.bom_data,
+            pagination: result.pagination
+        };
+        
+        await this.loadSplitBOMContent(activeBOM, freshBomData, false, true);
+        
+        console.log(`✅ BOM content updated: Page ${result.current_page}/${result.pagination.total_pages}`);
+        
+        if (wasAutoPaginationActive) {
+            const duration = parseInt(activeBOM.dataset.duration || 30000);
+            console.log(`🔄 Restarting auto pagination timer after manual navigation (${duration}ms)`);
+            this.isBomAutoPaginationActive = true;
+            this.scheduleNextBomPage(duration);
+        }
+    }
+} else {
             console.error('❌ BOM pagination error:', result.error);
             this.showClickAlert('Pagination Error', true);
         }
@@ -2915,55 +2917,37 @@ async advanceAutoBomPage(duration) {
             let nextPage;
             
             if (currentPage < totalPages) {
+                // Normal case: Move to next page
                 nextAction = 'next_page';
                 nextPage = currentPage + 1;
                 console.log(`📄 Moving to next page: ${nextPage}`);
             } else {
-                // CRITICAL FIX: Reset to page 1 before completing cycle
-                console.log(`🔄 Completed full BOM cycle (page ${currentPage}/${totalPages}), resetting to page 1 for next cycle`);
+                // ⭐ FIXED: When at last page, STOP auto pagination and move to next media
+                console.log(`🔄 Completed full BOM cycle (page ${currentPage}/${totalPages})`);
+                console.log(`✅ Staying on last page, will move to next media item`);
                 
-                try {
-                    // Reset pagination to page 1
-                    const resetResponse = await fetch(`/station/${this.stationId}/bom-pagination-control/`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': this.getCookie('csrftoken')
-                        },
-                        body: JSON.stringify({
-                            action: 'set_page',
-                            page: 1,
-                            mode: this.paginationMode,
-                            items_per_screen: this.itemsPerScreen
-                        })
-                    });
-                    
-                    if (resetResponse.ok) {
-                        const resetResult = await resetResponse.json();
-                        if (resetResult.success) {
-                            console.log(`✅ Successfully reset BOM pagination to page 1 for next cycle`);
-                            
-                            // Update pagination state immediately
-                            this.currentBomPage = 1;
-                            
-                            // Refresh BOM content to show page 1
-                            await this.refreshBOMContent();
-                            
-                            console.log(`🔄 BOM content refreshed to page 1, cycle complete`);
-                        }
-                    }
-                } catch (resetError) {
-                    console.error('❌ Error resetting BOM pagination to page 1:', resetError);
+                // Broadcast that we're staying on the last page (for sync)
+                if (this.displayNumber === 1) {
+                    console.log('📡 Broadcasting final page sync to other displays');
+                    await this.syncOtherDisplaysToBOMPage(currentPage, totalPages);
+                    await new Promise(resolve => setTimeout(resolve, 500));
                 }
                 
-                // Now move to next media after reset
+                // Stop auto pagination
                 this.stopAutoBomPagination();
-                this.slideshowTimer = setTimeout(() => this.switchMedia(), 1000);
-                return;
+                
+                // Move to next media after a brief delay
+                this.slideshowTimer = setTimeout(() => {
+                    console.log(`🔄 Moving to next media after completing BOM cycle`);
+                    this.switchMedia();
+                }, 2000);
+                
+                return; // Exit early, don't continue pagination
             }
 
             console.log(`🔄 Auto BOM pagination: Moving from page ${currentPage} to page ${nextPage}`);
             
+            // Make the pagination change request
             const response = await fetch(`/station/${this.stationId}/bom-pagination-control/`, {
                 method: 'POST',
                 headers: {
@@ -2986,17 +2970,36 @@ async advanceAutoBomPage(duration) {
                 
                 console.log(`✅ Auto BOM pagination successful: Page ${result.current_page}/${result.pagination.total_pages}`);
                 
+                // ⭐ CRITICAL FIX: Broadcast sync BEFORE refreshing content
+                if (this.displayNumber === 1) {
+                    console.log(`📡 Display 1: Broadcasting sync to displays 2 & 3 for page ${result.current_page}`);
+                    await this.syncOtherDisplaysToBOMPage(
+                        result.current_page, 
+                        result.pagination.total_pages
+                    );
+                    
+                    // Wait for other displays to receive the signal
+                    await new Promise(resolve => setTimeout(resolve, 400));
+                }
+                
+                // Show visual feedback
                 this.showClickAlert(`Auto: Page ${result.current_page}/${result.pagination.total_pages}`, false);
                 
-                // Always refresh BOM content after pagination change
+                // Refresh BOM content on this display
                 await this.refreshBOMContent();
                 
+                // Update last pagination hash to prevent conflicts
+                const newBomHash = `${result.current_page}_${result.pagination.total_pages}_${this.paginationMode}_${this.itemsPerScreen}`;
+                this.lastBomPaginationHash = newBomHash;
+                
                 // Continue to next page with same duration
+                console.log(`⏰ Scheduling next auto pagination in ${duration}ms`);
                 this.scheduleNextBomPage(duration);
                 
             } else {
                 console.error('❌ Auto BOM pagination failed:', result.error);
                 this.stopAutoBomPagination();
+                this.showClickAlert('Auto Pagination Error', true);
                 this.slideshowTimer = setTimeout(() => this.switchMedia(), duration);
             }
         } else {
@@ -3008,9 +3011,12 @@ async advanceAutoBomPage(duration) {
     } catch (error) {
         console.error('❌ Error in auto BOM pagination:', error);
         this.stopAutoBomPagination();
+        this.showClickAlert('Auto Pagination Connection Error', true);
         this.slideshowTimer = setTimeout(() => this.switchMedia(), duration);
     }
 }
+
+
 stopAutoBomPagination() {
     // FIXED: Use the correct timer variable name
     if (this.autoBomPaginationTimer) {

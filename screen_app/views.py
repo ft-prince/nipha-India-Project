@@ -512,10 +512,12 @@ def serialize_bom_item(item_data):
 
 
 def get_station_bom_data_paginated(request, station_id):
-    """Get paginated BOM data for a specific station (without get_current_bom_data)."""
+    """Get paginated BOM data for a specific station - FIXED WITH SHARED CACHE KEY."""
     station = get_object_or_404(Station, pk=station_id)
-    page_number = request.GET.get('page', 1)
-
+    
+    # ⭐ CRITICAL FIX: Get page from request OR from cache with SHARED key
+    page_param = request.GET.get('page')
+    
     if not station.current_product:
         return JsonResponse({'error': 'No product selected'}, status=400)
 
@@ -560,16 +562,35 @@ def get_station_bom_data_paginated(request, station_id):
             )
         except:
             bom_template = None
+    
+    # Determine actual BOM type from template
+    if bom_template:
+        bom_type = bom_template.bom_type
+        is_stage_specific = not bom_template.should_split_across_displays()
 
+    # ⭐ CRITICAL FIX: Use SHARED product-level cache key (same as pagination control)
+    cache_key_base = f"bom_pagination_product_{station.current_product.id}_type_{bom_type}"
+    
+    # If no page specified in URL, get current page from cache
+    if not page_param:
+        page = cache.get(cache_key_base, 1)
+        print(f"DEBUG BOM DATA: No page in URL, using cache page {page} for product {station.current_product.id}, type {bom_type}")
+    else:
+        print(f"DEBUG BOM DATA: Using page {page} from URL parameter")
+    
     # If we have a template, generate BOM data from it
     if bom_template:
         full_bom = bom_template.generate_bom_for_quantity(quantity)
-        paginator = Paginator(full_bom, 8 * (1 if is_stage_specific else 3))
-        try:
-            page_obj = paginator.page(page)
-            bom_data = page_obj.object_list
-        except:
-            bom_data = []
+        
+        # Get items for this specific display and page
+        bom_data = bom_template.get_items_for_display(
+            display_number=station.display_number,
+            quantity=quantity,
+            page=page,
+            items_per_screen=items_per_screen
+        )
+        
+        print(f"DEBUG BOM DATA: Got {len(bom_data)} items for display {station.display_number}, page {page}")
 
     # If no bom_data found, fallback to empty pagination
     if not bom_data:
@@ -606,13 +627,15 @@ def get_station_bom_data_paginated(request, station_id):
                 'is_stage_specific': is_stage_specific,
                 'bom_type': bom_type,
                 'template_found': False,
-                'stage': station.current_stage.name if station.current_stage else None
+                'stage': station.current_stage.name if station.current_stage else None,
+                'cache_key': cache_key_base
             }
         })
 
     # Calculate pagination info
     if bom_template:
-        template_pagination_info = bom_template.get_pagination_info_for_split(quantity=quantity, items_per_screen=8)
+        template_pagination_info = bom_template.get_pagination_info_for_split(quantity=quantity, items_per_screen=items_per_screen)
+        
         if is_stage_specific and station.display_number != 1:
             # Only Display 1 shows data in stage-specific mode
             bom_data = []
@@ -632,7 +655,7 @@ def get_station_bom_data_paginated(request, station_id):
                 'current_page': page,
                 'total_pages': template_pagination_info['total_pages'],
                 'total_items': template_pagination_info['total_items'],
-                'items_per_screen': 8,
+                'items_per_screen': items_per_screen,
                 'items_per_page': template_pagination_info['items_per_page'],
                 'screens_count': 1 if is_stage_specific else 3,
                 'mode': mode,
@@ -682,13 +705,16 @@ def get_station_bom_data_paginated(request, station_id):
             'is_stage_specific': is_stage_specific,
             'bom_type': bom_type,
             'template_found': bom_template is not None,
-            'stage': station.current_stage.name if station.current_stage else None
+            'stage': station.current_stage.name if station.current_stage else None,
+            'cache_key': cache_key_base,
+            'page_source': 'url_param' if page_param else 'cache'
         }
     })
+    
 
 
 def get_station_media_with_bom_pagination(request, station_id):
-    """Get media for a specific station - FIXED TO USE BOMPaginationManager"""
+    """Get media for a specific station - FIXED TO USE SHARED CACHE KEY"""
     station = get_object_or_404(Station, pk=station_id)
     
     # Validate pagination parameters
@@ -699,7 +725,7 @@ def get_station_media_with_bom_pagination(request, station_id):
     except:
         mode = 'split'
     
-    # CRITICAL FIX: Get current page from BOMPaginationManager instead of always using request parameter
+    # ⭐ CRITICAL FIX: Get current page using SHARED cache key
     try:
         # Check if page is explicitly provided in request
         page_param = request.GET.get('page')
@@ -708,7 +734,7 @@ def get_station_media_with_bom_pagination(request, station_id):
             if current_page < 1:
                 current_page = 1
         else:
-            # CRITICAL FIX: No page parameter provided, get current page from BOMPaginationManager
+            # ⭐ CRITICAL FIX: No page parameter, get from SHARED cache
             current_page = 1  # Default fallback
             
             if station.current_product and station.current_stage:
@@ -740,16 +766,16 @@ def get_station_media_with_bom_pagination(request, station_id):
                     if bom_template:
                         bom_type_key = bom_template.bom_type
                         
-                        # CRITICAL FIX: Get current page from BOMPaginationManager
-                        current_page = BOMPaginationManager.get_current_page(
-                            station.current_product.id, 
-                            bom_type_key
-                        )
+                        # ⭐ CRITICAL FIX: Use SHARED product-level cache key
+                        cache_key_base = f"bom_pagination_product_{station.current_product.id}_type_{bom_type_key}"
+                        current_page = cache.get(cache_key_base, 1)
+                        
+                        print(f"DEBUG MEDIA VIEW: Display {station.display_number}, Cache key: {cache_key_base}, Current page: {current_page}")
                     else:
-                        print(f"DEBUG VIEW: No BOM template found, using default page 1")
+                        print(f"DEBUG MEDIA VIEW: No BOM template found, using default page 1")
                         
                 except Exception as e:
-                    print(f"DEBUG VIEW: Error getting pagination state: {e}")
+                    print(f"DEBUG MEDIA VIEW: Error getting pagination state: {e}")
             
     except (ValueError, TypeError):
         current_page = 1
@@ -765,36 +791,31 @@ def get_station_media_with_bom_pagination(request, station_id):
     except (ValueError, TypeError):
         items_per_screen = 8
     
-    
     media_data = []
     
-    # FIRST: Try to get BOM data with the CORRECT current page
+    # Get BOM data with the CORRECT current page
     display_bom_data = station.get_current_bom_data(page=current_page) or []
     
-    
-    # DYNAMIC: Check if current BOM template should split across displays
+    # Check if current BOM template should split across displays
     bom_template = None
     is_splitting_bom_stage = False
     should_show_on_this_display = True
     
     if station.current_product and station.current_stage:
-        # Try to find BOM template for current stage/product
         try:
-            # First try to find stage-specific BOM template
+            # First try stage-specific template
             bom_template = station.current_product.bom_templates.filter(
                 stage=station.current_stage,
                 is_active=True
             ).first()
             
-            # If no stage-specific template, try to find by BOM type
+            # If no stage-specific template, try by BOM type
             if not bom_template:
-                # Determine BOM type based on station settings
                 if hasattr(station, 'show_single_unit_bom') and station.show_single_unit_bom:
                     bom_type_key = 'SINGLE_UNIT'
                 elif hasattr(station, 'show_batch_bom') and station.show_batch_bom:
                     bom_type_key = 'BATCH_50'
                 else:
-                    # Fallback to BATCH_50 for general BOM stages
                     bom_type_key = 'BATCH_50'
                 
                 bom_template = station.current_product.bom_templates.filter(
@@ -803,25 +824,21 @@ def get_station_media_with_bom_pagination(request, station_id):
                 ).first()
             
             if bom_template:
-                
                 # Check if this BOM should split across displays
                 is_splitting_bom_stage = bom_template.should_split_across_displays()
                 
-                # Check if this display should show this BOM based on template settings
+                # Check if this display should show this BOM
                 display_field_name = f'display_screen_{station.display_number}'
                 should_show_on_this_display = getattr(bom_template, display_field_name, True)
-                
             else:
-                print(f"DEBUG VIEW: Display {station.display_number} - No BOM template found")
+                print(f"DEBUG MEDIA VIEW: Display {station.display_number} - No BOM template found")
                 
         except Exception as e:
-            print(f"DEBUG VIEW: Display {station.display_number} - Error finding BOM template: {e}")
+            print(f"DEBUG MEDIA VIEW: Display {station.display_number} - Error finding BOM template: {e}")
     
-    # CRITICAL FIX: For splitting BOM stages, if this display should not show BOM or has no BOM data, return empty media
+    # For splitting BOM stages, check if this display should show BOM
     if is_splitting_bom_stage:
-        
         if not should_show_on_this_display:
-            
             pagination_info = {
                 'current_page': current_page,
                 'total_pages': 1,
@@ -835,7 +852,7 @@ def get_station_media_with_bom_pagination(request, station_id):
             }
             
             return JsonResponse({
-                'media': [],  # EMPTY - BOM disabled for this display
+                'media': [],
                 'station_info': {
                     'name': station.name,
                     'display_number': station.display_number,
@@ -869,22 +886,11 @@ def get_station_media_with_bom_pagination(request, station_id):
                 },
                 'debug_info': {
                     'display_number': station.display_number,
-                    'current_stage': station.current_stage.name if station.current_stage else None,
-                    'bom_items_from_station': 0,
-                    'regular_media_count': 0,
-                    'total_media_items': 0,
-                    'logic': 'Splitting BOM stage - BOM disabled for this display',
-                    'is_splitting_bom_stage': True,
-                    'should_show_on_this_display': False,
-                    'bom_template_found': bom_template is not None,
-                    'bom_template_type': bom_template.bom_type if bom_template else None,
                     'reason': 'BOM template disabled for this display'
                 }
             })
             
         elif not display_bom_data or len(display_bom_data) == 0:
-            
-            # Still need to provide pagination info for consistency
             if bom_template:
                 template_pagination_info = bom_template.get_pagination_info_for_split(
                     quantity=station.product_quantity or 1, 
@@ -915,7 +921,7 @@ def get_station_media_with_bom_pagination(request, station_id):
                 }
             
             return JsonResponse({
-                'media': [],  # EMPTY - no BOM data for this display
+                'media': [],
                 'station_info': {
                     'name': station.name,
                     'display_number': station.display_number,
@@ -949,23 +955,13 @@ def get_station_media_with_bom_pagination(request, station_id):
                 },
                 'debug_info': {
                     'display_number': station.display_number,
-                    'current_stage': station.current_stage.name if station.current_stage else None,
-                    'bom_items_from_station': 0,
-                    'regular_media_count': 0,
-                    'total_media_items': 0,
-                    'logic': 'Splitting BOM stage - this display has no BOM items',
-                    'is_splitting_bom_stage': True,
-                    'should_show_on_this_display': True,
-                    'bom_template_found': bom_template is not None,
-                    'bom_template_type': bom_template.bom_type if bom_template else None,
                     'reason': 'No BOM data for this display in splitting stage'
                 }
             })
         else:
-            print(f"DEBUG VIEW: Display {station.display_number} - Splitting BOM stage with {len(display_bom_data)} BOM items - proceeding normally")
+            print(f"DEBUG MEDIA VIEW: Display {station.display_number} - Splitting BOM stage with {len(display_bom_data)} items")
     
-    # If we reach here, either it's not a splitting BOM stage OR there is BOM data to show
-    # Add regular media ONLY if it's NOT a splitting BOM stage OR this display doesn't show BOM
+    # Add regular media if not splitting BOM stage
     if not is_splitting_bom_stage or not should_show_on_this_display:
         current_media = station.get_current_media()
         for media in current_media:
@@ -994,7 +990,6 @@ def get_station_media_with_bom_pagination(request, station_id):
     
     # Process BOM data if available
     if display_bom_data and len(display_bom_data) > 0:
-        # Determine BOM type and get the template for duration info
         is_stage_specific = False
         bom_type_key = 'UNKNOWN'
         bom_display_name = 'BOM'
@@ -1015,19 +1010,12 @@ def get_station_media_with_bom_pagination(request, station_id):
                 else:
                     bom_display_name = f'{bom_template.get_bom_type_display()} BOM'
         
-        # Determine duration from BOM template or use default
-        bom_duration = 400  # Default fallback
-        is_duration_active = False  # Default fallback
+        # Get duration from template
+        bom_duration = 20 if not bom_template else bom_template.duration
+        is_duration_active = False if not bom_template else bom_template.is_duration_active
         
-        if bom_template:
-            bom_duration = bom_template.duration
-            is_duration_active = bom_template.is_duration_active
-        else:
-            print(f"DEBUG VIEW: Display {station.display_number} - No BOM template found, using default duration: {bom_duration}s")
-        
-        # Get pagination info from template
+        # Get pagination info
         if bom_template and is_stage_specific:
-            # Stage-specific BOMs: Pagination on Display 1 only (8 items per page)
             if station.display_number == 1:
                 template_pagination_info = bom_template.get_pagination_info_for_split(
                     quantity=station.product_quantity or 1, 
@@ -1045,7 +1033,6 @@ def get_station_media_with_bom_pagination(request, station_id):
                     'has_previous': current_page > 1
                 }
             else:
-                # This shouldn't happen for stage-specific BOMs, but handle gracefully
                 pagination_info = {
                     'current_page': 1,
                     'total_pages': 1,
@@ -1058,7 +1045,6 @@ def get_station_media_with_bom_pagination(request, station_id):
                     'has_previous': False
                 }
         elif bom_template:
-            # Splitting BOMs: 8 items per display, multiple displays per page
             template_pagination_info = bom_template.get_pagination_info_for_split(
                 quantity=station.product_quantity or 1, 
                 items_per_screen=8
@@ -1075,7 +1061,6 @@ def get_station_media_with_bom_pagination(request, station_id):
                 'has_previous': current_page > 1
             }
         else:
-            # Fallback
             pagination_info = {
                 'current_page': current_page,
                 'total_pages': 1,
@@ -1088,7 +1073,7 @@ def get_station_media_with_bom_pagination(request, station_id):
                 'has_previous': False
             }
         
-        # Format the data we received from the station
+        # Serialize BOM data
         serialized_bom_data = []
         for i, item_data in enumerate(display_bom_data):
             serialized_item = {
@@ -1110,7 +1095,7 @@ def get_station_media_with_bom_pagination(request, station_id):
             }
             serialized_bom_data.append(serialized_item)
         
-        # Add BOM as media item with dynamic duration
+        # Add BOM as media item
         bom_media = {
             'id': f'bom_paginated_{station.id}',
             'url': f'/station/{station.id}/bom-render-paginated/',
@@ -1128,10 +1113,8 @@ def get_station_media_with_bom_pagination(request, station_id):
             'bom_hash': f"{station.current_product.id}_{bom_type_key}_{current_page}_{mode}_{items_per_screen}_{station.display_number}"
         }
         
-        # Add BOM at beginning (priority)
         media_data.insert(0, bom_media)
     else:
-        # Set default pagination_info if not set
         if 'pagination_info' not in locals():
             pagination_info = {
                 'current_page': current_page,
@@ -1180,18 +1163,12 @@ def get_station_media_with_bom_pagination(request, station_id):
         },
         'debug_info': {
             'display_number': station.display_number,
-            'current_stage': station.current_stage.name if station.current_stage else None,
-            'bom_items_from_station': len(display_bom_data) if 'display_bom_data' in locals() else 0,
-            'regular_media_count': len([m for m in media_data if not m.get('is_bom_data')]),
-            'total_media_items': len(media_data),
-            'logic': 'Dynamic BOM detection - no hardcoded stages',
-            'is_stage_specific': 'is_stage_specific' in locals() and is_stage_specific,
-            'is_splitting_bom_stage': is_splitting_bom_stage,
-            'should_show_on_this_display': should_show_on_this_display,
+            'current_page': current_page,
             'bom_template_found': bom_template is not None,
             'bom_template_type': bom_template.bom_type if bom_template else None
         }
     })
+   
    
    
 # ===== BACKEND FIX =====
@@ -1199,7 +1176,7 @@ def get_station_media_with_bom_pagination(request, station_id):
 @csrf_exempt
 @require_http_methods(["POST"])
 def bom_pagination_control(request, station_id):
-    """Handle BOM pagination controls - COMPREHENSIVE FIX"""
+    """Handle BOM pagination controls - FIXED TO PREVENT WRAP-AROUND"""
     station = get_object_or_404(Station, pk=station_id)
     
     if not station.current_product:
@@ -1209,7 +1186,6 @@ def bom_pagination_control(request, station_id):
         data = json.loads(request.body)
         
         action = data.get('action')
-        
         
         # Validate parameters
         mode = data.get('mode', 'split')
@@ -1249,7 +1225,6 @@ def bom_pagination_control(request, station_id):
                     ).first()
                 
                 if bom_template:
-                    
                     # Update variables based on template
                     bom_type_key = bom_template.bom_type
                     
@@ -1266,8 +1241,6 @@ def bom_pagination_control(request, station_id):
                         quantity = 1  # Stage-specific BOMs always use quantity 1
                     else:
                         quantity = station.product_quantity or 1
-                    
-
                 else:
                     print(f"DEBUG PAGINATION CONTROL: No BOM template found")
                     
@@ -1297,34 +1270,58 @@ def bom_pagination_control(request, station_id):
         total_pages = template_pagination_info['total_pages']
         total_items = template_pagination_info['total_items']
         
+        # ⭐ CRITICAL FIX: Use PRODUCT-level cache key, not station-specific
+        # This ensures ALL displays share the same pagination state
+        cache_key_base = f"bom_pagination_product_{station.current_product.id}_type_{bom_type_key}"
         
         # Get current page from cache
-        current_page = BOMPaginationManager.get_current_page(station.current_product.id, bom_type_key)
+        current_page = cache.get(cache_key_base, 1)
         
-        # Handle pagination actions
+        print(f"DEBUG PAGINATION: Station {station_id}, Display {station.display_number}, Current page from cache: {current_page}, Total pages: {total_pages}")
+        
+        # ⭐ CRITICAL FIX: Handle pagination actions WITHOUT wrap-around
         if action == 'next_page':
-            new_page = min(current_page + 1, total_pages)
+            # Don't wrap - if at last page, stay at last page
+            if current_page < total_pages:
+                new_page = current_page + 1
+            else:
+                new_page = total_pages  # Stay at last page
+                print(f"DEBUG PAGINATION: Already at last page ({total_pages}), staying there")
+                
         elif action == 'previous_page':
-            new_page = max(current_page - 1, 1)
+            # Don't wrap - if at first page, stay at first page
+            if current_page > 1:
+                new_page = current_page - 1
+            else:
+                new_page = 1  # Stay at first page
+                print(f"DEBUG PAGINATION: Already at first page (1), staying there")
+                
         elif action == 'set_page':
             try:
                 target_page = int(data.get('page', 1))
+                # Clamp to valid range
                 new_page = max(1, min(target_page, total_pages))
+                print(f"DEBUG PAGINATION: Set page to {new_page} (requested: {target_page}, max: {total_pages})")
             except (ValueError, TypeError):
                 new_page = 1
+                print(f"DEBUG PAGINATION: Invalid page number, defaulting to 1")
+                
         elif action == 'first_page':
             new_page = 1
+            
         elif action == 'last_page':
             new_page = total_pages
+            
         else:
             return JsonResponse({'error': 'Invalid action'}, status=400)
         
-        
-        # Update pagination state in cache
-        BOMPaginationManager.set_current_page(station.current_product.id, bom_type_key, new_page)
+        # ⭐ CRITICAL FIX: Update pagination state with SHARED cache key
+        cache.set(cache_key_base, new_page, timeout=None)  # No timeout - persist until changed
         
         # Verify cache update
-        verify_page = BOMPaginationManager.get_current_page(station.current_product.id, bom_type_key)
+        verify_page = cache.get(cache_key_base)
+        
+        print(f"DEBUG PAGINATION: Updated cache from {current_page} to {new_page}, verified: {verify_page}")
         
         # Get the updated BOM data directly from template
         try:
@@ -1339,6 +1336,7 @@ def bom_pagination_control(request, station_id):
             if updated_bom_data:
                 first_item = updated_bom_data[0]
                 last_item = updated_bom_data[-1] if len(updated_bom_data) > 1 else first_item
+                print(f"DEBUG PAGINATION: Got {len(updated_bom_data)} items for display {station.display_number}, page {new_page}")
         except Exception as e:
             print(f"DEBUG PAGINATION CONTROL: Error getting data from template: {e}")
             updated_bom_data = []
@@ -1373,7 +1371,6 @@ def bom_pagination_control(request, station_id):
                     print(f"DEBUG PAGINATION CONTROL: Invalid item data at index {i}: {item_data}")
             except Exception as e:
                 print(f"DEBUG PAGINATION CONTROL: Error formatting item {i}: {e}")
-        
         
         # Create pagination info
         if is_stage_specific:
@@ -1425,10 +1422,12 @@ def bom_pagination_control(request, station_id):
                 'items_returned': len(formatted_bom),
                 'total_pages': total_pages,
                 'total_items': total_items,
-                'template_found': True
+                'template_found': True,
+                'cache_key': cache_key_base  # For debugging
             }
         }
         
+        print(f"DEBUG PAGINATION RESPONSE: {response['summary']['page_change']}, has_next: {pagination_info['has_next']}, has_previous: {pagination_info['has_previous']}")
         
         return JsonResponse(response)
         
@@ -1436,11 +1435,21 @@ def bom_pagination_control(request, station_id):
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
     except Exception as e:
         print(f"DEBUG PAGINATION CONTROL ERROR: {str(e)}")
-        import traceback
-        print(f"DEBUG PAGINATION CONTROL TRACEBACK: {traceback.format_exc()}")
         return JsonResponse({'error': str(e)}, status=500)
-    
-    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     
 def render_bom_fragment_paginated(request, station_id):
     """Render BOM fragment with pagination support - USING MEDIA VIEW LOGIC"""

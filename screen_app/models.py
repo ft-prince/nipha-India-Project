@@ -462,7 +462,10 @@ class Station(models.Model):
     # BOM selection
     show_single_unit_bom = models.BooleanField(default=False, help_text="Show single unit BOM for reference")
     show_batch_bom = models.BooleanField(default=True, help_text="Show batch quantity BOM")
-    
+    # ⭐ NEW: BOM Pagination state - shared across all displays of the same product
+    current_bom_page = models.PositiveIntegerField(default=1, help_text="Current BOM page number (shared across displays)")
+    bom_page_updated_at = models.DateTimeField(auto_now=True, help_text="Last time BOM page was changed")
+
     # Control settings
     clicker_enabled = models.BooleanField(default=True, help_text="Enable clicker support")
     auto_advance = models.BooleanField(default=False, help_text="Auto advance after media duration")
